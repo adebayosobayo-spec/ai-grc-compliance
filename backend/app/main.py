@@ -43,7 +43,10 @@ async def root():
 @app.get(f"{settings.api_prefix}/health", response_model=HealthCheck)
 async def health_check():
     """Health check endpoint."""
-    db_type = "sqlite" if "sqlite" in settings.database_url else "postgresql"
+    import os
+    db_url = settings.database_url
+    env_db_url = os.environ.get("DATABASE_URL", "not_set")
+
     return HealthCheck(
         status="healthy",
         version=settings.app_version,
@@ -51,8 +54,9 @@ async def health_check():
         services={
             "api": "operational",
             "claude_ai": "operational" if settings.anthropic_api_key else "not_configured",
-            "database": db_type,
-            "database_url_obscured": settings.database_url.split("@")[-1] if "@" in settings.database_url else settings.database_url
+            "database": "postgresql",
+            "env_db_url_status": "present" if env_db_url != "not_set" else "missing",
+            "database_host": db_url.split("@")[-1].split("/")[0] if "@" in db_url else "local",
         }
     )
 

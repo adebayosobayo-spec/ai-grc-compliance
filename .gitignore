@@ -84,3 +84,4 @@ uploads/
 *.pyo
 
 .vercel
+.env*.local

@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     claude_model: str = Field(default="claude-sonnet-4-20250514")
     claude_max_tokens: int = Field(default=4096)
 
-    # Database
+    # Database (Supabase PostgreSQL)
     database_url: str = Field(
-        default="sqlite:///./complai.db",
+        default="postgresql://postgres:postgres@localhost:5432/postgres",
         validation_alias="DATABASE_URL"
     )
     database_echo: bool = Field(default=False)

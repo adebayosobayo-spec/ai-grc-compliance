@@ -9,6 +9,7 @@ import Assessment from './pages/Assessment'
 import ActionPlan from './pages/ActionPlan'
 import Verification from './pages/Verification'
 import Chat from './pages/Chat'
+import Security from './pages/Security'
 
 const NAV_LINKS = [
   { to: '/', label: 'Dashboard', icon: HomeIcon, exact: true },
@@ -19,6 +20,7 @@ const NAV_LINKS = [
   { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
   { to: '/verification', label: 'Verification', icon: ShieldIcon },
   { to: '/chat', label: 'Chat', icon: ChatBubbleIcon },
+  { to: '/security', label: 'Security', icon: LockIcon },
 ]
 
 // Inline SVG icons to avoid heavy icon library imports
@@ -75,6 +77,13 @@ function ChatBubbleIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+    </svg>
+  )
+}
+function LockIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
     </svg>
   )
 }
@@ -215,6 +224,7 @@ function AppShell() {
             <Route path="/action-plan" element={<ActionPlan />} />
             <Route path="/verification" element={<Verification />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/security" element={<Security />} />
           </Routes>
         </main>
       </div>
