@@ -5,9 +5,13 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.core.config import settings
 
+db_url = settings.database_url
+if db_url and db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
 # Supabase PostgreSQL connection
 engine = create_engine(
-    settings.database_url,
+    db_url,
     echo=settings.database_echo,
     pool_size=5,
     max_overflow=10,
