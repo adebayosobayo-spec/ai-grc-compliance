@@ -1,0 +1,2791 @@
+{
+  "version": "2.8",
+  "children": [
+    {
+      "type": "frame",
+      "id": "15Ueh",
+      "x": 0,
+      "y": 0,
+      "name": "Dashboard — COMPLAI",
+      "width": 1440,
+      "height": 900,
+      "fill": "#f0f2f5",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "jxn2H",
+          "name": "Navbar",
+          "width": "fill_container",
+          "height": 60,
+          "fill": "#0b192c",
+          "padding": [
+            0,
+            32
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "22QQk",
+              "name": "logo",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 2,
+                  "id": "1bME3",
+                  "name": "logoDot",
+                  "fill": "#1a73e8",
+                  "width": 8,
+                  "height": 8
+                },
+                {
+                  "type": "text",
+                  "id": "xexL9",
+                  "name": "logoText",
+                  "fill": "#ffffff",
+                  "content": "COMPLAI",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "DMiGl",
+              "name": "navRight",
+              "gap": 20,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "X4dNv",
+                  "name": "navBell",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "bell",
+                  "iconFontFamily": "lucide",
+                  "fill": "#94a3b8"
+                },
+                {
+                  "type": "frame",
+                  "id": "5egAN",
+                  "name": "navUser",
+                  "width": 32,
+                  "height": 32,
+                  "fill": "#1a73e8",
+                  "cornerRadius": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wvQbt",
+                      "name": "navUserInit",
+                      "fill": "#ffffff",
+                      "content": "JD",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "9vYsS",
+          "name": "Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "#f0f2f5",
+          "children": [
+            {
+              "type": "frame",
+              "id": "A3L3j",
+              "name": "Sidebar",
+              "width": 240,
+              "height": "fill_container",
+              "fill": "#060f1c",
+              "layout": "vertical",
+              "gap": 4,
+              "padding": [
+                24,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "EpmgF",
+                  "name": "sideSection",
+                  "fill": "#334155",
+                  "content": "MAIN MENU",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "sRlQU",
+                  "name": "navItem1",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "#1a73e8",
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "0TPge",
+                      "name": "icon1",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "layout-dashboard",
+                      "iconFontFamily": "lucide",
+                      "fill": "#ffffff"
+                    },
+                    {
+                      "type": "text",
+                      "id": "clSSi",
+                      "name": "label1",
+                      "fill": "#ffffff",
+                      "content": "Dashboard",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AzbNH",
+                  "name": "navItem2",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "dZoTQ",
+                      "name": "icon2",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "trending-up",
+                      "iconFontFamily": "lucide"
+                    },
+                    {
+                      "type": "text",
+                      "id": "7t52P",
+                      "name": "label2",
+                      "fill": "#64748b",
+                      "content": "Gap Analysis",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "r6TRC",
+                  "name": "navItem3",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "Y1hth",
+                      "name": "icon3",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "file-text",
+                      "iconFontFamily": "lucide"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PZPQv",
+                      "name": "label3",
+                      "fill": "#64748b",
+                      "content": "Policy Generator",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gsIH7",
+                  "name": "navItem4",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "gHTno",
+                      "name": "icon4",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "shield",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "W9s42",
+                      "name": "label4",
+                      "fill": "#64748b",
+                      "content": "Evidence Manager",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BO3wi",
+                  "name": "navItem5",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "emF6K",
+                      "name": "icon5",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "settings",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "v2O9k",
+                      "name": "label5",
+                      "fill": "#64748b",
+                      "content": "Settings",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nFKEO",
+              "name": "MainContent",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#f0f2f5",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": [
+                28,
+                32
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "YNjlA",
+                  "name": "pageHdr",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "nKOai",
+                      "name": "pageTitle",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "kpsGR",
+                          "name": "titleText",
+                          "fill": "#1e293b",
+                          "content": "Compliance Dashboard",
+                          "fontFamily": "Inter",
+                          "fontSize": 22,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "lzzHy",
+                          "name": "titleSub",
+                          "fill": "#64748b",
+                          "content": "ISO 27001 · Acme Financial Services Ltd · Last updated 27 Feb 2026",
+                          "fontFamily": "Inter",
+                          "fontSize": 12
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "bBiyH",
+                      "name": "hdrBtn",
+                      "height": 36,
+                      "fill": "#1a73e8",
+                      "cornerRadius": 6,
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "fr4AQ",
+                          "name": "hdrBtnIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "download",
+                          "iconFontFamily": "lucide",
+                          "fill": "#ffffff"
+                        },
+                        {
+                          "type": "text",
+                          "id": "11Gz6",
+                          "name": "hdrBtnText",
+                          "fill": "#ffffff",
+                          "content": "Export Report",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "1mA7N",
+                  "name": "KPIRow",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "UP8ZW",
+                      "name": "kpi1",
+                      "width": "fill_container",
+                      "fill": "#0b192c",
+                      "cornerRadius": 8,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QRpu2",
+                          "name": "kpi1Label",
+                          "fill": "#64748b",
+                          "content": "SECURITY POSTURE SCORE",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "R9Zre",
+                          "name": "kpi1Val",
+                          "fill": "#1a73e8",
+                          "content": "74%",
+                          "fontFamily": "Inter",
+                          "fontSize": 36,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "p8LtY",
+                          "name": "kpi1Sub",
+                          "fill": "#94a3b8",
+                          "content": "Largely Compliant",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "7kUv0",
+                      "name": "kpi2",
+                      "width": "fill_container",
+                      "fill": "#ffffff",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#e2e8f0"
+                      },
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "gBRTq",
+                          "name": "kpi2Label",
+                          "fill": "#64748b",
+                          "content": "OPEN GAPS",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "5KKTM",
+                          "name": "kpi2Val",
+                          "fill": "#f59e0b",
+                          "content": "12",
+                          "fontFamily": "Inter",
+                          "fontSize": 36,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Lf4YB",
+                          "name": "kpi2Sub",
+                          "fill": "#94a3b8",
+                          "content": "3 Critical · 5 High · 4 Medium",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ji0aI",
+                      "name": "kpi3",
+                      "width": "fill_container",
+                      "fill": "#ffffff",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#e2e8f0"
+                      },
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "MFcQw",
+                          "name": "kpi3Label",
+                          "fill": "#64748b",
+                          "content": "ACTIVE POLICIES",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "RDZk3",
+                          "name": "kpi3Val",
+                          "fill": "#1e293b",
+                          "content": "9",
+                          "fontFamily": "Inter",
+                          "fontSize": 36,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ygH5z",
+                          "name": "kpi3Sub",
+                          "fill": "#94a3b8",
+                          "content": "7 Verified · 2 Under Review",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "SxtGg",
+                      "name": "kpi4",
+                      "width": "fill_container",
+                      "fill": "#ffffff",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#e2e8f0"
+                      },
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 20,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "zIDvd",
+                          "name": "kpi4Label",
+                          "fill": "#64748b",
+                          "content": "NEXT AUDIT DATE",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "07xVV",
+                          "name": "kpi4Val",
+                          "fill": "#1e293b",
+                          "content": "14 Apr",
+                          "fontFamily": "Inter",
+                          "fontSize": 36,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "FWdMy",
+                          "name": "kpi4Sub",
+                          "fill": "#16a34a",
+                          "content": "47 days remaining",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MErcN",
+                  "name": "PoliciesTable",
+                  "width": "fill_container",
+                  "fill": "#ffffff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#e2e8f0"
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "y7FLT",
+                      "name": "tblHdr",
+                      "width": "fill_container",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": {
+                          "bottom": 1
+                        },
+                        "fill": "#e2e8f0"
+                      },
+                      "padding": [
+                        16,
+                        20
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "wZSq9",
+                          "name": "tblTitle",
+                          "fill": "#1e293b",
+                          "content": "Recent Policies",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Jsi4f",
+                          "name": "tblAction",
+                          "fill": "#1a73e8",
+                          "content": "View all →",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "SXNOG",
+                      "name": "tblColHdr",
+                      "width": "fill_container",
+                      "height": 40,
+                      "fill": "#f8fafc",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": {
+                          "bottom": 1
+                        },
+                        "fill": "#e2e8f0"
+                      },
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "BLaRJ",
+                          "name": "colA",
+                          "fill": "#64748b",
+                          "content": "POLICY NAME",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "QAY2u",
+                          "name": "colB",
+                          "fill": "#64748b",
+                          "content": "FRAMEWORK",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "C3Cmr",
+                          "name": "colC",
+                          "fill": "#64748b",
+                          "content": "STATUS",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "fxvgP",
+                          "name": "colD",
+                          "fill": "#64748b",
+                          "content": "LAST VERIFIED",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "zzp4f",
+                          "name": "colE",
+                          "fill": "#64748b",
+                          "content": "OWNER",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "AYvjG",
+                      "name": "row1",
+                      "width": "fill_container",
+                      "height": 52,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": {
+                          "bottom": 1
+                        },
+                        "fill": "#e2e8f0"
+                      },
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "DSUhp",
+                          "name": "r1a",
+                          "fill": "#1e293b",
+                          "content": "Information Security Policy",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "jFa4V",
+                          "name": "r1b",
+                          "content": "ISO 27001",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "IPV6K",
+                          "name": "r1cBadge",
+                          "width": 130,
+                          "height": 24,
+                          "fill": "#dcfce7",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "TDV9T",
+                              "name": "r1cText",
+                              "fill": "#16a34a",
+                              "content": "Verified",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "4bUxW",
+                          "name": "r1d",
+                          "content": "22 Feb 2026",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "QqF6e",
+                          "name": "r1e",
+                          "content": "J. Davies",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "7Jhyi",
+                      "name": "row2",
+                      "width": "fill_container",
+                      "height": 52,
+                      "fill": "#fafafa",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": {
+                          "bottom": 1
+                        },
+                        "fill": "#e2e8f0"
+                      },
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "DdNxO",
+                          "name": "r2a",
+                          "fill": "#1e293b",
+                          "content": "Access Control Policy",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "vNEA8",
+                          "name": "r2b",
+                          "content": "ISO 27001",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "WcU9H",
+                          "name": "r2cBadge",
+                          "width": 130,
+                          "height": 24,
+                          "fill": "#fef9c3",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "IqcBw",
+                              "name": "r2cText",
+                              "fill": "#a16207",
+                              "content": "Under Review",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "SqQkg",
+                          "name": "r2d",
+                          "content": "10 Jan 2026",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "5LvrH",
+                          "name": "r2e",
+                          "content": "M. Okonkwo",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "0Vooo",
+                      "name": "row3",
+                      "width": "fill_container",
+                      "height": 52,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": {
+                          "bottom": 1
+                        },
+                        "fill": "#e2e8f0"
+                      },
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "SH0aU",
+                          "name": "r3a",
+                          "fill": "#1e293b",
+                          "content": "Incident Response Plan",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "UMKvH",
+                          "name": "r3b",
+                          "content": "ISO 27001",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "BxkA0",
+                          "name": "r3cBadge",
+                          "width": 130,
+                          "height": 24,
+                          "fill": "#fee2e2",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kFLqV",
+                              "name": "r3cText",
+                              "fill": "#dc2626",
+                              "content": "Expired",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "3mOxO",
+                          "name": "r3d",
+                          "content": "05 Aug 2025",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "yFsxt",
+                          "name": "r3e",
+                          "content": "S. Adebayo",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "CyDDw",
+                      "name": "row4",
+                      "width": "fill_container",
+                      "height": 52,
+                      "fill": "#fafafa",
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "sQWGq",
+                          "name": "r4a",
+                          "fill": "#1e293b",
+                          "content": "AI Governance Framework",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "rbylj",
+                          "name": "r4b",
+                          "content": "ISO 42001",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "7aZcd",
+                          "name": "r4cBadge",
+                          "width": 130,
+                          "height": 24,
+                          "fill": "#dcfce7",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "jzNms",
+                              "name": "r4cText",
+                              "fill": "#16a34a",
+                              "content": "Verified",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "giOnI",
+                          "name": "r4d",
+                          "content": "18 Feb 2026",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "BJf2K",
+                          "name": "r4e",
+                          "content": "R. Mbeki",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "4rKxd",
+      "x": 1500,
+      "y": 0,
+      "name": "Gap Analysis — COMPLAI",
+      "width": 1440,
+      "height": 900,
+      "fill": "#f0f2f5",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "NGQY5",
+          "name": "gNav",
+          "width": "fill_container",
+          "height": 60,
+          "fill": "#0b192c",
+          "padding": [
+            0,
+            32
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "IlCFY",
+              "name": "gLogo",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 2,
+                  "id": "zxH8S",
+                  "name": "gDot",
+                  "fill": "#1a73e8",
+                  "width": 8,
+                  "height": 8
+                },
+                {
+                  "type": "text",
+                  "id": "k4N1Y",
+                  "name": "gLogoTxt",
+                  "fill": "#ffffff",
+                  "content": "COMPLAI",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "DG0MN",
+              "name": "gNavRight",
+              "gap": 20,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "kMl1f",
+                  "name": "gBell",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "bell",
+                  "iconFontFamily": "lucide"
+                },
+                {
+                  "type": "frame",
+                  "id": "QskhR",
+                  "name": "gAvatar",
+                  "width": 32,
+                  "height": 32,
+                  "fill": "#1a73e8",
+                  "cornerRadius": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lxoHF",
+                      "name": "gAvatarTxt",
+                      "content": "JD",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "bF3Sx",
+          "name": "gBody",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "#f0f2f5",
+          "children": [
+            {
+              "type": "frame",
+              "id": "3pImb",
+              "name": "gSidebar",
+              "width": 240,
+              "height": "fill_container",
+              "fill": "#060f1c",
+              "layout": "vertical",
+              "gap": 4,
+              "padding": [
+                24,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Vl5We",
+                  "name": "gSideSection",
+                  "content": "MAIN MENU",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "1J6cu",
+                  "name": "gNav1",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "99e6V",
+                      "name": "gNav1Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "layout-dashboard",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "2FJmV",
+                      "name": "gNav1Lbl",
+                      "fill": "#64748b",
+                      "content": "Dashboard",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "IOyvM",
+                  "name": "gNav2",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "#1a73e8",
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "7ss7N",
+                      "name": "gNav2Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "trending-up",
+                      "iconFontFamily": "lucide",
+                      "fill": "#ffffff"
+                    },
+                    {
+                      "type": "text",
+                      "id": "1Ubpn",
+                      "name": "gNav2Lbl",
+                      "fill": "#ffffff",
+                      "content": "Gap Analysis",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dFLeG",
+                  "name": "gNav3",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "8XM7L",
+                      "name": "gNav3Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "file-text",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "3xXrz",
+                      "name": "gNav3Lbl",
+                      "fill": "#64748b",
+                      "content": "Policy Generator",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "f1Yyl",
+                  "name": "gNav4",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "rCJB3",
+                      "name": "gNav4Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "shield",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "jUhu2",
+                      "name": "gNav4Lbl",
+                      "fill": "#64748b",
+                      "content": "Evidence Manager",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bk68H",
+              "name": "GapMain",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#f0f2f5",
+              "layout": "vertical",
+              "gap": 20,
+              "padding": [
+                28,
+                32
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "jgyZi",
+                  "name": "gPageHdr",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "OD22Z",
+                      "name": "gPageTitle",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "yrMO9",
+                          "name": "gTitle",
+                          "fill": "#1e293b",
+                          "content": "Gap Analysis",
+                          "fontFamily": "Inter",
+                          "fontSize": 22,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "e6dNP",
+                          "name": "gSubtitle",
+                          "fill": "#64748b",
+                          "content": "ISO 27001 · Acme Financial Services Ltd · Assessment run 27 Feb 2026",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "1Vtz0",
+                      "name": "gHdrBtns",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "vU2Df",
+                          "name": "gRunBtn",
+                          "height": 36,
+                          "fill": "#1a73e8",
+                          "cornerRadius": 6,
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            16
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "bim6y",
+                              "name": "gRunBtnTxt",
+                              "fill": "#ffffff",
+                              "content": "Re-run Analysis",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "N2bHj",
+                  "name": "scoreBanner",
+                  "width": "fill_container",
+                  "fill": "#0b192c",
+                  "cornerRadius": 8,
+                  "padding": [
+                    20,
+                    24
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "fTtl5",
+                      "name": "scoreLeft",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "pvkmN",
+                          "name": "scoreLbl",
+                          "fill": "#64748b",
+                          "content": "OVERALL COMPLIANCE SCORE",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "fAZN5",
+                          "name": "scoreVal",
+                          "fill": "#1a73e8",
+                          "content": "61%",
+                          "fontFamily": "Inter",
+                          "fontSize": 42,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "YNlEb",
+                          "name": "scoreSub",
+                          "fill": "#94a3b8",
+                          "content": "Partially Compliant · ISO/IEC 27001:2022",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "x5jl3",
+                      "name": "scoreRight",
+                      "gap": 32,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "z2kG3",
+                          "name": "sc1",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "erFh5",
+                              "name": "sc1Val",
+                              "fill": "#dc2626",
+                              "content": "3",
+                              "fontFamily": "Inter",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "O1mfq",
+                              "name": "sc1Lbl",
+                              "fill": "#94a3b8",
+                              "content": "Critical",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "JOcBR",
+                          "name": "sc2",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "l8rzy",
+                              "name": "sc2Val",
+                              "fill": "#f59e0b",
+                              "content": "5",
+                              "fontFamily": "Inter",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Y0kgu",
+                              "name": "sc2Lbl",
+                              "fill": "#94a3b8",
+                              "content": "High",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "GPV0c",
+                          "name": "sc3",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "IH6Xz",
+                              "name": "sc3Val",
+                              "fill": "#3b82f6",
+                              "content": "4",
+                              "fontFamily": "Inter",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "kmVnY",
+                              "name": "sc3Lbl",
+                              "fill": "#94a3b8",
+                              "content": "Medium",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "A1jWr",
+                  "name": "gapCards",
+                  "width": "fill_container",
+                  "fill": "#f0f2f5",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Tkh0V",
+                      "name": "gc1",
+                      "width": "fill_container",
+                      "fill": "#ffffff",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#e2e8f0"
+                      },
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "bTcG1",
+                          "name": "gc1Top",
+                          "width": "fill_container",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "pjKRR",
+                              "name": "gc1Bar",
+                              "width": 4,
+                              "height": "fill_container"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "5GkXk",
+                              "name": "gc1Body",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "padding": 16,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "DqWhU",
+                                  "name": "gc1Row",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Rv74i",
+                                      "name": "gc1Title",
+                                      "fill": "#1e293b",
+                                      "content": "A.5.1 — Policies for Information Security",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "6iu6J",
+                                      "name": "gc1Badge",
+                                      "height": 22,
+                                      "fill": "#fee2e2",
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        0,
+                                        10
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "Bo9rN",
+                                          "name": "gc1BadgeTxt",
+                                          "fill": "#dc2626",
+                                          "content": "CRITICAL",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 10,
+                                          "fontWeight": "700"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "yXhT6",
+                                  "name": "gc1Desc",
+                                  "fill": "#64748b",
+                                  "content": "No formal information security policy exists. Organisation lacks documented management direction and approval process for security controls.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "2DUVk",
+                                  "name": "gc1Recs",
+                                  "fill": "#1a73e8",
+                                  "content": "→ Draft and ratify an Information Security Policy by CISO within 30 days  →  Establish annual review cycle",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "AgfBE",
+                      "name": "gc2",
+                      "width": "fill_container",
+                      "fill": "#ffffff",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#e2e8f0"
+                      },
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "1LzLn",
+                          "name": "gc2Top",
+                          "width": "fill_container",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "fyrMe",
+                              "name": "gc2Bar",
+                              "width": 4,
+                              "height": "fill_container"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "C0PAH",
+                              "name": "gc2Body",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "padding": 16,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "RMpQH",
+                                  "name": "gc2Row",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "9Cdm0",
+                                      "name": "gc2Title",
+                                      "fill": "#1e293b",
+                                      "content": "A.8.3 — Information Access Restriction",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "spIwz",
+                                      "name": "gc2Badge",
+                                      "height": 22,
+                                      "fill": "#fef9c3",
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        0,
+                                        10
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "XSmKb",
+                                          "name": "gc2BadgeTxt",
+                                          "fill": "#a16207",
+                                          "content": "HIGH",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 10,
+                                          "fontWeight": "700"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "XX2Nn",
+                                  "name": "gc2Desc",
+                                  "fill": "#64748b",
+                                  "content": "Access rights are not formally reviewed quarterly. Least-privilege principle is not enforced across cloud infrastructure and legacy systems.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "UJ2K5",
+                                  "name": "gc2Recs",
+                                  "fill": "#1a73e8",
+                                  "content": "→ Implement quarterly access reviews  →  Deploy privileged access management (PAM) solution  →  Audit cloud IAM policies",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Hgc4X",
+                      "name": "gc3",
+                      "width": "fill_container",
+                      "fill": "#ffffff",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#e2e8f0"
+                      },
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "7X2sh",
+                          "name": "gc3Top",
+                          "width": "fill_container",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "MOxeJ",
+                              "name": "gc3Bar",
+                              "width": 4,
+                              "height": "fill_container"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Fbo43",
+                              "name": "gc3Body",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "padding": 16,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "rn7zI",
+                                  "name": "gc3Row",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Lw9JG",
+                                      "name": "gc3Title",
+                                      "fill": "#1e293b",
+                                      "content": "A.12.1 — Operational Procedures and Responsibilities",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "wCb04",
+                                      "name": "gc3Badge",
+                                      "height": 22,
+                                      "fill": "#dbeafe",
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        0,
+                                        10
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "AMMPb",
+                                          "name": "gc3BadgeTxt",
+                                          "fill": "#1d4ed8",
+                                          "content": "MEDIUM",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 10,
+                                          "fontWeight": "700"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "YBen2",
+                                  "name": "gc3Desc",
+                                  "fill": "#64748b",
+                                  "content": "Operational runbooks exist but are outdated. Change management procedures are undocumented for 4 of 7 production systems.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "ltC9z",
+                                  "name": "gc3Recs",
+                                  "fill": "#1a73e8",
+                                  "content": "→ Update operational runbooks  →  Formalise change management register  →  Assign system owners",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VBBMt",
+      "x": 3000,
+      "y": 0,
+      "name": "Policy Document — Acme Financial",
+      "width": 1440,
+      "height": 900,
+      "fill": "#f0f2f5",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "j4sWc",
+          "name": "pNav",
+          "width": "fill_container",
+          "height": 60,
+          "fill": "#0b192c",
+          "padding": [
+            0,
+            32
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "qqJ9E",
+              "name": "pLogo",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 2,
+                  "id": "VrmSA",
+                  "name": "pDot",
+                  "fill": "#1a73e8",
+                  "width": 8,
+                  "height": 8
+                },
+                {
+                  "type": "text",
+                  "id": "rhnVX",
+                  "name": "pLogoTxt",
+                  "fill": "#ffffff",
+                  "content": "COMPLAI",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "FOAzc",
+              "name": "pNavRight",
+              "gap": 20,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "agA1g",
+                  "name": "pBell",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "bell",
+                  "iconFontFamily": "lucide",
+                  "fill": "#94a3b8"
+                },
+                {
+                  "type": "frame",
+                  "id": "XzbzZ",
+                  "name": "pAvatar",
+                  "width": 32,
+                  "height": 32,
+                  "fill": "#1a73e8",
+                  "cornerRadius": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RxYOP",
+                      "name": "pAvatarTxt",
+                      "fill": "#ffffff",
+                      "content": "JD",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "wQ4Nf",
+          "name": "pBody",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "#f0f2f5",
+          "children": [
+            {
+              "type": "frame",
+              "id": "yZyar",
+              "name": "pSidebar",
+              "width": 240,
+              "height": "fill_container",
+              "fill": "#060f1c",
+              "layout": "vertical",
+              "gap": 4,
+              "padding": [
+                24,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "0y55f",
+                  "name": "pSideSection",
+                  "content": "MAIN MENU",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "krWhZ",
+                  "name": "pNav1",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "J01TL",
+                      "name": "pNav1Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "layout-dashboard",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "q3rr2",
+                      "name": "pNav1Lbl",
+                      "fill": "#64748b",
+                      "content": "Dashboard",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "UMwMR",
+                  "name": "pNav2",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "3QyWf",
+                      "name": "pNav2Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "trending-up",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Z6pnF",
+                      "name": "pNav2Lbl",
+                      "fill": "#64748b",
+                      "content": "Gap Analysis",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fLVEc",
+                  "name": "pNav3",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "#1a73e8",
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "VNh8j",
+                      "name": "pNav3Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "file-text",
+                      "iconFontFamily": "lucide",
+                      "fill": "#ffffff"
+                    },
+                    {
+                      "type": "text",
+                      "id": "f33ro",
+                      "name": "pNav3Lbl",
+                      "fill": "#ffffff",
+                      "content": "Policy Generator",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "25wSC",
+                  "name": "pNav4",
+                  "width": "fill_container",
+                  "height": 44,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "dMtSO",
+                      "name": "pNav4Icon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "shield",
+                      "iconFontFamily": "lucide",
+                      "fill": "#64748b"
+                    },
+                    {
+                      "type": "text",
+                      "id": "3aPZV",
+                      "name": "pNav4Lbl",
+                      "fill": "#64748b",
+                      "content": "Evidence Manager",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Ux8ub",
+              "name": "PolicyMain",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#f0f2f5",
+              "layout": "vertical",
+              "gap": 20,
+              "padding": [
+                28,
+                32
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "1i0PV",
+                  "name": "pPageHdr",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "343Xv",
+                      "name": "pPageTitle",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "TcARB",
+                          "name": "pTitle",
+                          "fill": "#1e293b",
+                          "content": "Policy Generator",
+                          "fontFamily": "Inter",
+                          "fontSize": 22,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "TLwAP",
+                          "name": "pSub",
+                          "fill": "#64748b",
+                          "content": "Information Security Policy · Acme Financial Services Ltd · ISO 27001",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VA0YC",
+                      "name": "pToolbar",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "fQZpN",
+                          "name": "pVerifyBtn",
+                          "height": 36,
+                          "cornerRadius": 6,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#e2e8f0"
+                          },
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            16
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "2itwg",
+                              "name": "pVerifyIcon",
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "#64748b"
+                            },
+                            {
+                              "type": "text",
+                              "id": "bHkxW",
+                              "name": "pVerifyTxt",
+                              "fill": "#1e293b",
+                              "content": "Verify Policy",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "MVM6c",
+                          "name": "pDlBtn",
+                          "height": 36,
+                          "fill": "#1a73e8",
+                          "cornerRadius": 6,
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            16
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "ICren",
+                              "name": "pDlIcon",
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "download",
+                              "iconFontFamily": "lucide",
+                              "fill": "#ffffff"
+                            },
+                            {
+                              "type": "text",
+                              "id": "TVa91",
+                              "name": "pDlTxt",
+                              "fill": "#ffffff",
+                              "content": "Download PDF",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "UpseO",
+                  "name": "docCanvas",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "#e5e7eb",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "wYx5Z",
+                      "name": "A4 Document",
+                      "width": 720,
+                      "height": "fill_container",
+                      "fill": "#ffffff",
+                      "cornerRadius": 4,
+                      "stroke": {
+                        "align": "outside",
+                        "thickness": 1,
+                        "fill": "#e2e8f0"
+                      },
+                      "layout": "vertical",
+                      "padding": [
+                        40,
+                        48
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "G7SVk",
+                          "name": "docOrgBar",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": {
+                              "bottom": 1
+                            },
+                            "fill": "#e2e8f0"
+                          },
+                          "padding": [
+                            0,
+                            0,
+                            20,
+                            0
+                          ],
+                          "justifyContent": "space_between",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "jXUg6",
+                              "name": "docOrgLeft",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "dRmTO",
+                                  "name": "docOrgName",
+                                  "fill": "#1e293b",
+                                  "content": "ACME FINANCIAL SERVICES LTD",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "xdmWZ",
+                                  "name": "docOrgSub",
+                                  "fill": "#64748b",
+                                  "content": "Compliance & Risk Management",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "pNHZ4",
+                              "name": "docMeta",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "WC5bc",
+                                  "name": "docMetaV",
+                                  "fill": "#64748b",
+                                  "content": "Version 1.0",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "bKtua",
+                                  "name": "docMetaD",
+                                  "fill": "#64748b",
+                                  "content": "Effective: 01 Mar 2026",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "TMtPa",
+                                  "name": "docMetaC",
+                                  "fill": "#1e293b",
+                                  "content": "Classification: CONFIDENTIAL",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "EbJXm",
+                          "name": "docTitle",
+                          "fill": "#1e293b",
+                          "content": "Information Security Policy",
+                          "fontFamily": "Inter",
+                          "fontSize": 20,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "tYkmF",
+                          "name": "docFw",
+                          "fill": "#64748b",
+                          "content": "ISO/IEC 27001:2022 · Acme Financial Services Ltd",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "khqRC",
+                          "name": "sec1Hdr",
+                          "width": "fill_container",
+                          "gap": 10,
+                          "padding": [
+                            0,
+                            0,
+                            8,
+                            0
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "kEIr7",
+                              "name": "sec1Line",
+                              "fill": "#1e293b",
+                              "width": 3,
+                              "height": 16
+                            },
+                            {
+                              "type": "text",
+                              "id": "gHKIZ",
+                              "name": "sec1Title",
+                              "fill": "#1e293b",
+                              "content": "1. Purpose and Scope",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "Hd3DM",
+                          "name": "sec1Body",
+                          "fill": "#374151",
+                          "content": "This policy establishes the framework for information security management at Acme Financial Services Ltd. It applies to all employees, contractors, and third parties who access, process, or store organisational data and systems. The objective is to protect the confidentiality, integrity, and availability of information assets in accordance with ISO/IEC 27001:2022.",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "tUOQs",
+                          "name": "sec2Hdr",
+                          "width": "fill_container",
+                          "gap": 10,
+                          "padding": [
+                            0,
+                            0,
+                            8,
+                            0
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "0ITQ0",
+                              "name": "sec2Line",
+                              "fill": "#1e293b",
+                              "width": 3,
+                              "height": 16
+                            },
+                            {
+                              "type": "text",
+                              "id": "kBQLf",
+                              "name": "sec2Title",
+                              "fill": "#1e293b",
+                              "content": "2. Roles and Responsibilities",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "0pkQw",
+                          "name": "sec2Body",
+                          "fill": "#374151",
+                          "content": "- Chief Information Security Officer (CISO): Overall accountability for the ISMS and policy compliance\n- IT Security Team: Day-to-day implementation and monitoring of security controls\n- Department Heads: Ensure staff within their function comply with this policy\n- All Staff: Responsible for protecting information assets under their custodianship",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "aBHTr",
+                          "name": "tblHdrRow",
+                          "width": "fill_container",
+                          "fill": "#f1f5f9",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#cbd5e1"
+                          },
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "F6iZ4",
+                              "name": "tblCol1H",
+                              "fill": "#1e293b",
+                              "content": "Control ID",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "shX6W",
+                              "name": "tblCol2H",
+                              "fill": "#1e293b",
+                              "content": "Control Name",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "2mdsy",
+                              "name": "tblCol3H",
+                              "fill": "#1e293b",
+                              "content": "Policy Statement",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "EXXwQ",
+                          "name": "tblR1",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": {
+                              "bottom": 1
+                            },
+                            "fill": "#e2e8f0"
+                          },
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WBY5z",
+                              "name": "tblR1C1",
+                              "fill": "#374151",
+                              "content": "A.5.1",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "1LY7H",
+                              "name": "tblR1C2",
+                              "fill": "#374151",
+                              "content": "Information Security Policies",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "u5Csn",
+                              "name": "tblR1C3",
+                              "fill": "#374151",
+                              "content": "A formal ISMS policy shall be approved by management and communicated to all personnel annually.",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "4aNhc",
+                          "name": "tblR2",
+                          "width": "fill_container",
+                          "fill": "#fafafa",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": {
+                              "bottom": 1
+                            },
+                            "fill": "#e2e8f0"
+                          },
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "CrBEV",
+                              "name": "tblR2C1",
+                              "fill": "#374151",
+                              "content": "A.8.3",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "3QGih",
+                              "name": "tblR2C2",
+                              "fill": "#374151",
+                              "content": "Information Access Restriction",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "KsXSc",
+                              "name": "tblR2C3",
+                              "fill": "#374151",
+                              "content": "Access to information shall be restricted on a least-privilege basis and reviewed quarterly by system owners.",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "2tzVY",
+                          "name": "docFooter",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": {
+                              "top": 1
+                            },
+                            "fill": "#e2e8f0"
+                          },
+                          "padding": [
+                            16,
+                            0,
+                            0,
+                            0
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "EscSD",
+                              "name": "docFtLeft",
+                              "fill": "#9ca3af",
+                              "content": "Acme Financial Services Ltd — Information Security Policy",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "gUIM6",
+                              "name": "docFtRight",
+                              "fill": "#93c5fd",
+                              "content": "Generated by COMPLAI",
+                              "fontFamily": "Inter",
+                              "fontSize": 8,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "colorAccent": {
+      "type": "color",
+      "value": "#1a73e8"
+    },
+    "colorAccentTeal": {
+      "type": "color",
+      "value": "#00bcd4"
+    },
+    "colorBackground": {
+      "type": "color",
+      "value": "#f0f2f5"
+    },
+    "colorBorder": {
+      "type": "color",
+      "value": "#e2e8f0"
+    },
+    "colorCritical": {
+      "type": "color",
+      "value": "#dc2626"
+    },
+    "colorHigh": {
+      "type": "color",
+      "value": "#f59e0b"
+    },
+    "colorMedium": {
+      "type": "color",
+      "value": "#3b82f6"
+    },
+    "colorNavy": {
+      "type": "color",
+      "value": "#0b192c"
+    },
+    "colorNavyDeep": {
+      "type": "color",
+      "value": "#060f1c"
+    },
+    "colorNavyMid": {
+      "type": "color",
+      "value": "#112240"
+    },
+    "colorSidebarActive": {
+      "type": "color",
+      "value": "#ffffff"
+    },
+    "colorSidebarText": {
+      "type": "color",
+      "value": "#94a3b8"
+    },
+    "colorSuccess": {
+      "type": "color",
+      "value": "#16a34a"
+    },
+    "colorSurface": {
+      "type": "color",
+      "value": "#ffffff"
+    },
+    "colorTextMuted": {
+      "type": "color",
+      "value": "#94a3b8"
+    },
+    "colorTextPrimary": {
+      "type": "color",
+      "value": "#1e293b"
+    },
+    "colorTextSecondary": {
+      "type": "color",
+      "value": "#64748b"
+    }
+  }
+}

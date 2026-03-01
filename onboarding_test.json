@@ -1,0 +1,19 @@
+{
+    "organization_name": "Antigravity Test Corp",
+    "industry": "Technology",
+    "employee_count": "11-50",
+    "compliance_framework": "ISO_27001",
+    "has_security_policy": "yes",
+    "has_security_team": "yes",
+    "performs_risk_assessments": "yes",
+    "has_incident_response": "yes",
+    "has_business_continuity": "yes",
+    "infrastructure_type": "cloud",
+    "has_third_party_vendors": "yes",
+    "has_remote_workers": "yes",
+    "has_asset_inventory": "yes",
+    "uses_identity_management": "yes",
+    "risk_appetite": "medium",
+    "compliance_timeline": "3-6 months",
+    "budget_level": "moderate"
+}

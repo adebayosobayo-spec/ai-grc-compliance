@@ -1,0 +1,56 @@
+# Dependency directories
+node_modules/
+backend/venv/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# Cache and build output
+.vercel/
+backend/__pycache__/
+backend/.pytest_cache/
+frontend/dist/
+frontend/.vite/
+
+# Python artifacts
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Test reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+*.log

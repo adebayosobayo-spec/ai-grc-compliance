@@ -1,0 +1,19 @@
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ],
+    "outputDirectory": "frontend/dist",
+    "env": {
+        "APP_NAME": "AI GRC Compliance Assistant",
+        "APP_VERSION": "1.0.0",
+        "ENVIRONMENT": "production"
+    }
+}

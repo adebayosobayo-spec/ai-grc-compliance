@@ -1,0 +1,50 @@
+"""Application configuration via environment variables."""
+
+from typing import List
+from pydantic_settings import BaseSettings
+from pydantic import Field
+
+
+class Settings(BaseSettings):
+    # Application
+    app_name: str = Field(default="Complai - Compliance Intelligence Platform")
+    app_version: str = Field(default="2.0.0")
+    environment: str = Field(default="development")
+    debug: bool = Field(default=True)
+
+    # API
+    api_host: str = Field(default="0.0.0.0")
+    api_port: int = Field(default=8000)
+    api_prefix: str = Field(default="/api/v1")
+
+    # Anthropic Claude
+    anthropic_api_key: str = Field(default="")
+    claude_model: str = Field(default="claude-sonnet-4-20250514")
+    claude_max_tokens: int = Field(default=4096)
+
+    # Database
+    database_url: str = Field(
+        default="sqlite:///./complai.db",
+        validation_alias="DATABASE_URL"
+    )
+    database_echo: bool = Field(default=False)
+
+    # Security
+    secret_key: str = Field(default="change-this-in-production")
+
+    # CORS
+    allowed_origins: str = Field(
+        default="http://localhost:3000,http://localhost:5173,https://complai-seven.vercel.app"
+    )
+
+    @property
+    def cors_origins(self) -> List[str]:
+        return [o.strip() for o in self.allowed_origins.split(",")]
+
+    # Logging
+    log_level: str = Field(default="INFO")
+
+    model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
+
+
+settings = Settings()

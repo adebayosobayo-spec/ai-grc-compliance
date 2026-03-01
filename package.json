@@ -1,0 +1,12 @@
+{
+    "name": "ai-grc-compliance",
+    "version": "1.0.0",
+    "private": true,
+    "engines": {
+        "node": "20.x",
+        "python": "3.12.x"
+    },
+    "scripts": {
+        "build": "cd frontend && npm install && npm run build"
+    }
+}

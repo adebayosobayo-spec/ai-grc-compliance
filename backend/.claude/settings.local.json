@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-Process -Id 25868 | Select-Object Id,ProcessName,Path\")",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''http://localhost:8000/api/v1/compliance/gap-analysis'' -Method POST -ContentType ''application/json'' -Body ''{\"\"framework\"\":\"\"ISO_27001\"\",\"\"organization_name\"\":\"\"Test Corp\"\",\"\"industry\"\":\"\"Technology\"\",\"\"current_practices\"\":\"\"We have basic firewall and antivirus in place.\"\"}'' -UseBasicParsing\")",
+      "Bash(powershell -Command \"taskkill /F /IM python3.12.exe 2>&1 | Out-Null; Start-Sleep 2; Start-Process python3.12 -ArgumentList ''run.py'' -WorkingDirectory ''C:\\\\Users\\\\DEBAYO\\\\Desktop\\\\ai-grc-compliance\\\\backend'' -WindowStyle Normal; Write-Host ''Restarted''\")",
+      "Bash(powershell -Command \":*)"
+    ]
+  }
+}
