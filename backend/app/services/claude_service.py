@@ -174,17 +174,29 @@ class ClaudeService:
 
         prompt = f"""{framework_context}
 
-Task: Perform a comprehensive gap analysis for {organization_name} in the {industry} industry.
+Task: Perform a comprehensive, accurate gap analysis for {organization_name} in the {industry} industry.
 
 Current State:
 {current_practices}
 {controls_focus}
 
+IMPORTANT ACCURACY RULES:
+- Only flag controls as gaps if the organisation's stated practices genuinely do not address them.
+- Do NOT assume something is missing just because it isn't explicitly mentioned — infer reasonable coverage if the practice description implies it.
+- Be realistic: a small company with basic policies can still partially cover many controls.
+- Each gap MUST map to an actual control ID from the framework's Annex A (ISO 27001) or Annex B (ISO 42001).
+
 Identify the TOP 8 most critical compliance gaps. Return ONLY valid JSON:
 {{
     "overall_compliance_level": "non_compliant|partially_compliant|largely_compliant|fully_compliant",
     "compliance_percentage": <number 0-100>,
-    "summary": "2-3 sentence overall assessment",
+    "summary": "2-3 sentence overall assessment written in plain language for a non-technical executive audience",
+    "risk_summary": {{
+        "critical": <count>,
+        "high": <count>,
+        "medium": <count>,
+        "low": <count>
+    }},
     "gaps": [
         {{
             "control_id": "e.g. A.5.1",
@@ -193,6 +205,7 @@ Identify the TOP 8 most critical compliance gaps. Return ONLY valid JSON:
             "required_state": "Brief required state",
             "gap_description": "One sentence gap description",
             "risk_level": "critical|high|medium|low",
+            "business_impact": "Plain-language explanation of what could go wrong if this gap is not fixed. Write this for a non-technical reader. Example: 'Without a formal incident response plan, a data breach could go undetected for weeks, resulting in regulatory fines, customer data exposure, and reputational damage.'",
             "recommendations": ["Action 1", "Action 2"]
         }}
     ],
@@ -212,7 +225,9 @@ Identify the TOP 8 most critical compliance gaps. Return ONLY valid JSON:
 Rules:
 - gap_controls must mirror the gaps list but in PRD format with status and traceability.
 - Every gap_control must have a traceability reference to the ISO clause or annex.
-- Be specific to {organization_name}'s stated practices."""
+- Be specific to {organization_name}'s stated practices.
+- business_impact must be written in simple, non-technical English that a CEO or board member can understand.
+- risk_summary must accurately tally the risk levels from the gaps array."""
 
         result = self._call_claude("architect", prompt, max_tokens=4096)
         return result

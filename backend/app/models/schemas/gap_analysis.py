@@ -51,6 +51,10 @@ class ControlGap(BaseModel):
     gap_description: str
     risk_level: str
     recommendations: List[str]
+    business_impact: str = Field(
+        default="",
+        description="Plain-language explanation of consequences if this gap is not addressed"
+    )
 
 
 class GapAnalysisRequest(BaseModel):
