@@ -646,3 +646,78 @@ async def export_audit_pack(request: AuditPackRequest, db: Session = Depends(get
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Audit pack export failed: {str(e)}",
         )
+
+
+# ── AI Register Generation ───────────────────────────────────────────────────
+
+from pydantic import BaseModel as PydanticBaseModel
+
+class GenerateRegisterRequest(PydanticBaseModel):
+    register_type: str  # asset_register | incident_register | supplier_register | training_register | change_log | audit_log
+    framework: str
+    organization_name: str
+    industry: str
+    current_practices: str = ""
+
+REGISTER_PROMPTS = {
+    "asset_register": {
+        "instruction": "Generate a realistic information asset register",
+        "columns": ["name", "type", "owner", "department", "classification", "location", "criticality", "description"],
+        "example": '{"name":"Production Database","type":"Software","owner":"CTO","department":"Engineering","classification":"Confidential","location":"AWS eu-west-1","criticality":"Critical","description":"PostgreSQL database storing all customer data"}',
+    },
+    "incident_register": {
+        "instruction": "Generate realistic example security incident register entries that this type of organisation should prepare for",
+        "columns": ["Incident ID", "Date", "Description", "Severity", "Response Actions", "Status", "Lessons Learned"],
+    },
+    "supplier_register": {
+        "instruction": "Generate a realistic supplier/vendor register for this organisation",
+        "columns": ["Supplier", "Service", "Data Access", "Risk Level", "Contract Expiry", "Last Review", "Status"],
+    },
+    "training_register": {
+        "instruction": "Generate a realistic staff training register for security awareness",
+        "columns": ["Employee", "Department", "Training Course", "Date Completed", "Next Due", "Certificate"],
+    },
+    "change_log": {
+        "instruction": "Generate realistic change management log entries",
+        "columns": ["Change ID", "Date", "Description", "Requester", "Approver", "Risk Assessment", "Status"],
+    },
+    "audit_log": {
+        "instruction": "Generate realistic internal audit log entries",
+        "columns": ["Audit ID", "Date", "Scope", "Auditor", "Findings", "Corrective Actions", "Follow-Up Date"],
+    },
+}
+
+@router.post("/generate-register")
+async def generate_register(request: GenerateRegisterRequest):
+    """Use Claude to generate structured register entries for any register type."""
+    reg = REGISTER_PROMPTS.get(request.register_type)
+    if not reg:
+        raise HTTPException(status_code=400, detail=f"Unknown register type: {request.register_type}")
+
+    fw_label = "ISO/IEC 42001:2023 (AI Management)" if "42001" in request.framework else "ISO/IEC 27001:2022 (Information Security)"
+    columns = reg["columns"]
+    example = reg.get("example", "")
+
+    prompt = f"""You are a compliance consultant. {reg['instruction']} for {request.organization_name} in the {request.industry} industry, aligned with {fw_label}.
+
+Organisation context:
+{request.current_practices or 'General organisation with standard IT infrastructure.'}
+
+Generate 8-12 realistic entries. Return ONLY a valid JSON array of objects with these keys: {columns}
+
+{f'Example entry: {example}' if example else ''}
+
+Rules:
+- Be specific and realistic for {request.organization_name} and the {request.industry} industry
+- Use real-world examples (e.g. actual software names, realistic department names)
+- Entries must be relevant to {fw_label}
+- Return ONLY the JSON array, no markdown, no explanation"""
+
+    try:
+        result = claude_service._call_claude("architect", prompt, max_tokens=3000)
+        return {"entries": result["data"], "register_type": request.register_type}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Register generation failed: {str(e)}",
+        )

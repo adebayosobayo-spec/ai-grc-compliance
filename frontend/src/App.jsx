@@ -5,9 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Onboarding from './pages/Onboarding'
 import GapAnalysis from './pages/GapAnalysis'
 import PolicyGenerator from './pages/PolicyGenerator'
-import Assessment from './pages/Assessment'
 import ActionPlan from './pages/ActionPlan'
-import Verification from './pages/Verification'
 import RiskRegister from './pages/RiskRegister'
 import AssetRegister from './pages/AssetRegister'
 import DocumentCentre from './pages/DocumentCentre'
@@ -22,9 +20,7 @@ const NAV_LINKS = [
   { to: '/risk-register', label: 'Risk Register', icon: RiskIcon },
   { to: '/asset-register', label: 'Asset Register', icon: AssetIcon },
   { to: '/documents', label: 'Documents', icon: FolderIcon },
-  { to: '/assessment', label: 'Assessment', icon: CheckIcon },
   { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
-  { to: '/verification', label: 'Verification', icon: ShieldIcon },
   { to: '/chat', label: 'Chat', icon: ChatBubbleIcon },
   { to: '/security', label: 'Security', icon: LockIcon },
 ]
@@ -250,9 +246,7 @@ function AppShell() {
             <Route path="/risk-register" element={<RiskRegister />} />
             <Route path="/asset-register" element={<AssetRegister />} />
             <Route path="/documents" element={<DocumentCentre />} />
-            <Route path="/assessment" element={<Assessment />} />
             <Route path="/action-plan" element={<ActionPlan />} />
-            <Route path="/verification" element={<Verification />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/security" element={<Security />} />
           </Routes>

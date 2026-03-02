@@ -22,8 +22,11 @@ export default function AssetRegister() {
     const [showForm, setShowForm] = useState(false)
     const [editIdx, setEditIdx] = useState(null)
     const [form, setForm] = useState({ ...EMPTY_ASSET })
+    const [generating, setGenerating] = useState(false)
 
     const orgName = orgProfile?.organization_name || 'Your Organisation'
+    const framework = orgProfile?.compliance_framework || 'ISO_27001'
+    const fwLabel = framework === 'ISO_42001' ? 'ISO 42001' : 'ISO 27001'
 
     function handleSave() {
         if (!form.name.trim()) return
@@ -49,6 +52,42 @@ export default function AssetRegister() {
         }
     }
 
+    async function generateAssets() {
+        if (!orgProfile) { alert('Please complete onboarding first.'); return }
+        setGenerating(true)
+        try {
+            const res = await fetch('/api/v1/compliance/generate-register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    register_type: 'asset_register',
+                    framework,
+                    organization_name: orgName,
+                    industry: orgProfile.industry || 'Technology',
+                    current_practices: orgProfile.current_practices || '',
+                }),
+            })
+            if (!res.ok) throw new Error('Generation failed')
+            const data = await res.json()
+            const entries = Array.isArray(data.entries) ? data.entries : []
+            const mapped = entries.map(e => ({
+                name: e.name || '',
+                type: e.type || 'Software',
+                owner: e.owner || '',
+                department: e.department || '',
+                classification: e.classification || 'Internal',
+                location: e.location || '',
+                criticality: e.criticality || 'Medium',
+                description: e.description || '',
+            }))
+            setAssets(prev => [...prev, ...mapped])
+        } catch (err) {
+            alert('Failed to generate assets: ' + err.message)
+        } finally {
+            setGenerating(false)
+        }
+    }
+
     function exportCSV() {
         const headers = ['Asset ID', 'Name', 'Type', 'Owner', 'Department', 'Classification', 'Location', 'Criticality', 'Description']
         const rows = assets.map((a, i) => [
@@ -63,26 +102,21 @@ export default function AssetRegister() {
     }
 
     const classColors = {
-        Public: 'bg-green-50 text-green-700',
-        Internal: 'bg-blue-50 text-blue-700',
-        Confidential: 'bg-orange-50 text-orange-700',
-        Restricted: 'bg-red-50 text-red-700',
+        Public: 'bg-green-50 text-green-700', Internal: 'bg-blue-50 text-blue-700',
+        Confidential: 'bg-orange-50 text-orange-700', Restricted: 'bg-red-50 text-red-700',
     }
     const critColors = {
-        Low: 'bg-green-50 text-green-700',
-        Medium: 'bg-yellow-50 text-yellow-700',
-        High: 'bg-orange-50 text-orange-700',
-        Critical: 'bg-red-50 text-red-700',
+        Low: 'bg-green-50 text-green-700', Medium: 'bg-yellow-50 text-yellow-700',
+        High: 'bg-orange-50 text-orange-700', Critical: 'bg-red-50 text-red-700',
     }
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Asset Register</h1>
                     <p className="text-sm text-slate-500 mt-1">
-                        ISO 27001 Annex A.5.9 requires an <strong>inventory of information and associated assets</strong> with designated owners.
+                        {fwLabel} requires an <strong>inventory of information and associated assets</strong> with designated owners.
                         Document every asset that stores, processes, or transmits information.
                     </p>
                 </div>
@@ -91,10 +125,13 @@ export default function AssetRegister() {
                         className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50">
                         Export CSV
                     </button>
+                    <button onClick={generateAssets} disabled={generating}
+                        className="px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50">
+                        {generating ? 'Generating…' : '✨ Generate Assets'}
+                    </button>
                 </div>
             </div>
 
-            {/* Info Banner */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
@@ -103,15 +140,14 @@ export default function AssetRegister() {
                 <ul className="text-xs text-blue-700 mt-2 space-y-1 list-disc list-inside">
                     <li><strong>Hardware</strong> — Servers, laptops, mobile devices, network equipment</li>
                     <li><strong>Software</strong> — Applications, databases, operating systems, SaaS platforms</li>
-                    <li><strong>Data</strong> — Customer data, financial records, intellectual property, HR records</li>
+                    <li><strong>Data</strong> — Customer data, financial records, intellectual property</li>
                     <li><strong>People</strong> — Key personnel with access to sensitive systems</li>
-                    <li><strong>Services</strong> — Cloud services (AWS, Azure), third-party APIs, managed services</li>
+                    <li><strong>Services</strong> — Cloud services, third-party APIs, managed services</li>
                     <li><strong>Classify each asset</strong> — Public, Internal, Confidential, or Restricted</li>
-                    <li><strong>Assign owners</strong> — Every asset must have a named individual responsible for it</li>
+                    <li><strong>Assign owners</strong> — Every asset must have a named individual responsible</li>
                 </ul>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                     { label: 'Total Assets', value: assets.length },
@@ -126,13 +162,11 @@ export default function AssetRegister() {
                 ))}
             </div>
 
-            {/* Add Asset Button */}
             <button onClick={() => { setForm({ ...EMPTY_ASSET }); setEditIdx(null); setShowForm(true) }}
                 className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-sm font-medium text-slate-500 hover:border-primary-400 hover:text-primary-600 transition-colors">
-                + Add Asset
+                + Add Asset Manually
             </button>
 
-            {/* Form Modal */}
             {showForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
@@ -141,7 +175,7 @@ export default function AssetRegister() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Asset Name *</label>
                                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. Production Database, AWS S3 Bucket" />
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. Production Database" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -163,19 +197,19 @@ export default function AssetRegister() {
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Owner</label>
                                     <input value={form.owner} onChange={e => setForm(f => ({ ...f, owner: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. CTO, IT Manager" />
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. CTO" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
                                     <input value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. Engineering, Finance" />
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. Engineering" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
                                     <input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. AWS eu-west-1, HQ Office" />
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. AWS eu-west-1" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Criticality</label>
@@ -188,7 +222,7 @@ export default function AssetRegister() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                                 <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="What does this asset contain or do?" />
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="What does this asset contain?" />
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
@@ -203,7 +237,6 @@ export default function AssetRegister() {
                 </div>
             )}
 
-            {/* Asset Table */}
             {assets.length > 0 ? (
                 <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
@@ -216,7 +249,6 @@ export default function AssetRegister() {
                                     <th className="text-left px-4 py-3 font-semibold text-slate-700">Classification</th>
                                     <th className="text-left px-4 py-3 font-semibold text-slate-700">Criticality</th>
                                     <th className="text-left px-4 py-3 font-semibold text-slate-700">Owner</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Location</th>
                                     <th className="text-right px-4 py-3 font-semibold text-slate-700">Actions</th>
                                 </tr>
                             </thead>
@@ -233,7 +265,6 @@ export default function AssetRegister() {
                                             <span className={`text-xs font-medium px-2 py-0.5 rounded ${critColors[a.criticality] || ''}`}>{a.criticality}</span>
                                         </td>
                                         <td className="px-4 py-3 text-slate-600">{a.owner || '—'}</td>
-                                        <td className="px-4 py-3 text-slate-600">{a.location || '—'}</td>
                                         <td className="px-4 py-3 text-right">
                                             <button onClick={() => handleEdit(i)} className="text-primary-600 hover:text-primary-800 text-xs font-medium mr-2">Edit</button>
                                             <button onClick={() => handleDelete(i)} className="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
@@ -249,8 +280,8 @@ export default function AssetRegister() {
                     <div className="text-4xl mb-3">🏢</div>
                     <h3 className="text-lg font-semibold text-slate-800">No assets documented yet</h3>
                     <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
-                        Add your organisation's information assets — servers, databases, cloud services, data stores, and key personnel.
-                        Every asset must have an owner and a classification.
+                        Click <strong>"✨ Generate Assets"</strong> to auto-create an asset register based on your organisation profile,
+                        or add assets manually. You can edit any generated entry.
                     </p>
                 </div>
             )}
