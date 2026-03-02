@@ -52,7 +52,11 @@ class ClaudeService:
     """Service for interacting with Claude AI with role-based prompting."""
 
     def __init__(self):
-        self.client = Anthropic(api_key=settings.anthropic_api_key)
+        api_key = (settings.anthropic_api_key or "").strip()
+        self.client = Anthropic(
+            api_key=api_key,
+            timeout=55.0,  # Just under Vercel's 60s maxDuration
+        )
         self.model = settings.claude_model
         self.max_tokens = settings.claude_max_tokens
 
