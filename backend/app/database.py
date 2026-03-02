@@ -6,7 +6,7 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
-db_url = settings.database_url
+db_url = settings.database_url.strip() if settings.database_url else ""
 if db_url and db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 

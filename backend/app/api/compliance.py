@@ -128,50 +128,57 @@ async def save_onboarding(request: OnboardingRequest, db: Session = Depends(get_
     plain-language `current_practices_summary` for gap analysis, and seeds
     the ISMS/AIMS registers (Risk, Asset, Supplier, Data Processing, SoA).
     """
-    session_id = str(uuid.uuid4())
-    summary = _build_practices_summary(request)
+    try:
+        session_id = str(uuid.uuid4())
+        summary = _build_practices_summary(request)
 
-    db_profile = DBOrganizationProfile(
-        session_id=session_id,
-        organization_name=request.organization_name,
-        industry=request.industry,
-        employee_count=request.employee_count,
-        compliance_framework=request.compliance_framework.value,
-        infrastructure_type=request.infrastructure_type,
-        risk_appetite=request.risk_appetite,
-        compliance_timeline=request.compliance_timeline,
-        onboarding_data=request.model_dump(mode='json'),
-        current_practices_summary=summary,
-    )
-    db.add(db_profile)
-    db.commit()
-    db.refresh(db_profile)
+        db_profile = DBOrganizationProfile(
+            session_id=session_id,
+            organization_name=request.organization_name,
+            industry=request.industry,
+            employee_count=request.employee_count,
+            compliance_framework=request.compliance_framework.value,
+            infrastructure_type=request.infrastructure_type,
+            risk_appetite=request.risk_appetite,
+            compliance_timeline=request.compliance_timeline,
+            onboarding_data=request.model_dump(mode='json'),
+            current_practices_summary=summary,
+        )
+        db.add(db_profile)
+        db.commit()
+        db.refresh(db_profile)
 
-    # Return as schema
-    profile = OrganizationProfile(
-        session_id=session_id,
-        organization_name=request.organization_name,
-        industry=request.industry,
-        employee_count=request.employee_count,
-        compliance_framework=request.compliance_framework,
-        infrastructure_type=request.infrastructure_type,
-        risk_appetite=request.risk_appetite,
-        compliance_timeline=request.compliance_timeline,
-        has_security_policy=request.has_security_policy,
-        has_security_team=request.has_security_team,
-        has_incident_response=request.has_incident_response,
-        existing_certifications=request.existing_certifications,
-        data_types_handled=request.data_types_handled,
-        biggest_concerns=request.biggest_concerns,
-        current_practices_summary=summary,
-        additional_context=request.additional_context,
-        created_at=db_profile.created_at,
-    )
+        # Return as schema
+        profile = OrganizationProfile(
+            session_id=session_id,
+            organization_name=request.organization_name,
+            industry=request.industry,
+            employee_count=request.employee_count,
+            compliance_framework=request.compliance_framework,
+            infrastructure_type=request.infrastructure_type,
+            risk_appetite=request.risk_appetite,
+            compliance_timeline=request.compliance_timeline,
+            has_security_policy=request.has_security_policy,
+            has_security_team=request.has_security_team,
+            has_incident_response=request.has_incident_response,
+            existing_certifications=request.existing_certifications,
+            data_types_handled=request.data_types_handled,
+            biggest_concerns=request.biggest_concerns,
+            current_practices_summary=summary,
+            additional_context=request.additional_context,
+            created_at=db_profile.created_at,
+        )
 
-    # Auto-generate initial register entries from onboarding answers
-    register_service.auto_generate_from_onboarding(db, session_id, profile)
+        # Auto-generate initial register entries from onboarding answers
+        register_service.auto_generate_from_onboarding(db, session_id, profile)
 
-    return profile
+        return profile
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Onboarding failed: {str(e)}",
+        )
 
 
 @router.get("/onboarding/{session_id}", response_model=OrganizationProfile)
