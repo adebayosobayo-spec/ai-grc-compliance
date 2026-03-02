@@ -8,6 +8,9 @@ import PolicyGenerator from './pages/PolicyGenerator'
 import Assessment from './pages/Assessment'
 import ActionPlan from './pages/ActionPlan'
 import Verification from './pages/Verification'
+import RiskRegister from './pages/RiskRegister'
+import AssetRegister from './pages/AssetRegister'
+import DocumentCentre from './pages/DocumentCentre'
 import Chat from './pages/Chat'
 import Security from './pages/Security'
 
@@ -16,6 +19,9 @@ const NAV_LINKS = [
   { to: '/onboarding', label: 'Onboarding', icon: ClipboardIcon },
   { to: '/gap-analysis', label: 'Gap Analysis', icon: ChartIcon },
   { to: '/policy-generator', label: 'Policies', icon: DocIcon },
+  { to: '/risk-register', label: 'Risk Register', icon: RiskIcon },
+  { to: '/asset-register', label: 'Asset Register', icon: AssetIcon },
+  { to: '/documents', label: 'Documents', icon: FolderIcon },
   { to: '/assessment', label: 'Assessment', icon: CheckIcon },
   { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
   { to: '/verification', label: 'Verification', icon: ShieldIcon },
@@ -77,6 +83,27 @@ function ChatBubbleIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+    </svg>
+  )
+}
+function RiskIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+  )
+}
+function AssetIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+    </svg>
+  )
+}
+function FolderIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
     </svg>
   )
 }
@@ -220,6 +247,9 @@ function AppShell() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/gap-analysis" element={<GapAnalysis />} />
             <Route path="/policy-generator" element={<PolicyGenerator />} />
+            <Route path="/risk-register" element={<RiskRegister />} />
+            <Route path="/asset-register" element={<AssetRegister />} />
+            <Route path="/documents" element={<DocumentCentre />} />
             <Route path="/assessment" element={<Assessment />} />
             <Route path="/action-plan" element={<ActionPlan />} />
             <Route path="/verification" element={<Verification />} />
