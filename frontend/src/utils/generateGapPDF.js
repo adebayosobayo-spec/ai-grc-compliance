@@ -3,15 +3,15 @@
  * Uses jsPDF loaded from CDN (window.jspdf.jsPDF) — no npm install needed.
  */
 
-const LIME     = [191, 255,   0]
-const BLACK    = [ 10,  10,  15]
-const DARK_CARD= [ 26,  26,  26]
-const GRAY_TEXT= [156, 163, 175]
-const WHITE    = [255, 255, 255]
-const RED      = [248, 113, 113]
-const ORANGE   = [251, 146,  60]
-const YELLOW   = [250, 204,  21]
-const GREEN    = [ 74, 222, 128]
+const LIME = [191, 255, 0]
+const BLACK = [10, 10, 15]
+const DARK_CARD = [26, 26, 26]
+const GRAY_TEXT = [156, 163, 175]
+const WHITE = [255, 255, 255]
+const RED = [248, 113, 113]
+const ORANGE = [251, 146, 60]
+const YELLOW = [250, 204, 21]
+const GREEN = [74, 222, 128]
 
 const RISK_COLORS = { critical: RED, high: ORANGE, medium: YELLOW, low: GREEN }
 
@@ -33,10 +33,10 @@ function wrapText(doc, text, x, y, maxWidth, lineHeight) {
 }
 
 function estimateGapCardHeight(doc, gap, contentW) {
-  const descLines    = doc.splitTextToSize(String(gap.gap_description || ''), contentW - 20).length
-  const currentLines = doc.splitTextToSize(String(gap.current_state  || ''), contentW - 96).length
-  const requiredLines= doc.splitTextToSize(String(gap.required_state || ''), contentW - 102).length
-  const recLines     = (gap.recommendations || []).reduce(
+  const descLines = doc.splitTextToSize(String(gap.gap_description || ''), contentW - 20).length
+  const currentLines = doc.splitTextToSize(String(gap.current_state || ''), contentW - 96).length
+  const requiredLines = doc.splitTextToSize(String(gap.required_state || ''), contentW - 102).length
+  const recLines = (gap.recommendations || []).reduce(
     (acc, r) => acc + doc.splitTextToSize(String(r), contentW - 40).length, 0
   )
   return 60 + descLines * 13 + currentLines * 12 + requiredLines * 12 + recLines * 12 + 20
@@ -50,11 +50,11 @@ export function generateGapPDF(result, orgName, framework) {
     return
   }
 
-  const doc     = new jsPDF({ unit: 'pt', format: 'a4' })
-  const pageW   = doc.internal.pageSize.getWidth()
-  const pageH   = doc.internal.pageSize.getHeight()
-  const margin  = 40
-  const contentW= pageW - margin * 2
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+  const pageW = doc.internal.pageSize.getWidth()
+  const pageH = doc.internal.pageSize.getHeight()
+  const margin = 40
+  const contentW = pageW - margin * 2
   let y = 0
 
   // ── Header ────────────────────────────────────────────────────────────────
@@ -62,10 +62,10 @@ export function generateGapPDF(result, orgName, framework) {
   drawRect(doc, 0, 118, pageW, 3, LIME)
 
   setFont(doc, 22, 'bold', LIME)
-  doc.text('BAYEAUX', margin, 52)
-  const bw = doc.getTextWidth('BAYEAUX')
+  doc.text('COMPL', margin, 52)
+  const bw = doc.getTextWidth('COMPL')
   setFont(doc, 22, 'bold', WHITE)
-  doc.text(' AI', margin + bw, 52)
+  doc.text('AI', margin + bw, 52)
 
   setFont(doc, 8, 'normal', GRAY_TEXT)
   doc.text('COMPLIANCE INTELLIGENCE PLATFORM', margin, 68)
@@ -93,9 +93,9 @@ export function generateGapPDF(result, orgName, framework) {
   // ── Stat Cards ────────────────────────────────────────────────────────────
   const cardW = (contentW - 16) / 3
   const cards = [
-    { label: 'COMPLIANCE LEVEL',   value: (result.overall_compliance_level || '').replace(/_/g, ' '), color: LIME },
-    { label: 'COMPLIANT CONTROLS', value: `${result.compliant_controls} / ${result.total_controls}`,  color: LIME },
-    { label: 'GAPS IDENTIFIED',    value: String(result.gaps?.length ?? 0), color: result.gaps?.length ? RED : GREEN },
+    { label: 'COMPLIANCE LEVEL', value: (result.overall_compliance_level || '').replace(/_/g, ' '), color: LIME },
+    { label: 'COMPLIANT CONTROLS', value: `${result.compliant_controls} / ${result.total_controls}`, color: LIME },
+    { label: 'GAPS IDENTIFIED', value: String(result.gaps?.length ?? 0), color: result.gaps?.length ? RED : GREEN },
   ]
 
   cards.forEach((card, i) => {
@@ -201,7 +201,7 @@ export function generateGapPDF(result, orgName, framework) {
     doc.setPage(p)
     drawRect(doc, 0, pageH - 28, pageW, 28, BLACK)
     setFont(doc, 7, 'normal', GRAY_TEXT)
-    doc.text('BAYEAUX AI \u2014 Compliance Intelligence Platform', margin, pageH - 10)
+    doc.text('COMPLAI \u2014 Compliance Intelligence Platform', margin, pageH - 10)
     doc.text(`Page ${p} of ${totalPages}`, pageW - margin, pageH - 10, { align: 'right' })
     doc.text(`CONFIDENTIAL \u2014 ${orgName}`, pageW / 2, pageH - 10, { align: 'center' })
   }
