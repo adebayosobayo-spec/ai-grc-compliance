@@ -1,6 +1,6 @@
 """SQLAlchemy database engine and session configuration for Supabase PostgreSQL."""
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.pool import NullPool
 
@@ -12,14 +12,21 @@ if db_url and db_url.startswith("postgresql://"):
 
 # Supabase PostgreSQL connection.
 # - NullPool: required for serverless (Vercel) — no persistent idle connections.
-# - prepare_threshold=0: Supabase Supavisor pooler does not support server-side
-#   prepared statements. Disabling them prevents psycopg3 from hanging.
+# - prepare_threshold=0 via event listener: Supabase Supavisor pooler does NOT
+#   support server-side prepared statements. We disable them on every new
+#   connection via the SQLAlchemy "connect" engine event.
 engine = create_engine(
     db_url,
     echo=settings.database_echo,
     poolclass=NullPool,
-    connect_args={"prepare_threshold": 0},
 )
+
+
+@event.listens_for(engine, "connect")
+def _set_prepare_threshold(dbapi_connection, connection_record):
+    """Disable psycopg3 server-side prepared statements for Supabase pooler."""
+    dbapi_connection.prepare_threshold = 0
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -37,6 +44,7 @@ def get_db():
 
 
 def init_db():
-    """Create all tables (dev convenience -- production uses Alembic)."""
+    """Create all tables (dev convenience — production uses Alembic)."""
     from app.models import database_models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+
