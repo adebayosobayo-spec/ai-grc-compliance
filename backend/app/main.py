@@ -60,6 +60,26 @@ async def health_check():
         }
     )
 
+@app.get(f"{settings.api_prefix}/debug")
+async def debug_db():
+    """Debug endpoint to test DB connection and check prepare_threshold."""
+    import os
+    from app.database import engine, _raw_url
+    try:
+        with engine.connect() as conn:
+            raw_conn = conn.connection.dbapi_connection
+            pt = getattr(raw_conn, 'prepare_threshold', 'N/A')
+            result = conn.execute(__import__('sqlalchemy').text('SELECT 1')).fetchone()
+            return {
+                "db_ok": True,
+                "prepare_threshold": pt,
+                "query_result": str(result),
+                "raw_url_repr": repr(_raw_url[:30]) + "...",
+                "env_url_repr": repr(os.environ.get("DATABASE_URL", "")[:30]) + "...",
+            }
+    except Exception as e:
+        return {"db_ok": False, "error": str(e)}
+
 # Include routers
 app.include_router(compliance.router, prefix=settings.api_prefix)
 
