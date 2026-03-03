@@ -159,7 +159,7 @@ function PolicyGenerator() {
         <p className="text-xs font-mono text-blue-600 tracking-widest mb-1 uppercase">Generator</p>
         <h2 className="text-3xl font-black text-slate-900">Policy Generator</h2>
         <p className="mt-1 text-slate-600">
-          Generate compliance policies for {framework === 'ISO_27001' ? 'ISO 27001' : 'ISO 42001'}
+          Generate compliance policies for {{ ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }[framework] || framework}
         </p>
       </div>
 
@@ -193,7 +193,7 @@ function PolicyGenerator() {
                   <option value="Remote Working Policy">Remote Working Policy</option>
                   <option value="Change Management Policy">Change Management Policy</option>
                 </>
-              ) : (
+              ) : framework === 'ISO_42001' ? (
                 <>
                   <option value="AI Governance Policy">AI Governance Policy</option>
                   <option value="AI Ethics Policy">AI Ethics Policy</option>
@@ -201,6 +201,18 @@ function PolicyGenerator() {
                   <option value="AI Model Development Policy">AI Model Development Policy</option>
                   <option value="AI Transparency Policy">AI Transparency Policy</option>
                   <option value="AI Risk Management Policy">AI Risk Management Policy</option>
+                </>
+              ) : (
+                <>
+                  <option value="Data Protection Policy">Data Protection Policy</option>
+                  <option value="Privacy Notice">Privacy Notice</option>
+                  <option value="Data Breach Response Policy">Data Breach Response Policy</option>
+                  <option value="Data Subject Rights Policy">Data Subject Rights Policy</option>
+                  <option value="Data Retention Policy">Data Retention Policy</option>
+                  <option value="Cookie Policy">Cookie Policy</option>
+                  <option value="Consent Management Policy">Consent Management Policy</option>
+                  <option value="International Data Transfer Policy">International Data Transfer Policy</option>
+                  <option value="Third Party/Vendor Policy">Third Party/Vendor Policy</option>
                 </>
               )}
             </select>

@@ -191,7 +191,7 @@ function AppShell() {
             <div className="bg-slate-800 rounded-lg px-3 py-2 text-xs">
               <p className="text-slate-400 font-medium">Framework</p>
               <p className="text-primary-400 font-bold font-mono mt-0.5">
-                {orgProfile.compliance_framework === 'ISO_27001' ? 'ISO 27001' : 'ISO 42001'}
+                {{ ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }[orgProfile.compliance_framework] || orgProfile.compliance_framework}
               </p>
             </div>
           </div>
@@ -246,17 +246,23 @@ function AppShell() {
               </button>
             </div>
             <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMobileOpen(false)}
-                  className="sidebar-link text-slate-300 hover:bg-slate-800 hover:text-white"
-                >
-                  <link.icon className="w-5 h-5 flex-shrink-0" />
-                  <span>{link.label}</span>
-                </Link>
-              ))}
+              {NAV_LINKS.map((link, i) =>
+                link.divider ? (
+                  <div key={link.label} className="pt-4 pb-1 px-3">
+                    <p className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">{link.label}</p>
+                  </div>
+                ) : (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setMobileOpen(false)}
+                    className="sidebar-link text-slate-300 hover:bg-slate-800 hover:text-white"
+                  >
+                    <link.icon className="w-5 h-5 flex-shrink-0" />
+                    <span>{link.label}</span>
+                  </Link>
+                )
+              )}
             </nav>
           </aside>
         </div>

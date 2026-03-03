@@ -41,18 +41,24 @@ function Chat() {
     }
   }
 
-  const frameworkLabel = framework === 'ISO_27001' ? 'ISO 27001' : 'ISO 42001'
+  const FW_LABELS = { ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }
+  const frameworkLabel = FW_LABELS[framework] || framework
 
   const suggestedQuestions = framework === 'ISO_27001' ? [
     'What are the key requirements for ISO 27001 certification?',
     'How do I implement access control policies?',
     'What is required for incident response?',
     'How should I handle data classification?',
-  ] : [
+  ] : framework === 'ISO_42001' ? [
     'What are the key requirements for AI governance?',
     'How do I ensure AI fairness and prevent bias?',
     'What is required for AI model documentation?',
     'How should I monitor AI systems in production?',
+  ] : [
+    `What are the key requirements of ${frameworkLabel}?`,
+    'How do I handle data subject access requests?',
+    'What are my breach notification obligations?',
+    'When is a Data Protection Impact Assessment required?',
   ]
 
   return (
@@ -80,13 +86,12 @@ function Chat() {
 
           {messages.map((message, index) => (
             <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-3xl rounded-lg p-4 ${
-                message.role === 'user'
+              <div className={`max-w-3xl rounded-lg p-4 ${message.role === 'user'
                   ? 'bg-blue-600 text-white font-medium'
                   : message.role === 'error'
-                  ? 'bg-red-50 border border-red-200 text-red-600'
-                  : 'bg-gray-50 border border-gray-200 text-slate-700'
-              }`}>
+                    ? 'bg-red-50 border border-red-200 text-red-600'
+                    : 'bg-gray-50 border border-gray-200 text-slate-700'
+                }`}>
                 {message.role === 'user' ? (
                   <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                 ) : (

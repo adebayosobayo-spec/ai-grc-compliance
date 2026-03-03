@@ -64,7 +64,8 @@ function GapAnalysis() {
   }, [orgProfile])
 
   const framework = orgProfile?.compliance_framework || 'ISO_27001'
-  const frameworkLabel = framework === 'ISO_27001' ? 'ISO 27001' : 'ISO 42001'
+  const FW_LABELS = { ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }
+  const frameworkLabel = FW_LABELS[framework] || framework
 
   // Tick elapsed timer while loading
   useEffect(() => {

@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { complianceAPI } from '../services/api'
 
+const FW_LABELS = { ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }
+const FW_FULL = { ISO_27001: 'ISO/IEC 27001:2022', ISO_42001: 'ISO/IEC 42001:2023', NDPR: 'Nigeria Data Protection Regulation 2019', GDPR: 'EU General Data Protection Regulation', UK_GDPR: 'UK General Data Protection Regulation', POPIA: 'Protection of Personal Information Act 2013', LGPD: 'Lei Geral de Proteção de Dados', CCPA: 'California Consumer Privacy Act / CPRA', PDPA: 'Personal Data Protection Act' }
+
 const quickActions = [
   {
     to: '/gap-analysis',
@@ -27,24 +30,24 @@ const quickActions = [
     ),
   },
   {
-    to: '/assessment',
-    label: 'Assessment',
-    desc: 'Assess controls and prepare for audits',
+    to: '/dpia',
+    label: 'DPIA',
+    desc: 'Draft a Data Protection Impact Assessment',
     color: 'text-amber-600 bg-amber-50 border-amber-200',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
       </svg>
     ),
   },
   {
-    to: '/verification',
-    label: 'Verification',
-    desc: 'Verify policy formatting and control coverage',
+    to: '/hire-dpo',
+    label: 'Hire a DPO',
+    desc: 'Connect with qualified Data Protection Officers',
     color: 'text-violet-600 bg-violet-50 border-violet-200',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
       </svg>
     ),
   },
@@ -53,7 +56,7 @@ const quickActions = [
 function Dashboard() {
   const { orgProfile, sessionId, lastGapResult } = useAppContext()
   const framework = orgProfile?.compliance_framework || 'ISO_27001'
-  const frameworkLabel = framework === 'ISO_27001' ? 'ISO 27001' : 'ISO 42001'
+  const frameworkLabel = FW_LABELS[framework] || framework
 
   const [registerSummary, setRegisterSummary] = useState(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
@@ -103,11 +106,11 @@ function Dashboard() {
   // ── Authenticated dashboard ─────────────────────────────────
   const summaryCards = registerSummary
     ? [
-        { label: 'Risks', value: registerSummary.risks ?? 0, color: 'text-red-600' },
-        { label: 'Assets', value: registerSummary.assets ?? 0, color: 'text-blue-600' },
-        { label: 'Controls', value: registerSummary.controls ?? 0, color: 'text-emerald-600' },
-        { label: 'Evidence', value: registerSummary.evidence ?? 0, color: 'text-amber-600' },
-      ]
+      { label: 'Risks', value: registerSummary.risks ?? 0, color: 'text-red-600' },
+      { label: 'Assets', value: registerSummary.assets ?? 0, color: 'text-blue-600' },
+      { label: 'Controls', value: registerSummary.controls ?? 0, color: 'text-emerald-600' },
+      { label: 'Evidence', value: registerSummary.evidence ?? 0, color: 'text-amber-600' },
+    ]
     : null
 
   return (
@@ -127,7 +130,7 @@ function Dashboard() {
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            {framework === 'ISO_27001' ? 'ISO/IEC 27001:2022' : 'ISO/IEC 42001:2023'}
+            {FW_FULL[framework] || framework}
           </span>
         </div>
       </div>
@@ -236,72 +239,39 @@ function Dashboard() {
           Framework
         </h2>
         <h3 className="text-lg font-bold text-slate-900 mb-4">
-          {framework === 'ISO_27001' ? 'ISO/IEC 27001:2022' : 'ISO/IEC 42001:2023'}
+          {FW_FULL[framework] || framework}
         </h3>
 
-        {framework === 'ISO_27001' ? (
-          <>
-            <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-              ISO/IEC 27001 is the international standard for information security management systems (ISMS).
-              It provides a systematic approach to managing sensitive company information so that it remains secure.
-            </p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {[
-                { value: '93', label: 'Controls' },
-                { value: '4', label: 'Themes' },
-                { value: 'CIA', label: 'Triad Focus' },
-              ].map(({ value, label }) => (
-                <div key={label} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                  <p className="text-xl font-bold text-blue-600">{value}</p>
-                  <p className="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wide">{label}</p>
-                </div>
-              ))}
-            </div>
-            <ul className="space-y-1.5">
-              {[
-                'Covers organisational, people, physical, and technological controls',
-                'Focus on confidentiality, integrity, and availability',
-                'Risk-based approach to information security',
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-slate-600">
-                  <span className="text-blue-600 flex-shrink-0 mt-0.5">&rarr;</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <>
-            <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-              ISO/IEC 42001 is the first international standard for AI management systems. It helps organisations
-              develop, provide, and use AI responsibly through a comprehensive management framework.
-            </p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {[
-                { value: 'AIMS', label: 'Standard Type' },
-                { value: '2023', label: 'Published' },
-                { value: 'AI', label: 'Governance' },
-              ].map(({ value, label }) => (
-                <div key={label} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                  <p className="text-xl font-bold text-blue-600">{value}</p>
-                  <p className="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wide">{label}</p>
-                </div>
-              ))}
-            </div>
-            <ul className="space-y-1.5">
-              {[
-                'Covers AI governance, data management, and system development',
-                'Addresses transparency, fairness, and accountability',
-                'Focus on responsible and ethical AI practices',
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-slate-600">
-                  <span className="text-blue-600 flex-shrink-0 mt-0.5">&rarr;</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+          {framework === 'ISO_27001' ? 'ISO/IEC 27001 is the international standard for information security management systems (ISMS). It provides a systematic approach to managing sensitive company information so that it remains secure.'
+            : framework === 'ISO_42001' ? 'ISO/IEC 42001 is the first international standard for AI management systems. It helps organisations develop, provide, and use AI responsibly through a comprehensive management framework.'
+              : framework === 'NDPR' ? 'The Nigeria Data Protection Regulation (NDPR) governs the collection, storage, and processing of personal data of Nigerian residents. It establishes rights of data subjects and obligations for data controllers.'
+                : framework === 'GDPR' ? 'The General Data Protection Regulation (GDPR) is the EU\'s comprehensive data protection law. It gives individuals control over their personal data and imposes strict obligations on organisations that process it.'
+                  : framework === 'UK_GDPR' ? 'The UK GDPR is the UK\'s post-Brexit data protection framework, largely mirroring the EU GDPR. It works alongside the Data Protection Act 2018 to regulate personal data processing.'
+                    : framework === 'POPIA' ? 'The Protection of Personal Information Act (POPIA) is South Africa\'s data protection law. It regulates how personal information is collected, stored, and shared, and establishes the Information Regulator as the supervisory authority.'
+                      : framework === 'LGPD' ? 'The Lei Geral de Proteção de Dados (LGPD) is Brazil\'s data protection law, inspired by the GDPR. It governs the processing of personal data of individuals located in Brazil.'
+                        : framework === 'CCPA' ? 'The California Consumer Privacy Act (CCPA), as amended by the CPRA, grants California residents rights over their personal information and imposes obligations on businesses that collect, share, or sell personal data.'
+                          : 'The Personal Data Protection Act (PDPA) governs the collection, use, and disclosure of personal data by organisations, balancing individual rights with organisational needs.'
+          }
+        </p>
+
+        <ul className="space-y-1.5">
+          {(framework === 'ISO_27001' ? ['Covers organisational, people, physical, and technological controls', 'Focus on confidentiality, integrity, and availability', 'Risk-based approach to information security']
+            : framework === 'ISO_42001' ? ['Covers AI governance, data management, and system development', 'Addresses transparency, fairness, and accountability', 'Focus on responsible and ethical AI practices']
+              : framework === 'NDPR' ? ['Requires consent for personal data processing', 'Mandates data protection impact assessments', 'Requires appointment of a Data Protection Officer']
+                : framework === 'GDPR' ? ['Lawful basis required for all processing', 'Data subject rights (access, erasure, portability)', '72-hour breach notification requirement']
+                  : framework === 'UK_GDPR' ? ['Aligns with EU GDPR post-Brexit', 'ICO as supervisory authority', 'Adequacy decisions for international transfers']
+                    : framework === 'POPIA' ? ['8 conditions for lawful processing', 'Information Regulator oversight', 'Cross-border transfer restrictions']
+                      : framework === 'LGPD' ? ['10 legal bases for processing', 'ANPD as supervisory authority', 'Data subject rights including portability and deletion']
+                        : framework === 'CCPA' ? ['Right to know, delete, and opt-out', 'Do Not Sell/Share requirements', 'Privacy notices and consent mechanisms']
+                          : ['Consent-based data processing', 'Data Protection Officer requirements', 'Cross-border transfer restrictions']
+          ).map((item) => (
+            <li key={item} className="flex items-start gap-2 text-sm text-slate-600">
+              <span className="text-blue-600 flex-shrink-0 mt-0.5">&rarr;</span>
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )

@@ -281,8 +281,15 @@ export default function Onboarding() {
             <RadioGroup label="Target Compliance Framework" name="compliance_framework"
               value={form.compliance_framework} onChange={set} required
               options={[
-                { value: 'ISO_27001', label: 'ISO 27001 — Information Security' },
+                { value: 'ISO_27001', label: 'ISO 27001 — Information Security Management' },
                 { value: 'ISO_42001', label: 'ISO 42001 — AI Governance' },
+                { value: 'NDPR', label: 'NDPR — Nigeria Data Protection Regulation' },
+                { value: 'GDPR', label: 'GDPR — EU General Data Protection Regulation' },
+                { value: 'UK_GDPR', label: 'UK GDPR — UK Data Protection' },
+                { value: 'POPIA', label: 'POPIA — South Africa Protection of Personal Information Act' },
+                { value: 'LGPD', label: 'LGPD — Brazil Lei Geral de Proteção de Dados' },
+                { value: 'CCPA', label: 'CCPA/CPRA — California Consumer Privacy Act' },
+                { value: 'PDPA', label: 'PDPA — Singapore/Thailand Personal Data Protection Act' },
               ]} />
 
             <FormField label="Target Certification Date (optional)">
