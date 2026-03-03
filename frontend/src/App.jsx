@@ -11,14 +11,7 @@ import AssetRegister from './pages/AssetRegister'
 import DocumentCentre from './pages/DocumentCentre'
 import Chat from './pages/Chat'
 import Security from './pages/Security'
-import DPIA from './pages/DPIA'
-import RoPA from './pages/RoPA'
-import BreachResponse from './pages/BreachResponse'
-import ConsentDSR from './pages/ConsentDSR'
-import PrivacyPolicies from './pages/PrivacyPolicies'
-import Approvals from './pages/Approvals'
-import AuditLog from './pages/AuditLog'
-import HireDPO from './pages/HireDPO'
+import DPOAssist from './pages/DPOAssist'
 
 const NAV_LINKS = [
   { to: '/', label: 'Dashboard', icon: HomeIcon, exact: true },
@@ -31,15 +24,7 @@ const NAV_LINKS = [
   { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
   { to: '/chat', label: 'Chat', icon: ChatBubbleIcon },
   { to: '/security', label: 'Security', icon: LockIcon },
-  { divider: true, label: 'DPO ASSIST' },
-  { to: '/dpia', label: 'DPIA', icon: DPIAIcon },
-  { to: '/ropa', label: 'RoPA', icon: RopaIcon },
-  { to: '/breaches', label: 'Breach Response', icon: BreachIcon },
-  { to: '/consent', label: 'Consent & DSR', icon: ConsentIcon },
-  { to: '/privacy-policies', label: 'Privacy Policies', icon: PrivacyIcon },
-  { to: '/approvals', label: 'DPO Approvals', icon: ApprovalIcon },
-  { to: '/audit-log', label: 'Audit Log', icon: AuditIcon },
-  { to: '/hire-dpo', label: 'Hire a DPO', icon: BriefcaseIcon },
+  { to: '/dpo-assist', label: 'DPO Assist', icon: DPIAIcon },
 ]
 
 // Inline SVG icons to avoid heavy icon library imports
@@ -199,15 +184,9 @@ function AppShell() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {NAV_LINKS.map((link, i) =>
-            link.divider ? (
-              <div key={link.label} className="pt-4 pb-1 px-3">
-                <p className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">{link.label}</p>
-              </div>
-            ) : (
-              <SidebarLink key={link.to} {...link} />
-            )
-          )}
+          {NAV_LINKS.map((link) => (
+            <SidebarLink key={link.to} {...link} />
+          ))}
         </nav>
 
         {/* Profile footer */}
@@ -246,23 +225,17 @@ function AppShell() {
               </button>
             </div>
             <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-              {NAV_LINKS.map((link, i) =>
-                link.divider ? (
-                  <div key={link.label} className="pt-4 pb-1 px-3">
-                    <p className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">{link.label}</p>
-                  </div>
-                ) : (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    onClick={() => setMobileOpen(false)}
-                    className="sidebar-link text-slate-300 hover:bg-slate-800 hover:text-white"
-                  >
-                    <link.icon className="w-5 h-5 flex-shrink-0" />
-                    <span>{link.label}</span>
-                  </Link>
-                )
-              )}
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className="sidebar-link text-slate-300 hover:bg-slate-800 hover:text-white"
+                >
+                  <link.icon className="w-5 h-5 flex-shrink-0" />
+                  <span>{link.label}</span>
+                </Link>
+              ))}
             </nav>
           </aside>
         </div>
@@ -310,14 +283,7 @@ function AppShell() {
             <Route path="/action-plan" element={<ActionPlan />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/security" element={<Security />} />
-            <Route path="/dpia" element={<DPIA />} />
-            <Route path="/ropa" element={<RoPA />} />
-            <Route path="/breaches" element={<BreachResponse />} />
-            <Route path="/consent" element={<ConsentDSR />} />
-            <Route path="/privacy-policies" element={<PrivacyPolicies />} />
-            <Route path="/approvals" element={<Approvals />} />
-            <Route path="/audit-log" element={<AuditLog />} />
-            <Route path="/hire-dpo" element={<HireDPO />} />
+            <Route path="/dpo-assist" element={<DPOAssist />} />
           </Routes>
         </main>
       </div>
