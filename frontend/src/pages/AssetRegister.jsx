@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAppContext } from '../context/AppContext'
+
+const LS_KEY = 'complai_assets'
 
 const ASSET_TYPES = ['Hardware', 'Software', 'Data', 'People', 'Service', 'Facility', 'Network']
 const CLASSIFICATIONS = ['Public', 'Internal', 'Confidential', 'Restricted']
@@ -18,7 +20,16 @@ const EMPTY_ASSET = {
 
 export default function AssetRegister() {
     const { orgProfile } = useAppContext()
-    const [assets, setAssets] = useState([])
+    // ── localStorage persistence (Sprint 4) ──────────────────────
+    const [assets, setAssets] = useState(() => {
+        try {
+            const saved = localStorage.getItem(LS_KEY)
+            return saved ? JSON.parse(saved) : []
+        } catch { return [] }
+    })
+    useEffect(() => {
+        localStorage.setItem(LS_KEY, JSON.stringify(assets))
+    }, [assets])
     const [showForm, setShowForm] = useState(false)
     const [editIdx, setEditIdx] = useState(null)
     const [form, setForm] = useState({ ...EMPTY_ASSET })

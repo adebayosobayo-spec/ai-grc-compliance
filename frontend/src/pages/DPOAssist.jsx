@@ -22,8 +22,8 @@ const TABS = [
     { key: 'hire', label: 'Hire / Appoint DPO', icon: '💼' },
 ]
 
-export default function DPOAssist() {
-    const [activeTab, setActiveTab] = useState('overview')
+export default function DPOAssist({ defaultTab }) {
+    const [activeTab, setActiveTab] = useState(defaultTab || 'overview')
 
     return (
         <div className="px-4 py-6 sm:px-0">
@@ -42,8 +42,8 @@ export default function DPOAssist() {
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${activeTab === tab.key
-                                    ? 'bg-blue-600 text-white shadow-sm'
-                                    : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'
                                 }`}
                         >
                             <span>{tab.icon}</span>

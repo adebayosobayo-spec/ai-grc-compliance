@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { complianceAPI } from '../services/api'
+
+const ComplianceGlobe = lazy(() => import('../components/ComplianceGlobe'))
 
 const FW_LABELS = { ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }
 const FW_FULL = { ISO_27001: 'ISO/IEC 27001:2022', ISO_42001: 'ISO/IEC 42001:2023', NDPR: 'Nigeria Data Protection Regulation 2019', GDPR: 'EU General Data Protection Regulation', UK_GDPR: 'UK General Data Protection Regulation', POPIA: 'Protection of Personal Information Act 2013', LGPD: 'Lei Geral de Proteção de Dados', CCPA: 'California Consumer Privacy Act / CPRA', PDPA: 'Personal Data Protection Act' }
@@ -53,10 +55,36 @@ const quickActions = [
   },
 ]
 
+// ── Compliance score derived from last gap result ──────────────────
+function useComplianceScore(lastGapResult) {
+  if (!lastGapResult) return null
+  const { compliant_controls, total_controls } = lastGapResult
+  if (!total_controls) return null
+  return Math.round((compliant_controls / total_controls) * 100)
+}
+
+// ── Animated score counter ─────────────────────────────────────────
+function AnimatedScore({ target }) {
+  const [display, setDisplay] = useState(0)
+  useEffect(() => {
+    if (target === null) return
+    let start = 0
+    const step = Math.ceil(target / 40)
+    const interval = setInterval(() => {
+      start = Math.min(start + step, target)
+      setDisplay(start)
+      if (start >= target) clearInterval(interval)
+    }, 25)
+    return () => clearInterval(interval)
+  }, [target])
+  return <>{display}</>
+}
+
 function Dashboard() {
   const { orgProfile, sessionId, lastGapResult } = useAppContext()
   const framework = orgProfile?.compliance_framework || 'ISO_27001'
   const frameworkLabel = FW_LABELS[framework] || framework
+  const complianceScore = useComplianceScore(lastGapResult)
 
   const [registerSummary, setRegisterSummary] = useState(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
@@ -72,7 +100,7 @@ function Dashboard() {
     }
   }, [orgProfile, sessionId])
 
-  // ── No org profile: onboarding CTA ─────────────────────────
+  // ── No org profile: onboarding CTA ─────────────────────────────────
   if (!orgProfile) {
     return (
       <div className="px-4 py-10 sm:px-6 lg:px-8 max-w-4xl mx-auto">
@@ -82,9 +110,7 @@ function Dashboard() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
-            Welcome to ComplAI
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome to COMPLAI</h1>
           <p className="text-slate-500 mb-8 max-w-md mx-auto">
             Automate ISO 27001 &amp; ISO 42001 compliance — from gap analysis to audit-ready
             policies — powered by AI.
@@ -103,7 +129,7 @@ function Dashboard() {
     )
   }
 
-  // ── Authenticated dashboard ─────────────────────────────────
+  // ── Authenticated dashboard ─────────────────────────────────────────
   const summaryCards = registerSummary
     ? [
       { label: 'Risks', value: registerSummary.risks ?? 0, color: 'text-red-600' },
@@ -115,27 +141,97 @@ function Dashboard() {
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* ── Welcome Header ───────────────────────────────────── */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Welcome back, {orgProfile.organization_name}
+
+      {/* ── 3D Hero Panel ─────────────────────────────────────────── */}
+      <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 border border-blue-900/40 shadow-2xl min-h-[260px]">
+        {/* Background grid pattern */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(59,130,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.3) 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }}
+        />
+
+        {/* Radial glow */}
+        <div className="absolute inset-0 opacity-20"
+          style={{ background: 'radial-gradient(ellipse 60% 60% at 70% 50%, #3b82f6, transparent)' }}
+        />
+
+        <div className="relative flex flex-col lg:flex-row items-center lg:items-stretch gap-4 p-6 sm:p-8">
+          {/* Left: text content */}
+          <div className="flex-1 flex flex-col justify-center z-10">
+            <p className="text-xs font-mono text-blue-400 tracking-widest uppercase mb-2">Compliance Cockpit</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2 leading-tight">
+              {orgProfile.organization_name}
             </h1>
-            <p className="text-slate-500 text-sm mt-1">
-              Continuing your {frameworkLabel} compliance journey
+            <p className="text-blue-200 text-sm mb-5">
+              {FW_FULL[framework] || framework}
             </p>
+
+            {/* Score badge */}
+            {complianceScore !== null ? (
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col">
+                  <p className="text-xs text-blue-400 font-mono uppercase tracking-widest mb-1">Compliance Score</p>
+                  <p className="text-4xl font-black text-white tabular-nums">
+                    <AnimatedScore target={complianceScore} />
+                    <span className="text-xl font-semibold text-blue-300 ml-0.5">%</span>
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-900/60 border border-blue-700/40 text-blue-200 font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
+                    {lastGapResult?.compliant_controls} / {lastGapResult?.total_controls} controls met
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-900/40 border border-red-800/40 text-red-300 font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
+                    {lastGapResult?.gaps?.length ?? 0} gaps identified
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs text-blue-400 font-mono uppercase tracking-widest mb-2">No analysis yet</p>
+                <Link
+                  to="/gap-analysis"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors"
+                >
+                  Run Gap Analysis
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            )}
+
+            {/* Framework tag */}
+            <div className="mt-5 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-900/50 border border-blue-700/40 text-blue-300 text-xs font-semibold font-mono">
+                {frameworkLabel}
+              </span>
+              {orgProfile.industry && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/50 border border-slate-700 text-slate-300 text-xs font-medium">
+                  {orgProfile.industry}
+                </span>
+              )}
+            </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold tracking-wide self-start">
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            {FW_FULL[framework] || framework}
-          </span>
+
+          {/* Right: 3D Globe */}
+          <div className="flex-shrink-0 w-full lg:w-64 h-52 lg:h-auto relative">
+            <Suspense fallback={
+              <div className="w-full h-full flex items-center justify-center opacity-20">
+                <div className="w-12 h-12 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
+              </div>
+            }>
+              <ComplianceGlobe score={complianceScore ?? 0} />
+            </Suspense>
+          </div>
         </div>
       </div>
 
-      {/* ── Register Summary Cards ───────────────────────────── */}
+      {/* ── Register Summary Cards ───────────────────────────────── */}
       {summaryLoading && (
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -163,7 +259,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ── Last Gap Analysis ────────────────────────────────── */}
+      {/* ── Last Gap Analysis ────────────────────────────────────── */}
       {lastGapResult && (
         <div className="mb-8 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -209,7 +305,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ── Quick Actions ────────────────────────────────────── */}
+      {/* ── Quick Actions ────────────────────────────────────────── */}
       <div className="mb-8">
         <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-4">
           Quick Actions
@@ -233,7 +329,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* ── Framework Info ────────────────────────────────────── */}
+      {/* ── Framework Info ────────────────────────────────────────── */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">
           Framework
@@ -246,10 +342,10 @@ function Dashboard() {
           {framework === 'ISO_27001' ? 'ISO/IEC 27001 is the international standard for information security management systems (ISMS). It provides a systematic approach to managing sensitive company information so that it remains secure.'
             : framework === 'ISO_42001' ? 'ISO/IEC 42001 is the first international standard for AI management systems. It helps organisations develop, provide, and use AI responsibly through a comprehensive management framework.'
               : framework === 'NDPR' ? 'The Nigeria Data Protection Regulation (NDPR) governs the collection, storage, and processing of personal data of Nigerian residents. It establishes rights of data subjects and obligations for data controllers.'
-                : framework === 'GDPR' ? 'The General Data Protection Regulation (GDPR) is the EU\'s comprehensive data protection law. It gives individuals control over their personal data and imposes strict obligations on organisations that process it.'
-                  : framework === 'UK_GDPR' ? 'The UK GDPR is the UK\'s post-Brexit data protection framework, largely mirroring the EU GDPR. It works alongside the Data Protection Act 2018 to regulate personal data processing.'
-                    : framework === 'POPIA' ? 'The Protection of Personal Information Act (POPIA) is South Africa\'s data protection law. It regulates how personal information is collected, stored, and shared, and establishes the Information Regulator as the supervisory authority.'
-                      : framework === 'LGPD' ? 'The Lei Geral de Proteção de Dados (LGPD) is Brazil\'s data protection law, inspired by the GDPR. It governs the processing of personal data of individuals located in Brazil.'
+                : framework === 'GDPR' ? "The General Data Protection Regulation (GDPR) is the EU's comprehensive data protection law. It gives individuals control over their personal data and imposes strict obligations on organisations that process it."
+                  : framework === 'UK_GDPR' ? "The UK GDPR is the UK's post-Brexit data protection framework, largely mirroring the EU GDPR. It works alongside the Data Protection Act 2018 to regulate personal data processing."
+                    : framework === 'POPIA' ? "The Protection of Personal Information Act (POPIA) is South Africa's data protection law. It regulates how personal information is collected, stored, and shared, and establishes the Information Regulator as the supervisory authority."
+                      : framework === 'LGPD' ? "The Lei Geral de Proteção de Dados (LGPD) is Brazil's data protection law, inspired by the GDPR. It governs the processing of personal data of individuals located in Brazil."
                         : framework === 'CCPA' ? 'The California Consumer Privacy Act (CCPA), as amended by the CPRA, grants California residents rights over their personal information and imposes obligations on businesses that collect, share, or sell personal data.'
                           : 'The Personal Data Protection Act (PDPA) governs the collection, use, and disclosure of personal data by organisations, balancing individual rights with organisational needs.'
           }

@@ -12,6 +12,8 @@ import DocumentCentre from './pages/DocumentCentre'
 import Chat from './pages/Chat'
 import Security from './pages/Security'
 import DPOAssist from './pages/DPOAssist'
+import Verification from './pages/Verification'
+import Assessment from './pages/Assessment'
 
 const NAV_LINKS = [
   { to: '/', label: 'Dashboard', icon: HomeIcon, exact: true },
@@ -22,6 +24,8 @@ const NAV_LINKS = [
   { to: '/asset-register', label: 'Asset Register', icon: AssetIcon },
   { to: '/documents', label: 'Documents', icon: FolderIcon },
   { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
+  { to: '/assessment', label: 'Assessment', icon: CheckIcon },
+  { to: '/verification', label: 'Verification', icon: ShieldIcon },
   { to: '/chat', label: 'Chat', icon: ChatBubbleIcon },
   { to: '/security', label: 'Security', icon: LockIcon },
   { to: '/dpo-assist', label: 'DPO Assist', icon: DPIAIcon },
@@ -281,9 +285,13 @@ function AppShell() {
             <Route path="/asset-register" element={<AssetRegister />} />
             <Route path="/documents" element={<DocumentCentre />} />
             <Route path="/action-plan" element={<ActionPlan />} />
+            <Route path="/assessment" element={<Assessment />} />
+            <Route path="/verification" element={<Verification />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/security" element={<Security />} />
             <Route path="/dpo-assist" element={<DPOAssist />} />
+            <Route path="/dpia" element={<DPOAssist defaultTab="dpia" />} />
+            <Route path="/hire-dpo" element={<DPOAssist defaultTab="hire" />} />
           </Routes>
         </main>
       </div>

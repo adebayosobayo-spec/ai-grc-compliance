@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAppContext } from '../context/AppContext'
+import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts'
 
 const LIKELIHOOD_LABELS = ['Very Low', 'Low', 'Medium', 'High', 'Very High']
 const IMPACT_LABELS = ['Negligible', 'Minor', 'Moderate', 'Major', 'Severe']
 const TREATMENTS = ['Mitigate', 'Accept', 'Transfer', 'Avoid']
 const STATUS_OPTIONS = ['Open', 'In Treatment', 'Closed', 'Accepted']
+const LS_KEY = 'complai_risks'
 
 const EMPTY_RISK = {
     description: '',
@@ -20,19 +22,146 @@ const EMPTY_RISK = {
 
 function riskScore(l, i) { return l * i }
 function riskColor(score) {
-    if (score >= 16) return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: 'Critical' }
-    if (score >= 9) return { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', label: 'High' }
-    if (score >= 4) return { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', label: 'Medium' }
-    return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', label: 'Low' }
+    if (score >= 16) return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: 'Critical', hex: '#ef4444' }
+    if (score >= 9) return { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', label: 'High', hex: '#f97316' }
+    if (score >= 4) return { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', label: 'Medium', hex: '#eab308' }
+    return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', label: 'Low', hex: '#22c55e' }
+}
+
+// ── Cell background for the heatmap ───────────────────────────────
+function heatmapCellColor(l, i) {
+    const score = l * i
+    if (score >= 16) return 'bg-red-100 border-red-300'
+    if (score >= 9) return 'bg-orange-100 border-orange-200'
+    if (score >= 4) return 'bg-yellow-100 border-yellow-200'
+    return 'bg-green-100 border-green-200'
+}
+
+// ── 5×5 Heatmap ───────────────────────────────────────────────────
+function RiskHeatmap({ risks, onCellClick, highlightIdx }) {
+    // Build a lookup: { "l-i": [riskIndices] }
+    const cellMap = {}
+    risks.forEach((r, idx) => {
+        const key = `${r.likelihood}-${r.impact}`
+        if (!cellMap[key]) cellMap[key] = []
+        cellMap[key].push(idx)
+    })
+
+    return (
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <h3 className="text-xs font-mono text-blue-600 uppercase tracking-widest mb-1">Risk Heatmap</h3>
+            <p className="text-xs text-slate-500 mb-4">Likelihood × Impact — click a cell to highlight risks</p>
+            <div className="flex gap-2">
+                {/* Y-axis label */}
+                <div className="flex flex-col justify-around text-xs text-slate-400 font-mono w-4 py-1" style={{ writingMode: 'initial' }}>
+                    {[5, 4, 3, 2, 1].map(i => (
+                        <span key={i} className="text-right leading-none" style={{ fontSize: '10px' }}>{i}</span>
+                    ))}
+                </div>
+                <div className="flex-1">
+                    {/* Grid */}
+                    <div className="grid gap-0.5" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gridTemplateRows: 'repeat(5, 1fr)' }}>
+                        {[5, 4, 3, 2, 1].map(impact => (
+                            [1, 2, 3, 4, 5].map(likelihood => {
+                                const key = `${likelihood}-${impact}`
+                                const indices = cellMap[key] || []
+                                const isHighlighted = indices.some(i => i === highlightIdx)
+                                return (
+                                    <button
+                                        key={key}
+                                        onClick={() => indices.length > 0 && onCellClick(indices[indices.length - 1])}
+                                        className={`relative aspect-square rounded border text-center flex items-center justify-center text-xs font-bold transition-all ${heatmapCellColor(likelihood, impact)} ${isHighlighted ? 'ring-2 ring-blue-500 ring-offset-1' : ''} ${indices.length > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                                    >
+                                        {indices.length > 0 && (
+                                            <span className="w-5 h-5 rounded-full bg-slate-700 text-white text-xs flex items-center justify-center font-black leading-none">
+                                                {indices.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                )
+                            })
+                        ))}
+                    </div>
+                    {/* X-axis labels */}
+                    <div className="grid mt-1" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                        {[1, 2, 3, 4, 5].map(l => (
+                            <span key={l} className="text-center text-slate-400 font-mono" style={{ fontSize: '10px' }}>{l}</span>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="flex items-center gap-4 mt-3 flex-wrap">
+                <p className="text-xs text-slate-400 font-mono">← Likelihood →</p>
+                <div className="flex gap-2 flex-wrap">
+                    {[{ label: 'Critical (≥16)', cls: 'bg-red-100 border-red-300' }, { label: 'High (≥9)', cls: 'bg-orange-100 border-orange-200' }, { label: 'Medium (≥4)', cls: 'bg-yellow-100 border-yellow-200' }, { label: 'Low', cls: 'bg-green-100 border-green-200' }].map(({ label, cls }) => (
+                        <span key={label} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs text-slate-600 ${cls}`}>{label}</span>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ── Radial progress ring ─────────────────────────────────────────
+function TreatmentProgress({ risks }) {
+    const total = risks.length
+    const treated = risks.filter(r => r.status === 'In Treatment' || r.status === 'Closed' || r.status === 'Accepted').length
+    const pct = total > 0 ? Math.round((treated / total) * 100) : 0
+
+    const data = [{ name: 'progress', value: pct, fill: '#3b82f6' }]
+
+    return (
+        <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col items-center justify-center">
+            <h3 className="text-xs font-mono text-blue-600 uppercase tracking-widest mb-1 self-start">Treatment Progress</h3>
+            <p className="text-xs text-slate-500 mb-3 self-start">Risks addressed vs. open</p>
+            <div className="relative w-28 h-28">
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                        cx="50%" cy="50%"
+                        innerRadius="70%" outerRadius="100%"
+                        barSize={10}
+                        data={data}
+                        startAngle={90}
+                        endAngle={-270}
+                    >
+                        <RadialBar
+                            background={{ fill: '#f1f5f9' }}
+                            dataKey="value"
+                            cornerRadius={6}
+                        />
+                    </RadialBarChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-slate-900 leading-none">{pct}%</span>
+                    <span className="text-xs text-slate-400 font-mono leading-none mt-0.5">treated</span>
+                </div>
+            </div>
+            <div className="mt-3 text-center">
+                <p className="text-xs text-slate-500">{treated} of {total} risks addressed</p>
+            </div>
+        </div>
+    )
 }
 
 export default function RiskRegister() {
     const { orgProfile } = useAppContext()
-    const [risks, setRisks] = useState([])
+
+    // ── localStorage persistence (Sprint 4) ──────────────────────
+    const [risks, setRisks] = useState(() => {
+        try {
+            const saved = localStorage.getItem(LS_KEY)
+            return saved ? JSON.parse(saved) : []
+        } catch { return [] }
+    })
+    useEffect(() => {
+        localStorage.setItem(LS_KEY, JSON.stringify(risks))
+    }, [risks])
+
     const [showForm, setShowForm] = useState(false)
     const [editIdx, setEditIdx] = useState(null)
     const [form, setForm] = useState({ ...EMPTY_RISK })
     const [generating, setGenerating] = useState(false)
+    const [highlightIdx, setHighlightIdx] = useState(null)
 
     const orgName = orgProfile?.organization_name || 'Your Organisation'
     const framework = orgProfile?.compliance_framework || 'ISO_27001'
@@ -58,6 +187,7 @@ export default function RiskRegister() {
     function handleDelete(idx) {
         if (confirm('Delete this risk?')) {
             setRisks(prev => prev.filter((_, i) => i !== idx))
+            if (highlightIdx === idx) setHighlightIdx(null)
         }
     }
 
@@ -78,7 +208,7 @@ export default function RiskRegister() {
             if (!gapRes.ok) throw new Error('Gap analysis failed')
             const gapData = await gapRes.json()
 
-            const generated = (gapData.gaps || []).map((g, i) => ({
+            const generated = (gapData.gaps || []).map((g) => ({
                 description: `${g.control_id} — ${g.control_name}: ${g.gap_description}`,
                 category: 'Information Security',
                 likelihood: g.risk_level === 'critical' ? 5 : g.risk_level === 'high' ? 4 : g.risk_level === 'medium' ? 3 : 2,
@@ -127,7 +257,7 @@ export default function RiskRegister() {
                         their likelihood and impact, treatment decisions, and owners. This is the <strong>single most important document</strong> auditors review.
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0 ml-4">
                     <button onClick={exportCSV} disabled={risks.length === 0}
                         className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50">
                         Export CSV
@@ -137,21 +267,6 @@ export default function RiskRegister() {
                         {generating ? 'Generating…' : '✨ Generate from Gap Analysis'}
                     </button>
                 </div>
-            </div>
-
-            {/* Info Banner */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
-                    How to use your Risk Register
-                </h3>
-                <ul className="text-xs text-blue-700 mt-2 space-y-1 list-disc list-inside">
-                    <li><strong>Auto-generate</strong> — Click "Generate from Gap Analysis" to create risks from your compliance gaps</li>
-                    <li><strong>Score risks</strong> — Likelihood × Impact = Risk Score. Scores ≥16 are critical, ≥9 high, ≥4 medium</li>
-                    <li><strong>Assign owners</strong> — Every risk must have a named owner responsible for treatment</li>
-                    <li><strong>Choose treatment</strong> — Mitigate (reduce), Accept (document acceptance), Transfer (insure), Avoid (eliminate)</li>
-                    <li><strong>Review regularly</strong> — ISO requires periodic review. Update status and re-score as controls are implemented</li>
-                </ul>
             </div>
 
             {/* Stats */}
@@ -167,6 +282,41 @@ export default function RiskRegister() {
                         <p className={`text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
                     </div>
                 ))}
+            </div>
+
+            {/* ── Heatmap + Progress Ring ─────────────────────────── */}
+            {risks.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2">
+                        <RiskHeatmap
+                            risks={risks}
+                            onCellClick={(idx) => {
+                                setHighlightIdx(idx)
+                                // Scroll the highlighted row into view
+                                setTimeout(() => {
+                                    document.getElementById(`risk-row-${idx}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                }, 100)
+                            }}
+                            highlightIdx={highlightIdx}
+                        />
+                    </div>
+                    <TreatmentProgress risks={risks} />
+                </div>
+            )}
+
+            {/* Info Banner */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+                    How to use your Risk Register
+                </h3>
+                <ul className="text-xs text-blue-700 mt-2 space-y-1 list-disc list-inside">
+                    <li><strong>Auto-generate</strong> — Click "Generate from Gap Analysis" to create risks from your compliance gaps</li>
+                    <li><strong>Score risks</strong> — Likelihood × Impact = Risk Score. Scores ≥16 are critical, ≥9 high, ≥4 medium</li>
+                    <li><strong>Assign owners</strong> — Every risk must have a named owner responsible for treatment</li>
+                    <li><strong>Heatmap</strong> — Click any cell on the matrix above to highlight matching risks in the table below</li>
+                    <li><strong>Persisted</strong> — Your risk register is saved locally and survives page refreshes</li>
+                </ul>
             </div>
 
             {/* Add Risk Button */}
@@ -271,8 +421,13 @@ export default function RiskRegister() {
                                 {risks.map((r, i) => {
                                     const score = riskScore(r.likelihood, r.impact)
                                     const rc = riskColor(score)
+                                    const isHighlighted = i === highlightIdx
                                     return (
-                                        <tr key={i} className="hover:bg-slate-50">
+                                        <tr
+                                            id={`risk-row-${i}`}
+                                            key={i}
+                                            className={`transition-colors ${isHighlighted ? 'bg-blue-50 ring-2 ring-inset ring-blue-400' : 'hover:bg-slate-50'}`}
+                                        >
                                             <td className="px-4 py-3 font-mono text-xs text-slate-500">RSK-{String(i + 1).padStart(3, '0')}</td>
                                             <td className="px-4 py-3 text-slate-800 max-w-xs truncate" title={r.description}>{r.description}</td>
                                             <td className="px-3 py-3 text-center">{r.likelihood}</td>
@@ -286,9 +441,9 @@ export default function RiskRegister() {
                                             <td className="px-4 py-3 text-slate-600">{r.treatment}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`text-xs font-medium px-2 py-0.5 rounded ${r.status === 'Closed' ? 'bg-green-50 text-green-700' :
-                                                        r.status === 'In Treatment' ? 'bg-blue-50 text-blue-700' :
-                                                            r.status === 'Accepted' ? 'bg-slate-100 text-slate-600' :
-                                                                'bg-yellow-50 text-yellow-700'
+                                                    r.status === 'In Treatment' ? 'bg-blue-50 text-blue-700' :
+                                                        r.status === 'Accepted' ? 'bg-slate-100 text-slate-600' :
+                                                            'bg-yellow-50 text-yellow-700'
                                                     }`}>{r.status}</span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
