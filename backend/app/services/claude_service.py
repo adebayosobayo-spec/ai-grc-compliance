@@ -45,7 +45,29 @@ ROLE_PROMPTS: Dict[str, str] = {
         "assessments. You evaluate evidence against control requirements "
         "objectively. Return structured JSON only."
     ),
+    "advisor": (
+        "You are COMPLAI, a friendly and expert compliance advisor who makes "
+        "data protection, information security, and AI governance easy to "
+        "understand for everyone — from CEOs and founders to HR managers and "
+        "small business owners who have never heard of ISO 27001 or GDPR before.\n\n"
+        "Your communication style:\n"
+        "- Use plain, everyday English. Avoid jargon; when you must use a technical "
+        "term, immediately explain it in brackets with a simple analogy.\n"
+        "- Structure every answer clearly: start with a one-sentence plain-English "
+        "summary, then explain the detail, then give 2-3 practical next steps.\n"
+        "- Use analogies and real-world examples that non-technical people relate to.\n"
+        "- Be warm, encouraging, and reassuring — compliance doesn't have to be scary.\n"
+        "- Be accurate: do not simplify to the point of being wrong. Every claim "
+        "must be factually correct for the stated framework.\n"
+        "- Always cover: WHAT the requirement is, WHY it matters in plain terms, "
+        "and HOW to meet it practically.\n"
+        "- If asked about any data protection law (GDPR, NDPR, POPIA, CCPA, UK GDPR, "
+        "LGPD, PDPA) or security/AI standard (ISO 27001, ISO 42001, SOC 2, NIST), "
+        "answer accurately even if it falls outside the user's selected framework.\n"
+        "Return ONLY valid JSON — no markdown fences outside the JSON."
+    ),
 }
+
 
 
 class ClaudeService:
@@ -416,25 +438,43 @@ Create a practical, prioritized plan with clear ownership and measurable outcome
         question: str,
         context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """Handle general compliance questions using the 'architect' role."""
+        """Handle general compliance questions using the layman-friendly 'advisor' role."""
         framework_context = self._get_framework_context(framework)
         context_text = ""
         if context:
             context_text = f"\n\nAdditional Context:\n{json.dumps(context, indent=2)}"
 
-        prompt = f"""{framework_context}
+        prompt = f"""You are answering a compliance question. The user's selected framework is {framework}, but answer accurately for any framework they ask about.
+
+{framework_context}
 {context_text}
 
-Question: {question}
+User Question: {question}
 
-Provide a comprehensive answer. Return ONLY valid JSON:
+Respond in plain English that a non-technical business owner can understand. Structure your answer as follows:
+
+Return ONLY valid JSON:
 {{
-    "answer": "Your detailed answer with practical guidance",
-    "references": ["Reference 1", "Reference 2"],
-    "related_controls": ["Control IDs"]
-}}"""
+    "summary": "One sentence plain-English answer (what this means for ordinary people)",
+    "explanation": "Full explanation in 2-4 paragraphs. Use simple analogies. When using a technical term, explain it immediately. Be warm, clear, and practical. Cover: WHAT the requirement is, WHY it matters, HOW to meet it.",
+    "practical_steps": [
+        "Step 1 — concrete action anyone can take",
+        "Step 2",
+        "Step 3"
+    ],
+    "key_point": "The single most important thing to remember, in one plain sentence",
+    "references": ["Framework clause or article reference e.g. GDPR Article 33"],
+    "related_controls": ["Control ID if applicable e.g. A.5.1"]
+}}
 
-        result = self._call_claude("architect", prompt)
+Rules:
+- Write as if explaining to a smart but non-technical friend.
+- No jargon without an immediate plain-English explanation in brackets.
+- Every statement must be factually accurate.
+- practical_steps must be concrete and doable, not vague advice.
+- Do not refuse to answer questions about frameworks other than {framework} — answer them accurately."""
+
+        result = self._call_claude("advisor", prompt, max_tokens=2048)
         return result
 
     # ── Semantic Policy Verification ─────────────────────────────────────

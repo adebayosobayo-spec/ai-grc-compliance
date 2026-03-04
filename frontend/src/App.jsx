@@ -15,13 +15,19 @@ import DPOAssist from './pages/DPOAssist'
 import Verification from './pages/Verification'
 import Assessment from './pages/Assessment'
 
-// ── Nav structure: 6 top-level items (1 direct link + 5 groups) ───
+// ── Nav structure: top-level items ──────────────────────────────
 const NAV = [
   {
     type: 'link',
     to: '/',
-    label: 'Dashboard',
+    label: 'AI Advisor',
     exact: true,
+    icon: ChatBubbleIcon,
+  },
+  {
+    type: 'link',
+    to: '/dashboard',
+    label: 'Dashboard',
     icon: HomeIcon,
   },
   {
@@ -64,7 +70,6 @@ const NAV = [
     label: 'Settings',
     icon: LockIcon,
     children: [
-      { to: '/chat', label: 'AI Chat', icon: ChatBubbleIcon },
       { to: '/security', label: 'Security', icon: LockIcon },
       { to: '/onboarding', label: 'Onboarding', icon: ClipboardIcon },
     ],
@@ -82,8 +87,8 @@ function NavItem({ to, label, icon: Icon, exact, onClick }) {
       to={to}
       onClick={onClick}
       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${active
-          ? 'bg-primary-600 text-white'
-          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+        ? 'bg-primary-600 text-white'
+        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
         }`}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
@@ -103,8 +108,8 @@ function NavGroup({ label, icon: GroupIcon, children, onChildClick }) {
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isChildActive
-            ? 'text-white bg-slate-800'
-            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          ? 'text-white bg-slate-800'
+          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
           }`}
       >
         <GroupIcon className="w-4 h-4 flex-shrink-0" />
@@ -127,8 +132,8 @@ function NavGroup({ label, icon: GroupIcon, children, onChildClick }) {
                 to={child.to}
                 onClick={onChildClick}
                 className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors ${active
-                    ? 'text-white font-semibold bg-primary-600/20'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'text-white font-semibold bg-primary-600/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
               >
                 <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -387,7 +392,8 @@ function AppShell() {
 
         <main className="max-w-5xl mx-auto py-6 px-4 sm:px-6">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Chat />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/gap-analysis" element={<GapAnalysis />} />
             <Route path="/policy-generator" element={<PolicyGenerator />} />

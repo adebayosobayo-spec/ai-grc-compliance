@@ -353,10 +353,11 @@ async def generate_action_plan(request: ActionPlanRequest):
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Ask general compliance questions and get expert answers.
+    Ask any compliance question and get a plain-English answer.
 
-    This endpoint provides an interactive chat interface for
-    compliance questions and guidance.
+    Uses the COMPLAI advisor role — answers are structured for both
+    technical and non-technical audiences, with a summary, explanation,
+    practical steps, and a key takeaway.
     """
     try:
         result = claude_service.chat(
@@ -366,10 +367,24 @@ async def chat(request: ChatRequest):
         )
 
         ai_data = result["data"]
+        # Build a combined answer string for backwards compatibility,
+        # and pass the new fields in references as structured extras.
+        summary = ai_data.get("summary", "")
+        explanation = ai_data.get("explanation", "")
+        practical_steps = ai_data.get("practical_steps", [])
+        key_point = ai_data.get("key_point", "")
+        # Combine into a readable markdown answer
+        steps_md = "\n".join(f"{i+1}. {s}" for i, s in enumerate(practical_steps))
+        answer_md = f"{summary}\n\n{explanation}"
+        if steps_md:
+            answer_md += f"\n\n**Practical steps:**\n{steps_md}"
+        if key_point:
+            answer_md += f"\n\n> 💡 **Key point:** {key_point}"
+
         return ChatResponse(
             framework=request.framework,
             question=request.question,
-            answer=ai_data.get("answer", ""),
+            answer=answer_md,
             references=ai_data.get("references", []),
             related_controls=ai_data.get("related_controls", []),
         )
@@ -384,6 +399,7 @@ async def chat(request: ChatRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Chat failed: {str(e)}"
         )
+
 
 
 @router.get("/frameworks")
