@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { AppProvider, useAppContext } from './context/AppContext'
+import { pageView } from './utils/analytics'
 import Dashboard from './pages/Dashboard'
 import Onboarding from './pages/Onboarding'
 import GapAnalysis from './pages/GapAnalysis'
@@ -294,6 +295,12 @@ function SidebarLink({ to, label, icon: Icon, exact }) {
 function AppShell() {
   const { orgProfile, clearProfile } = useAppContext()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const location = useLocation()
+
+  // Fire a GA4 page_view on every route change
+  useEffect(() => {
+    pageView(location.pathname)
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen bg-[#FAFBFC] flex">

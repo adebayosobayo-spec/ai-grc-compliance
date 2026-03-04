@@ -1,18 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMPLAI — Compliance Intelligence</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- jsPDF loaded from CDN — no npm install required -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COMPLAI — Compliance Intelligence</title>
+
+  <!-- SEO -->
+  <meta name="description"
+    content="COMPLAI — AI-powered compliance advisor. Ask any question about GDPR, ISO 27001, NDPR, POPIA, CCPA and more. Plain English answers, practical steps, no jargon." />
+  <meta property="og:title" content="COMPLAI — Compliance Intelligence" />
+  <meta property="og:description"
+    content="Ask any compliance question. Get plain-English answers with practical next steps. Free, no sign-up." />
+  <meta property="og:url" content="https://complai-seven.vercel.app" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="COMPLAI — Compliance Intelligence" />
+  <meta name="twitter:description"
+    content="Plain-English answers to GDPR, ISO 27001, NDPR and more. Free AI compliance advisor." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
+  <!-- jsPDF loaded from CDN — no npm install required -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Google Analytics 4 — set VITE_GA_MEASUREMENT_ID in Vercel env vars -->
+  <script>
+    window.__GA_ID__ = '%VITE_GA_MEASUREMENT_ID%';
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
