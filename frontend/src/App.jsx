@@ -15,21 +15,147 @@ import DPOAssist from './pages/DPOAssist'
 import Verification from './pages/Verification'
 import Assessment from './pages/Assessment'
 
-const NAV_LINKS = [
-  { to: '/', label: 'Dashboard', icon: HomeIcon, exact: true },
-  { to: '/onboarding', label: 'Onboarding', icon: ClipboardIcon },
-  { to: '/gap-analysis', label: 'Gap Analysis', icon: ChartIcon },
-  { to: '/policy-generator', label: 'Policies', icon: DocIcon },
-  { to: '/risk-register', label: 'Risk Register', icon: RiskIcon },
-  { to: '/asset-register', label: 'Asset Register', icon: AssetIcon },
-  { to: '/documents', label: 'Documents', icon: FolderIcon },
-  { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
-  { to: '/assessment', label: 'Assessment', icon: CheckIcon },
-  { to: '/verification', label: 'Verification', icon: ShieldIcon },
-  { to: '/chat', label: 'Chat', icon: ChatBubbleIcon },
-  { to: '/security', label: 'Security', icon: LockIcon },
-  { to: '/dpo-assist', label: 'DPO Assist', icon: DPIAIcon },
+// ── Nav structure: 6 top-level items (1 direct link + 5 groups) ───
+const NAV = [
+  {
+    type: 'link',
+    to: '/',
+    label: 'Dashboard',
+    exact: true,
+    icon: HomeIcon,
+  },
+  {
+    type: 'group',
+    label: 'Compliance',
+    icon: ChartIcon,
+    children: [
+      { to: '/gap-analysis', label: 'Gap Analysis', icon: ChartIcon },
+      { to: '/assessment', label: 'Assessment', icon: CheckIcon },
+      { to: '/verification', label: 'Verification', icon: ShieldIcon },
+      { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
+    ],
+  },
+  {
+    type: 'group',
+    label: 'Documents',
+    icon: DocIcon,
+    children: [
+      { to: '/policy-generator', label: 'Policies', icon: DocIcon },
+      { to: '/documents', label: 'Document Centre', icon: FolderIcon },
+    ],
+  },
+  {
+    type: 'group',
+    label: 'Registers',
+    icon: RiskIcon,
+    children: [
+      { to: '/risk-register', label: 'Risk Register', icon: RiskIcon },
+      { to: '/asset-register', label: 'Asset Register', icon: AssetIcon },
+    ],
+  },
+  {
+    type: 'link',
+    to: '/dpo-assist',
+    label: 'DPO Assist',
+    icon: DPIAIcon,
+  },
+  {
+    type: 'group',
+    label: 'Settings',
+    icon: LockIcon,
+    children: [
+      { to: '/chat', label: 'AI Chat', icon: ChatBubbleIcon },
+      { to: '/security', label: 'Security', icon: LockIcon },
+      { to: '/onboarding', label: 'Onboarding', icon: ClipboardIcon },
+    ],
+  },
 ]
+
+// ── Sidebar nav components ────────────────────────────────────────
+
+// Single direct link
+function NavItem({ to, label, icon: Icon, exact, onClick }) {
+  const location = useLocation()
+  const active = exact ? location.pathname === to : location.pathname === to
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${active
+          ? 'bg-primary-600 text-white'
+          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+        }`}
+    >
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span>{label}</span>
+    </Link>
+  )
+}
+
+// Collapsible group with auto-expand when a child is active
+function NavGroup({ label, icon: GroupIcon, children, onChildClick }) {
+  const location = useLocation()
+  const isChildActive = children.some(c => location.pathname === c.to || location.pathname.startsWith(c.to + '/'))
+  const [open, setOpen] = useState(isChildActive)
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isChildActive
+            ? 'text-white bg-slate-800'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          }`}
+      >
+        <GroupIcon className="w-4 h-4 flex-shrink-0" />
+        <span className="flex-1 text-left">{label}</span>
+        <svg
+          className={`w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''
+            }`}
+          fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+      {open && (
+        <div className="mt-0.5 ml-3 pl-3 border-l border-slate-700 space-y-0.5">
+          {children.map(child => {
+            const active = location.pathname === child.to
+            return (
+              <Link
+                key={child.to}
+                to={child.to}
+                onClick={onChildClick}
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors ${active
+                    ? 'text-white font-semibold bg-primary-600/20'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+              >
+                <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{child.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Renders the full nav from the NAV config
+function SidebarNav({ onLinkClick }) {
+  return (
+    <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      {NAV.map((item, idx) =>
+        item.type === 'link' ? (
+          <NavItem key={item.to} {...item} onClick={onLinkClick} />
+        ) : (
+          <NavGroup key={idx} {...item} onChildClick={onLinkClick} />
+        )
+      )}
+    </nav>
+  )
+}
 
 // Inline SVG icons to avoid heavy icon library imports
 function HomeIcon({ className }) {
@@ -187,11 +313,7 @@ function AppShell() {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {NAV_LINKS.map((link) => (
-            <SidebarLink key={link.to} {...link} />
-          ))}
-        </nav>
+        <SidebarNav />
 
         {/* Profile footer */}
         {orgProfile && (
@@ -228,19 +350,7 @@ function AppShell() {
                 </svg>
               </button>
             </div>
-            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMobileOpen(false)}
-                  className="sidebar-link text-slate-300 hover:bg-slate-800 hover:text-white"
-                >
-                  <link.icon className="w-5 h-5 flex-shrink-0" />
-                  <span>{link.label}</span>
-                </Link>
-              ))}
-            </nav>
+            <SidebarNav onLinkClick={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
