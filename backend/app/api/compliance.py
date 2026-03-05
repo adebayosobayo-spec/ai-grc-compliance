@@ -39,6 +39,7 @@ from app.models.schemas import (
     AuditPackRequest,
 )
 from app.models.database_models import OrganizationProfile as DBOrganizationProfile
+from app.models.database_models import EmailSubscriber
 from app.services.claude_service import claude_service
 from app.services.gap_analysis_service import gap_analysis_service
 from app.services.policy_generator_service import policy_generator_service
@@ -46,10 +47,42 @@ from app.services.assessment_service import assessment_service
 from app.services.verification_service import verification_service
 from app.services import register_service
 from app.services.audit_pack_service import build_audit_pack
+from pydantic import BaseModel as _BaseModel, EmailStr
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
-# ── Organization Profile Endpoints ──────────────────────────
+
+# ── Email Subscriber ─────────────────────────────────────────
+
+class SubscribeRequest(_BaseModel):
+    email: str
+    source: str = "chat"
+    framework: str = ""
+
+
+@router.post("/subscribe")
+async def subscribe(request: SubscribeRequest, db: Session = Depends(get_db)):
+    """Save an email address for the early-access waitlist."""
+    email = request.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=422, detail="Invalid email address")
+    try:
+        existing = db.query(EmailSubscriber).filter(EmailSubscriber.email == email).first()
+        if existing:
+            return {"status": "already_subscribed", "message": "You're already on the list!"}
+        subscriber = EmailSubscriber(
+            email=email,
+            source=request.source,
+            framework=request.framework,
+        )
+        db.add(subscriber)
+        db.commit()
+        return {"status": "subscribed", "message": "You're on the list!"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Subscription failed: {str(e)}")
+
+
 
 
 def _build_practices_summary(req: OnboardingRequest) -> str:

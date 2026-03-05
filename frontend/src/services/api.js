@@ -60,6 +60,12 @@ export const complianceAPI = {
     return response.data
   },
 
+  // ── Email Subscribe ────────────────────────────────────────
+  subscribe: async (data) => {
+    const response = await api.post('/compliance/subscribe', data)
+    return response.data
+  },
+
   // ── Frameworks ────────────────────────────────────────────
   listFrameworks: async () => {
     const response = await api.get('/compliance/frameworks')

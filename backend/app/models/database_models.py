@@ -193,3 +193,15 @@ class EvidenceEntry(Base):
     notes = Column(Text, default="")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+# ─── Email Subscribers (Waitlist / Early Access) ─────────────
+class EmailSubscriber(Base):
+    __tablename__ = "email_subscribers"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    source = Column(String(50), default="chat")   # chat | onboarding | landing
+    framework = Column(String(20), default="")    # which framework they were using
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+

@@ -3,6 +3,71 @@ import ReactMarkdown from 'react-markdown'
 import { complianceAPI } from '../services/api'
 import { useAppContext } from '../context/AppContext'
 import { Link } from 'react-router-dom'
+import { trackEvent } from '../utils/analytics'
+
+const EMAIL_DISMISSED_KEY = 'complai_email_dismissed'
+
+function EmailCapture({ framework, onDismiss }) {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState('idle') // idle | loading | done | error
+
+  async function submit(e) {
+    e.preventDefault()
+    if (!email.trim()) return
+    setStatus('loading')
+    try {
+      await complianceAPI.subscribe({ email: email.trim(), source: 'chat', framework })
+      setStatus('done')
+      trackEvent('email_subscribed', { source: 'chat', framework })
+      setTimeout(onDismiss, 3000)
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  if (status === 'done') {
+    return (
+      <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+        <span className="text-lg">🎉</span>
+        <span><strong>You're on the list!</strong> We'll let you know when we ship new features and the Pro plan.</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl px-4 py-3.5">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div>
+          <p className="text-sm font-semibold text-slate-800">Want early access to COMPLAI Pro?</p>
+          <p className="text-xs text-slate-500 mt-0.5">Get notified when we launch — unlimited analyses, full policy library, and team features.</p>
+        </div>
+        <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 flex-shrink-0 mt-0.5">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form onSubmit={submit} className="flex gap-2">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          disabled={status === 'loading'}
+          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+        >
+          {status === 'loading' ? '...' : 'Notify me'}
+        </button>
+      </form>
+      {status === 'error' && <p className="text-xs text-red-500 mt-1.5">Something went wrong — please try again.</p>}
+    </div>
+  )
+}
 
 const FW_LABELS = {
   ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR',
@@ -104,8 +169,16 @@ export default function Chat() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showEmailCapture, setShowEmailCapture] = useState(
+    !localStorage.getItem(EMAIL_DISMISSED_KEY)
+  )
   const inputRef = useRef(null)
   const bottomRef = useRef(null)
+
+  function dismissEmail() {
+    localStorage.setItem(EMAIL_DISMISSED_KEY, '1')
+    setShowEmailCapture(false)
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -213,7 +286,15 @@ export default function Chat() {
           )}
 
           {messages.map((msg, i) => (
-            <MessageBubble key={i} msg={msg} />
+            <React.Fragment key={i}>
+              <MessageBubble msg={msg} />
+              {/* Show email capture after the first assistant reply */}
+              {msg.role === 'assistant' && i === 1 && showEmailCapture && (
+                <div className="max-w-2xl ml-11">
+                  <EmailCapture framework={selectedFw} onDismiss={dismissEmail} />
+                </div>
+              )}
+            </React.Fragment>
           ))}
 
           {loading && (
