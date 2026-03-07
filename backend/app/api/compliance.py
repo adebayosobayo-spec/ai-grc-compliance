@@ -743,3 +743,68 @@ Rules:
         return {"entries": result["data"], "register_type": request.register_type}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Register generation failed: {str(e)}")
+
+
+# ── GDPR Data Export / Portability (Art. 20) ──────────────────────
+@router.get("/data-export")
+async def export_user_data(
+    req: Request,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Export all user data as JSON (GDPR Art. 20 data portability).
+
+    Returns every record associated with the authenticated user across
+    all tables — organization profiles, registers, gap analyses, audit
+    logs — in a single machine-readable JSON download.
+    """
+    import json as _json
+    from app.models.database_models import (
+        OrganizationProfile as DBOrg,
+        GapAnalysisResult, RiskEntry, AssetEntry,
+        SupplierEntry, DataProcessingEntry, AISystemEntry,
+        ControlEntry, EvidenceEntry, AuditLogEntry,
+    )
+
+    def _rows(model):
+        rows = db.query(model).filter(model.user_id == user.id).all()
+        out = []
+        for r in rows:
+            d = {c.name: getattr(r, c.name) for c in r.__table__.columns}
+            # Serialize datetimes
+            for k, v in d.items():
+                if isinstance(v, datetime):
+                    d[k] = v.isoformat()
+            out.append(d)
+        return out
+
+    export = {
+        "export_date": datetime.utcnow().isoformat(),
+        "user_id": user.id,
+        "user_email": user.email,
+        "organization_profiles": _rows(DBOrg),
+        "gap_analyses": _rows(GapAnalysisResult),
+        "risk_register": _rows(RiskEntry),
+        "asset_register": _rows(AssetEntry),
+        "supplier_register": _rows(SupplierEntry),
+        "data_processing_register": _rows(DataProcessingEntry),
+        "ai_system_register": _rows(AISystemEntry),
+        "control_register": _rows(ControlEntry),
+        "evidence": _rows(EvidenceEntry),
+        "audit_log": _rows(AuditLogEntry),
+    }
+
+    audit_service.log_action(
+        db, user_id=user.id, action="export",
+        resource_type="user_data", details={"type": "gdpr_portability"},
+        request=req,
+    )
+
+    content = _json.dumps(export, indent=2, default=str)
+    return StreamingResponse(
+        io.BytesIO(content.encode()),
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="complai-data-export-{user.id[:8]}.json"',
+        },
+    )

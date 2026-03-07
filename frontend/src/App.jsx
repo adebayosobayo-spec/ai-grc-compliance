@@ -1,24 +1,38 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider, useAppContext } from './context/AppContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import ErrorBoundary from './components/ErrorBoundary'
 import { pageView } from './utils/analytics'
-import Dashboard from './pages/Dashboard'
-import Onboarding from './pages/Onboarding'
-import GapAnalysis from './pages/GapAnalysis'
-import PolicyGenerator from './pages/PolicyGenerator'
-import ActionPlan from './pages/ActionPlan'
-import RiskRegister from './pages/RiskRegister'
-import AssetRegister from './pages/AssetRegister'
-import DocumentCentre from './pages/DocumentCentre'
+
+// Eager-load public pages for instant first paint
 import Chat from './pages/Chat'
 import Login from './pages/Login'
-import Security from './pages/Security'
-import DPOAssist from './pages/DPOAssist'
-import Verification from './pages/Verification'
-import Assessment from './pages/Assessment'
-import AWSAssessment from './pages/AWSAssessment'
+
+// Lazy-load protected routes — smaller initial bundle (react-best-practices: bundle-dynamic-imports)
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Onboarding = lazy(() => import('./pages/Onboarding'))
+const GapAnalysis = lazy(() => import('./pages/GapAnalysis'))
+const PolicyGenerator = lazy(() => import('./pages/PolicyGenerator'))
+const ActionPlan = lazy(() => import('./pages/ActionPlan'))
+const RiskRegister = lazy(() => import('./pages/RiskRegister'))
+const AssetRegister = lazy(() => import('./pages/AssetRegister'))
+const DocumentCentre = lazy(() => import('./pages/DocumentCentre'))
+const Security = lazy(() => import('./pages/Security'))
+const DPOAssist = lazy(() => import('./pages/DPOAssist'))
+const Verification = lazy(() => import('./pages/Verification'))
+const Assessment = lazy(() => import('./pages/Assessment'))
+const AWSAssessment = lazy(() => import('./pages/AWSAssessment'))
+const LogicComparison = lazy(() => import('./pages/LogicComparison'))
+
+function RouteFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-[40vh]" role="status" aria-label="Loading page">
+      <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+    </div>
+  )
+}
 
 // ── Nav structure: top-level items ──────────────────────────────
 const NAV = [
@@ -317,8 +331,16 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-[#FAFBFC] flex">
+      {/* Skip navigation — accessibility (WCAG 2.4.1) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-medium"
+      >
+        Skip to main content
+      </a>
+
       {/* Sidebar — desktop */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-slate-900">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-slate-900" role="navigation" aria-label="Main navigation">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-800">
           <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black bg-primary-600">C</span>
@@ -425,30 +447,35 @@ function AppShell() {
           </div>
         )}
 
-        <main className="max-w-5xl mx-auto py-6 px-4 sm:px-6">
-          <Routes>
-            {/* Public routes — no login required */}
-            <Route path="/" element={<Chat />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/login" element={<Login />} />
+        <main id="main-content" className="max-w-5xl mx-auto py-6 px-4 sm:px-6" role="main">
+          <ErrorBoundary>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                {/* Public routes — no login required */}
+                <Route path="/" element={<Chat />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/login" element={<Login />} />
 
-            {/* Protected routes — require authentication */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/gap-analysis" element={<ProtectedRoute><GapAnalysis /></ProtectedRoute>} />
-            <Route path="/policy-generator" element={<ProtectedRoute><PolicyGenerator /></ProtectedRoute>} />
-            <Route path="/risk-register" element={<ProtectedRoute><RiskRegister /></ProtectedRoute>} />
-            <Route path="/asset-register" element={<ProtectedRoute><AssetRegister /></ProtectedRoute>} />
-            <Route path="/documents" element={<ProtectedRoute><DocumentCentre /></ProtectedRoute>} />
-            <Route path="/action-plan" element={<ProtectedRoute><ActionPlan /></ProtectedRoute>} />
-            <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
-            <Route path="/aws-assessment" element={<ProtectedRoute><AWSAssessment /></ProtectedRoute>} />
-            <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
-            <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
-            <Route path="/dpo-assist" element={<ProtectedRoute><DPOAssist /></ProtectedRoute>} />
-            <Route path="/dpia" element={<ProtectedRoute><DPOAssist defaultTab="dpia" /></ProtectedRoute>} />
-            <Route path="/hire-dpo" element={<ProtectedRoute><DPOAssist defaultTab="hire" /></ProtectedRoute>} />
-          </Routes>
+                {/* Protected routes — require authentication */}
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+                <Route path="/gap-analysis" element={<ProtectedRoute><GapAnalysis /></ProtectedRoute>} />
+                <Route path="/policy-generator" element={<ProtectedRoute><PolicyGenerator /></ProtectedRoute>} />
+                <Route path="/risk-register" element={<ProtectedRoute><RiskRegister /></ProtectedRoute>} />
+                <Route path="/asset-register" element={<ProtectedRoute><AssetRegister /></ProtectedRoute>} />
+                <Route path="/documents" element={<ProtectedRoute><DocumentCentre /></ProtectedRoute>} />
+                <Route path="/action-plan" element={<ProtectedRoute><ActionPlan /></ProtectedRoute>} />
+                <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
+                <Route path="/aws-assessment" element={<ProtectedRoute><AWSAssessment /></ProtectedRoute>} />
+                <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
+                <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+                <Route path="/dpo-assist" element={<ProtectedRoute><DPOAssist /></ProtectedRoute>} />
+                <Route path="/dpia" element={<ProtectedRoute><DPOAssist defaultTab="dpia" /></ProtectedRoute>} />
+                <Route path="/hire-dpo" element={<ProtectedRoute><DPOAssist defaultTab="hire" /></ProtectedRoute>} />
+                <Route path="/logic-comparison" element={<ProtectedRoute><LogicComparison /></ProtectedRoute>} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
     </div>
