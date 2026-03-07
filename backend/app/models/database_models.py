@@ -28,6 +28,7 @@ class OrganizationProfile(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), unique=True, nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     organization_name = Column(String(255), nullable=False)
     industry = Column(String(100), nullable=False)
     employee_count = Column(String(50), nullable=False)
@@ -47,6 +48,7 @@ class GapAnalysisResult(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     framework = Column(String(20), nullable=False)
     prompt_hash = Column(String(64), nullable=False)
     model_version = Column(String(100), nullable=False)
@@ -60,6 +62,7 @@ class RiskEntry(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     risk_id = Column(String(20), nullable=False)
     risk_description = Column(Text, nullable=False)
     asset = Column(String(255), default="")
@@ -83,6 +86,7 @@ class AssetEntry(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     asset_id = Column(String(20), nullable=False)
     asset_name = Column(String(255), nullable=False)
     asset_type = Column(String(50), default="")
@@ -102,6 +106,7 @@ class SupplierEntry(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     supplier_id = Column(String(20), nullable=False)
     supplier_name = Column(String(255), nullable=False)
     service_provided = Column(String(255), default="")
@@ -121,6 +126,7 @@ class DataProcessingEntry(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     record_id = Column(String(20), nullable=False)
     processing_activity = Column(String(255), nullable=False)
     purpose = Column(Text, default="")
@@ -141,6 +147,7 @@ class AISystemEntry(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     system_id = Column(String(20), nullable=False)
     system_name = Column(String(255), nullable=False)
     purpose = Column(Text, default="")
@@ -162,6 +169,7 @@ class ControlEntry(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     framework = Column(String(20), nullable=False)
     control_id = Column(String(20), nullable=False)
     control_name = Column(String(255), nullable=False)
@@ -182,6 +190,7 @@ class EvidenceEntry(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     session_id = Column(String(36), nullable=False, index=True)
+    user_id = Column(String(36), nullable=True, index=True)
     evidence_id = Column(String(20), nullable=False)
     control_id = Column(String(20), nullable=False)
     evidence_type = Column(String(50), default="")
@@ -193,6 +202,22 @@ class EvidenceEntry(Base):
     notes = Column(Text, default="")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+# ─── Audit Log ────────────────────────────────────────────────
+class AuditLogEntry(Base):
+    __tablename__ = "audit_log"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    session_id = Column(String(36), nullable=True)
+    action = Column(String(50), nullable=False, index=True)          # create, update, delete, generate, export, query
+    resource_type = Column(String(50), nullable=False)               # risk, asset, gap_analysis, policy, chat, etc.
+    resource_id = Column(String(255), nullable=True)
+    details = Column(JSON, nullable=False, default=dict)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 
 # ─── Email Subscribers (Waitlist / Early Access) ─────────────

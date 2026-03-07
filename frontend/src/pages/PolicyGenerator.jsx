@@ -134,6 +134,10 @@ function PolicyGenerator() {
       setResult(response)
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } catch (error) {
+      if (error.isRateLimited) {
+        setGenError(`Too many requests. Please wait ${error.retryAfter || 60} seconds before trying again.`)
+        return
+      }
       console.error('Policy generation failed:', error)
       const detail = error?.response?.data?.detail
       const isTimeout = error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')

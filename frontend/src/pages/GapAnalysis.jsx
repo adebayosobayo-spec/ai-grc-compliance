@@ -14,6 +14,25 @@ const LOADING_MESSAGES = [
   'Generating recommendations...',
 ]
 
+const EXAMPLES = {
+  cloud: `We are a cloud-native SaaS running on AWS. 
+- Infrastructure: Primarily using managed services (Lambda, RDS, S3).
+- Access Control: IAM for cloud resources, Google Workspace with 2FA for staff.
+- Encryption: SSL/TLS for all traffic, AES-256 for data at rest.
+- Development: GitHub for code, CI/CD with automated vulnerability scanning.
+- Policies: Internal documentation on onboarding/offboarding.`,
+  enterprise: `Traditional enterprise with hybrid cloud infrastructure.
+- Infrastructure: VMware virtualization, Managed Windows Server.
+- Access Control: Active Directory for identity, mandatory VPN for remote access.
+- Encryption: Internal backups encrypted, full disk encryption (BitLocker) on all laptops.
+- Policies: Formal information security policies covering HR and Physical security.`,
+  fintech: `Regulated Fintech application.
+- Data: PII and financial records in encrypted PostgreSQL.
+- Access Control: RBAC across all systems, mandatory quarterly access reviews.
+- Audit: Full logging of all admin actions (CloudTrail, application logs).
+- Policies: Comprehensive library including Incident Response and Data Protection.`
+}
+
 function LoadingPanel({ elapsed }) {
   const msgIndex = Math.min(Math.floor(elapsed / 8), LOADING_MESSAGES.length - 1)
   const progress = Math.min((elapsed / 45) * 95, 95)
@@ -88,6 +107,10 @@ function GapAnalysis() {
       setLastGapResult(response)
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } catch (err) {
+      if (err.isRateLimited) {
+        setError(`Too many requests. Please wait ${err.retryAfter || 60} seconds before trying again.`)
+        return
+      }
       console.error('Gap analysis failed:', err)
       setError('Gap analysis failed. Please check your connection and try again.')
     } finally {
@@ -139,6 +162,31 @@ function GapAnalysis() {
         </div>
       )}
 
+      {/* ── Guidance Section ────────────────────────────────────────── */}
+      <div className="mb-6 bg-white rounded-xl border border-blue-100 p-5 shadow-sm">
+        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-2">
+          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          How to get the most accurate results?
+        </h3>
+        <p className="text-sm text-slate-600 leading-relaxed mb-3">
+          The AI compares your current state against the <strong>{frameworkLabel}</strong> controls. The more detail you provide about your encryption, access controls, and policies, the more tailored your gap analysis will be.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[
+            { tag: 'Access', text: 'Who has access? 2FA? RBAC?' },
+            { tag: 'Data', text: 'Is data encrypted at rest/transit?' },
+            { tag: 'Cloud', text: 'AWS/Azure/GCP controls in use?' },
+          ].map((item, idx) => (
+            <div key={idx} className="bg-slate-50 rounded-lg p-2.5 border border-slate-100 flex flex-col">
+              <span className="text-[10px] font-black uppercase text-blue-600 tracking-wider mb-0.5">{item.tag}</span>
+              <span className="text-[11px] text-slate-500">{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -165,9 +213,24 @@ function GapAnalysis() {
             {orgProfile && (
               <p className="text-xs text-slate-500 mb-1">Auto-generated from onboarding. Edit to add more detail.</p>
             )}
-            <textarea required rows={7} className={inputCls} value={formData.current_practices}
+            <div className="mb-2 flex flex-wrap gap-2">
+              <span className="text-[10px] items-center flex font-bold text-slate-400 uppercase tracking-tight">Quick Examples:</span>
+              <button type="button" onClick={() => setFormData({ ...formData, current_practices: EXAMPLES.cloud })}
+                className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 rounded-md text-slate-600 font-bold transition-colors">
+                Cloud-Native
+              </button>
+              <button type="button" onClick={() => setFormData({ ...formData, current_practices: EXAMPLES.enterprise })}
+                className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 rounded-md text-slate-600 font-bold transition-colors">
+                Enterprise
+              </button>
+              <button type="button" onClick={() => setFormData({ ...formData, current_practices: EXAMPLES.fintech })}
+                className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 rounded-md text-slate-600 font-bold transition-colors">
+                Fintech
+              </button>
+            </div>
+            <textarea required rows={8} className={inputCls} value={formData.current_practices}
               onChange={(e) => setFormData({ ...formData, current_practices: e.target.value })}
-              placeholder="Describe your current security/AI governance practices, existing policies, controls..." />
+              placeholder="E.g., We use AWS handles our hosting. Data is encrypted at rest using KMS. Multi-factor authentication is mandatory for all administrative access. We have a draft Information Security Policy..." />
           </div>
 
           <button type="submit" disabled={loading}

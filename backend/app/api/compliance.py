@@ -1,15 +1,19 @@
 """
 API endpoints for GRC compliance operations.
+
+Public endpoints (no auth): subscribe, chat, frameworks, framework controls
+Protected endpoints (require auth): everything else
 """
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import io
 
 from app.database import get_db
+from app.core.auth import CurrentUser, get_current_user, get_optional_user, verify_session_ownership
 from app.models.schemas import (
     GapAnalysisRequest,
     GapAnalysisResponse,
@@ -47,10 +51,16 @@ from app.services.assessment_service import assessment_service
 from app.services.verification_service import verification_service
 from app.services import register_service
 from app.services.audit_pack_service import build_audit_pack
-from pydantic import BaseModel as _BaseModel, EmailStr
+from app.services import audit_service
+from app.core.rate_limit import limiter
+from pydantic import BaseModel as _BaseModel
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PUBLIC ENDPOINTS (no authentication required)
+# ══════════════════════════════════════════════════════════════════════════════
 
 # ── Email Subscriber ─────────────────────────────────────────
 
@@ -83,6 +93,79 @@ async def subscribe(request: SubscribeRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Subscription failed: {str(e)}")
 
 
+@router.post("/chat", response_model=ChatResponse)
+@limiter.limit("20/minute")
+async def chat(req: Request, request: ChatRequest):
+    """
+    COMPLIANA — public AI compliance advisor.
+
+    Ask any compliance question and get a plain-English answer.
+    No authentication required.
+    """
+    try:
+        result = claude_service.chat(
+            framework=request.framework.value,
+            question=request.question,
+            context=request.context,
+        )
+
+        ai_data = result["data"]
+        summary = ai_data.get("summary", "")
+        explanation = ai_data.get("explanation", "")
+        practical_steps = ai_data.get("practical_steps", [])
+        key_point = ai_data.get("key_point", "")
+        steps_md = "\n".join(f"{i+1}. {s}" for i, s in enumerate(practical_steps))
+        answer_md = f"{summary}\n\n{explanation}"
+        if steps_md:
+            answer_md += f"\n\n**Practical steps:**\n{steps_md}"
+        if key_point:
+            answer_md += f"\n\n> **Key point:** {key_point}"
+
+        return ChatResponse(
+            framework=request.framework,
+            question=request.question,
+            answer=answer_md,
+            references=ai_data.get("references", []),
+            related_controls=ai_data.get("related_controls", []),
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Chat failed: {str(e)}")
+
+
+@router.get("/frameworks")
+async def list_frameworks():
+    """List all supported compliance frameworks."""
+    return {
+        "frameworks": [
+            {"id": "ISO_27001", "name": "ISO/IEC 27001:2022", "description": "Information Security Management Systems", "type": "Information Security"},
+            {"id": "ISO_42001", "name": "ISO/IEC 42001:2023", "description": "AI Management Systems", "type": "AI Governance"},
+        ]
+    }
+
+
+@router.get("/frameworks/{framework_id}/controls")
+async def get_framework_controls(framework_id: str):
+    """Get all controls for a specific framework."""
+    from app.knowledge_base import iso27001, iso42001
+
+    if framework_id == "ISO_27001":
+        controls = iso27001.get_all_controls()
+        info = iso27001.ISO_27001_INFO
+    elif framework_id == "ISO_42001":
+        controls = iso42001.get_all_controls()
+        info = iso42001.ISO_42001_INFO
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Framework not found")
+
+    return {"framework": info, "total_controls": len(controls), "controls": controls}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PROTECTED ENDPOINTS (require authentication)
+# ══════════════════════════════════════════════════════════════════════════════
 
 
 def _build_practices_summary(req: OnboardingRequest) -> str:
@@ -153,20 +236,20 @@ def _build_practices_summary(req: OnboardingRequest) -> str:
 
 
 @router.post("/onboarding", response_model=OrganizationProfile)
-async def save_onboarding(request: OnboardingRequest, db: Session = Depends(get_db)):
-    """
-    Save organisational onboarding profile and auto-generate initial registers.
-
-    Converts the intake form into a persistent profile, generates a
-    plain-language `current_practices_summary` for gap analysis, and seeds
-    the ISMS/AIMS registers (Risk, Asset, Supplier, Data Processing, SoA).
-    """
+async def save_onboarding(
+    request: OnboardingRequest,
+    req: Request,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Save organisational onboarding profile and auto-generate initial registers."""
     try:
         session_id = str(uuid.uuid4())
         summary = _build_practices_summary(request)
 
         db_profile = DBOrganizationProfile(
             session_id=session_id,
+            user_id=user.id,
             organization_name=request.organization_name,
             industry=request.industry,
             employee_count=request.employee_count,
@@ -181,7 +264,6 @@ async def save_onboarding(request: OnboardingRequest, db: Session = Depends(get_
         db.commit()
         db.refresh(db_profile)
 
-        # Return as schema
         profile = OrganizationProfile(
             session_id=session_id,
             organization_name=request.organization_name,
@@ -202,29 +284,23 @@ async def save_onboarding(request: OnboardingRequest, db: Session = Depends(get_
             created_at=db_profile.created_at,
         )
 
-        # Auto-generate initial register entries from onboarding answers
         register_service.auto_generate_from_onboarding(db, session_id, profile)
-
+        audit_service.log_action(db, user_id=user.id, action="create", resource_type="onboarding", resource_id=session_id, session_id=session_id, details={"organization": request.organization_name, "framework": request.compliance_framework.value}, request=req)
         return profile
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Onboarding failed: {str(e)}",
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Onboarding failed: {str(e)}")
 
 
 @router.get("/onboarding/{session_id}", response_model=OrganizationProfile)
-async def get_onboarding(session_id: str, db: Session = Depends(get_db)):
+async def get_onboarding(
+    session_id: str,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
     """Retrieve a previously saved organisational profile by session ID."""
-    db_profile = db.query(DBOrganizationProfile).filter(DBOrganizationProfile.session_id == session_id).first()
-    if not db_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No profile found for session '{session_id}'",
-        )
-    
-    # Reconstruct schema from database JSON
+    db_profile = verify_session_ownership(session_id, user, db)
+
     data = db_profile.onboarding_data
     return OrganizationProfile(
         session_id=db_profile.session_id,
@@ -248,103 +324,65 @@ async def get_onboarding(session_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/verify", response_model=VerificationResponse)
-async def verify_document(request: VerificationRequest):
-    """
-    Two-layer document verification.
-
-    Layer 1 – Structural: deterministic Tanensity formatting checks.
-    Layer 2 – Semantic:   Claude-powered ISO control objective coverage checks.
-    """
+@limiter.limit("10/minute")
+async def verify_document(req: Request, request: VerificationRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    """Two-layer document verification (structural + semantic)."""
     try:
-        return await verification_service.verify_document(request)
+        result = await verification_service.verify_document(request)
+        audit_service.log_action(db, user_id=user.id, action="verify", resource_type="document", details={"framework": request.framework.value if hasattr(request, 'framework') else ""}, request=req)
+        return result
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Verification failed: {str(e)}",
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Verification failed: {str(e)}")
 
 
 @router.post("/gap-analysis", response_model=GapAnalysisResponse)
-async def perform_gap_analysis(request: GapAnalysisRequest):
-    """
-    Perform comprehensive gap analysis for ISO 27001 or ISO 42001.
-
-    Combines programmatic control coverage screening with Claude-powered
-    analysis to identify gaps and calculate an overall compliance score.
-    """
+@limiter.limit("5/minute")
+async def perform_gap_analysis(req: Request, request: GapAnalysisRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    """Perform comprehensive gap analysis for ISO 27001 or ISO 42001."""
     try:
-        return await gap_analysis_service.perform_gap_analysis(request)
+        result = await gap_analysis_service.perform_gap_analysis(request)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="gap_analysis", details={"framework": request.framework.value, "organization": request.organization_name}, request=req)
+        return result
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except Exception as e:
-        import traceback
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Gap analysis failed: [{type(e).__name__}] {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Gap analysis failed: [{type(e).__name__}] {str(e)}")
 
 
 @router.post("/generate-policy", response_model=PolicyGeneratorResponse)
-async def generate_policy(request: PolicyGeneratorRequest):
-    """
-    Generate compliance policy documents for ISO 27001 or ISO 42001.
-
-    Produces Tanensity-formatted Markdown policies with tabular Terms &
-    Definitions (Section 4) and Standards/Controls mapping (Section 5).
-    If Tanensity validation fails, returns HTTP 422 (not degraded output).
-    """
+@limiter.limit("5/minute")
+async def generate_policy(req: Request, request: PolicyGeneratorRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    """Generate compliance policy documents."""
     try:
-        return await policy_generator_service.generate_policy(request)
+        result = await policy_generator_service.generate_policy(request)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="policy", details={"framework": request.framework.value, "policy_type": request.policy_type}, request=req)
+        return result
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Policy generation failed validation: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Policy generation failed validation: {str(e)}")
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Policy generation failed: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Policy generation failed: {str(e)}")
 
 
 @router.post("/assessment", response_model=AssessmentResponse)
-async def perform_assessment(request: AssessmentRequest):
-    """
-    Perform compliance assessment for a specific control.
-
-    Evaluates provided evidence against the target control using Claude
-    and returns findings, strengths, weaknesses, and a compliance score.
-    """
+@limiter.limit("5/minute")
+async def perform_assessment(req: Request, request: AssessmentRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    """Perform compliance assessment for a specific control."""
     try:
-        return await assessment_service.assess_control(request)
+        result = await assessment_service.assess_control(request)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="assessment", details={"framework": request.framework.value, "control_id": request.control_id}, request=req)
+        return result
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Assessment failed: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Assessment failed: {str(e)}")
 
 
 @router.post("/action-plan", response_model=ActionPlanResponse)
-async def generate_action_plan(request: ActionPlanRequest):
-    """
-    Generate remediation action plan for identified gaps.
-
-    This endpoint creates a detailed, prioritized action plan
-    to address compliance gaps and achieve compliance.
-    """
+@limiter.limit("5/minute")
+async def generate_action_plan(req: Request, request: ActionPlanRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    """Generate remediation action plan for identified gaps."""
     try:
         result = claude_service.generate_action_plan(
             framework=request.framework.value,
@@ -355,11 +393,9 @@ async def generate_action_plan(request: ActionPlanRequest):
         )
 
         ai_data = result["data"]
-        actions = [
-            ActionItem(**action) for action in ai_data.get("actions", [])
-        ]
+        actions = [ActionItem(**action) for action in ai_data.get("actions", [])]
 
-        return ActionPlanResponse(
+        response = ActionPlanResponse(
             framework=request.framework,
             organization_name=request.organization_name,
             plan_date=datetime.now(),
@@ -370,312 +406,250 @@ async def generate_action_plan(request: ActionPlanRequest):
             milestones=ai_data.get("milestones", []),
             budget_estimate=ai_data.get("budget_estimate"),
         )
-
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="action_plan", details={"framework": request.framework.value, "organization": request.organization_name, "total_actions": len(actions)}, request=req)
+        return response
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Action plan generation failed: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Action plan generation failed: {str(e)}")
 
 
-@router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    """
-    Ask any compliance question and get a plain-English answer.
-
-    Uses the COMPLAI advisor role — answers are structured for both
-    technical and non-technical audiences, with a summary, explanation,
-    practical steps, and a key takeaway.
-    """
-    try:
-        result = claude_service.chat(
-            framework=request.framework.value,
-            question=request.question,
-            context=request.context,
-        )
-
-        ai_data = result["data"]
-        # Build a combined answer string for backwards compatibility,
-        # and pass the new fields in references as structured extras.
-        summary = ai_data.get("summary", "")
-        explanation = ai_data.get("explanation", "")
-        practical_steps = ai_data.get("practical_steps", [])
-        key_point = ai_data.get("key_point", "")
-        # Combine into a readable markdown answer
-        steps_md = "\n".join(f"{i+1}. {s}" for i, s in enumerate(practical_steps))
-        answer_md = f"{summary}\n\n{explanation}"
-        if steps_md:
-            answer_md += f"\n\n**Practical steps:**\n{steps_md}"
-        if key_point:
-            answer_md += f"\n\n> 💡 **Key point:** {key_point}"
-
-        return ChatResponse(
-            framework=request.framework,
-            question=request.question,
-            answer=answer_md,
-            references=ai_data.get("references", []),
-            related_controls=ai_data.get("related_controls", []),
-        )
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Chat failed: {str(e)}"
-        )
-
-
-
-@router.get("/frameworks")
-async def list_frameworks():
-    """List all supported compliance frameworks."""
-    return {
-        "frameworks": [
-            {
-                "id": "ISO_27001",
-                "name": "ISO/IEC 27001:2022",
-                "description": "Information Security Management Systems",
-                "type": "Information Security"
-            },
-            {
-                "id": "ISO_42001",
-                "name": "ISO/IEC 42001:2023",
-                "description": "AI Management Systems",
-                "type": "AI Governance"
-            }
-        ]
-    }
-
-
-@router.get("/frameworks/{framework_id}/controls")
-async def get_framework_controls(framework_id: str):
-    """Get all controls for a specific framework."""
-    from app.knowledge_base import iso27001, iso42001
-
-    if framework_id == "ISO_27001":
-        controls = iso27001.get_all_controls()
-        info = iso27001.ISO_27001_INFO
-    elif framework_id == "ISO_42001":
-        controls = iso42001.get_all_controls()
-        info = iso42001.ISO_42001_INFO
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Framework not found"
-        )
-
-    return {
-        "framework": info,
-        "total_controls": len(controls),
-        "controls": controls
-    }
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# REGISTER CRUD ENDPOINTS
-# ═══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# REGISTER CRUD ENDPOINTS (all require auth + session ownership)
+# ══════════════════════════════════════════════════════════════════════════════
 
 # ── Risk Register ─────────────────────────────────────────────────────────────
 
 @router.get("/registers/{session_id}/risks", response_model=List[RiskEntryOut])
-async def list_risks(session_id: str, db: Session = Depends(get_db)):
+async def list_risks(session_id: str, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.list_risks(db, session_id)
 
 
 @router.post("/registers/{session_id}/risks", response_model=RiskEntryOut, status_code=201)
-async def create_risk(session_id: str, data: RiskEntryIn, db: Session = Depends(get_db)):
-    return register_service.create_risk(db, session_id, data)
+async def create_risk(session_id: str, data: RiskEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
+    result = register_service.create_risk(db, session_id, data)
+    audit_service.log_action(db, user_id=user.id, action="create", resource_type="risk", resource_id=str(result.id), session_id=session_id, request=req)
+    return result
 
 
 @router.put("/registers/risks/{entry_id}", response_model=RiskEntryOut)
-async def update_risk(entry_id: str, data: RiskEntryIn, db: Session = Depends(get_db)):
+async def update_risk(entry_id: str, data: RiskEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     result = register_service.update_risk(db, entry_id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Risk entry not found")
+    audit_service.log_action(db, user_id=user.id, action="update", resource_type="risk", resource_id=entry_id, request=req)
     return result
 
 
 @router.delete("/registers/risks/{entry_id}", status_code=204)
-async def delete_risk(entry_id: str, db: Session = Depends(get_db)):
+async def delete_risk(entry_id: str, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     if not register_service.delete_risk(db, entry_id):
         raise HTTPException(status_code=404, detail="Risk entry not found")
+    audit_service.log_action(db, user_id=user.id, action="delete", resource_type="risk", resource_id=entry_id, request=req)
 
 
 # ── Asset Register ────────────────────────────────────────────────────────────
 
 @router.get("/registers/{session_id}/assets", response_model=List[AssetEntryOut])
-async def list_assets(session_id: str, db: Session = Depends(get_db)):
+async def list_assets(session_id: str, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.list_assets(db, session_id)
 
 
 @router.post("/registers/{session_id}/assets", response_model=AssetEntryOut, status_code=201)
-async def create_asset(session_id: str, data: AssetEntryIn, db: Session = Depends(get_db)):
-    return register_service.create_asset(db, session_id, data)
+async def create_asset(session_id: str, data: AssetEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
+    result = register_service.create_asset(db, session_id, data)
+    audit_service.log_action(db, user_id=user.id, action="create", resource_type="asset", resource_id=str(result.id), session_id=session_id, request=req)
+    return result
 
 
 @router.put("/registers/assets/{entry_id}", response_model=AssetEntryOut)
-async def update_asset(entry_id: str, data: AssetEntryIn, db: Session = Depends(get_db)):
+async def update_asset(entry_id: str, data: AssetEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     result = register_service.update_asset(db, entry_id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Asset entry not found")
+    audit_service.log_action(db, user_id=user.id, action="update", resource_type="asset", resource_id=entry_id, request=req)
     return result
 
 
 @router.delete("/registers/assets/{entry_id}", status_code=204)
-async def delete_asset(entry_id: str, db: Session = Depends(get_db)):
+async def delete_asset(entry_id: str, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     if not register_service.delete_asset(db, entry_id):
         raise HTTPException(status_code=404, detail="Asset entry not found")
+    audit_service.log_action(db, user_id=user.id, action="delete", resource_type="asset", resource_id=entry_id, request=req)
 
 
 # ── Supplier Register ─────────────────────────────────────────────────────────
 
 @router.get("/registers/{session_id}/suppliers", response_model=List[SupplierEntryOut])
-async def list_suppliers(session_id: str, db: Session = Depends(get_db)):
+async def list_suppliers(session_id: str, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.list_suppliers(db, session_id)
 
 
 @router.post("/registers/{session_id}/suppliers", response_model=SupplierEntryOut, status_code=201)
-async def create_supplier(session_id: str, data: SupplierEntryIn, db: Session = Depends(get_db)):
-    return register_service.create_supplier(db, session_id, data)
+async def create_supplier(session_id: str, data: SupplierEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
+    result = register_service.create_supplier(db, session_id, data)
+    audit_service.log_action(db, user_id=user.id, action="create", resource_type="supplier", resource_id=str(result.id), session_id=session_id, request=req)
+    return result
 
 
 @router.put("/registers/suppliers/{entry_id}", response_model=SupplierEntryOut)
-async def update_supplier(entry_id: str, data: SupplierEntryIn, db: Session = Depends(get_db)):
+async def update_supplier(entry_id: str, data: SupplierEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     result = register_service.update_supplier(db, entry_id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Supplier entry not found")
+    audit_service.log_action(db, user_id=user.id, action="update", resource_type="supplier", resource_id=entry_id, request=req)
     return result
 
 
 @router.delete("/registers/suppliers/{entry_id}", status_code=204)
-async def delete_supplier(entry_id: str, db: Session = Depends(get_db)):
+async def delete_supplier(entry_id: str, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     if not register_service.delete_supplier(db, entry_id):
         raise HTTPException(status_code=404, detail="Supplier entry not found")
+    audit_service.log_action(db, user_id=user.id, action="delete", resource_type="supplier", resource_id=entry_id, request=req)
 
 
 # ── Data Processing Register ──────────────────────────────────────────────────
 
 @router.get("/registers/{session_id}/data-processing", response_model=List[DataProcessingEntryOut])
-async def list_data_processing(session_id: str, db: Session = Depends(get_db)):
+async def list_data_processing(session_id: str, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.list_data_processing(db, session_id)
 
 
 @router.post("/registers/{session_id}/data-processing", response_model=DataProcessingEntryOut, status_code=201)
-async def create_data_processing(session_id: str, data: DataProcessingEntryIn, db: Session = Depends(get_db)):
-    return register_service.create_data_processing(db, session_id, data)
+async def create_data_processing(session_id: str, data: DataProcessingEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
+    result = register_service.create_data_processing(db, session_id, data)
+    audit_service.log_action(db, user_id=user.id, action="create", resource_type="data_processing", resource_id=str(result.id), session_id=session_id, request=req)
+    return result
 
 
 @router.put("/registers/data-processing/{entry_id}", response_model=DataProcessingEntryOut)
-async def update_data_processing(entry_id: str, data: DataProcessingEntryIn, db: Session = Depends(get_db)):
+async def update_data_processing(entry_id: str, data: DataProcessingEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     result = register_service.update_data_processing(db, entry_id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Data processing entry not found")
+    audit_service.log_action(db, user_id=user.id, action="update", resource_type="data_processing", resource_id=entry_id, request=req)
     return result
 
 
 @router.delete("/registers/data-processing/{entry_id}", status_code=204)
-async def delete_data_processing(entry_id: str, db: Session = Depends(get_db)):
+async def delete_data_processing(entry_id: str, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     if not register_service.delete_data_processing(db, entry_id):
         raise HTTPException(status_code=404, detail="Data processing entry not found")
+    audit_service.log_action(db, user_id=user.id, action="delete", resource_type="data_processing", resource_id=entry_id, request=req)
 
 
 # ── AI System Register ────────────────────────────────────────────────────────
 
 @router.get("/registers/{session_id}/ai-systems", response_model=List[AISystemEntryOut])
-async def list_ai_systems(session_id: str, db: Session = Depends(get_db)):
+async def list_ai_systems(session_id: str, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.list_ai_systems(db, session_id)
 
 
 @router.post("/registers/{session_id}/ai-systems", response_model=AISystemEntryOut, status_code=201)
-async def create_ai_system(session_id: str, data: AISystemEntryIn, db: Session = Depends(get_db)):
-    return register_service.create_ai_system(db, session_id, data)
+async def create_ai_system(session_id: str, data: AISystemEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
+    result = register_service.create_ai_system(db, session_id, data)
+    audit_service.log_action(db, user_id=user.id, action="create", resource_type="ai_system", resource_id=str(result.id), session_id=session_id, request=req)
+    return result
 
 
 @router.put("/registers/ai-systems/{entry_id}", response_model=AISystemEntryOut)
-async def update_ai_system(entry_id: str, data: AISystemEntryIn, db: Session = Depends(get_db)):
+async def update_ai_system(entry_id: str, data: AISystemEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     result = register_service.update_ai_system(db, entry_id, data)
     if not result:
         raise HTTPException(status_code=404, detail="AI system entry not found")
+    audit_service.log_action(db, user_id=user.id, action="update", resource_type="ai_system", resource_id=entry_id, request=req)
     return result
 
 
 @router.delete("/registers/ai-systems/{entry_id}", status_code=204)
-async def delete_ai_system(entry_id: str, db: Session = Depends(get_db)):
+async def delete_ai_system(entry_id: str, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     if not register_service.delete_ai_system(db, entry_id):
         raise HTTPException(status_code=404, detail="AI system entry not found")
+    audit_service.log_action(db, user_id=user.id, action="delete", resource_type="ai_system", resource_id=entry_id, request=req)
 
 
 # ── Control Register (Statement of Applicability) ─────────────────────────────
 
 @router.get("/registers/{session_id}/controls", response_model=List[ControlEntryOut])
-async def list_controls(session_id: str, framework: Optional[str] = None, db: Session = Depends(get_db)):
+async def list_controls(session_id: str, framework: Optional[str] = None, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.list_controls(db, session_id, framework)
 
 
 @router.post("/registers/{session_id}/controls/{framework}", response_model=ControlEntryOut, status_code=201)
-async def upsert_control(session_id: str, framework: str, data: ControlEntryIn, db: Session = Depends(get_db)):
-    return register_service.upsert_control(db, session_id, framework, data)
+async def upsert_control(session_id: str, framework: str, data: ControlEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
+    result = register_service.upsert_control(db, session_id, framework, data)
+    audit_service.log_action(db, user_id=user.id, action="upsert", resource_type="control", resource_id=data.control_id, session_id=session_id, details={"framework": framework}, request=req)
+    return result
 
 
 @router.delete("/registers/controls/{entry_id}", status_code=204)
-async def delete_control(entry_id: str, db: Session = Depends(get_db)):
+async def delete_control(entry_id: str, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     if not register_service.delete_control(db, entry_id):
         raise HTTPException(status_code=404, detail="Control entry not found")
+    audit_service.log_action(db, user_id=user.id, action="delete", resource_type="control", resource_id=entry_id, request=req)
 
 
 # ── Evidence ──────────────────────────────────────────────────────────────────
 
 @router.get("/registers/{session_id}/evidence", response_model=List[EvidenceEntryOut])
-async def list_evidence(session_id: str, control_id: Optional[str] = None, db: Session = Depends(get_db)):
+async def list_evidence(session_id: str, control_id: Optional[str] = None, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.list_evidence(db, session_id, control_id)
 
 
 @router.post("/registers/{session_id}/evidence", response_model=EvidenceEntryOut, status_code=201)
-async def create_evidence(session_id: str, data: EvidenceEntryIn, db: Session = Depends(get_db)):
-    return register_service.create_evidence(db, session_id, data)
+async def create_evidence(session_id: str, data: EvidenceEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
+    result = register_service.create_evidence(db, session_id, data)
+    audit_service.log_action(db, user_id=user.id, action="create", resource_type="evidence", resource_id=str(result.id), session_id=session_id, request=req)
+    return result
 
 
 @router.put("/registers/evidence/{entry_id}", response_model=EvidenceEntryOut)
-async def update_evidence(entry_id: str, data: EvidenceEntryIn, db: Session = Depends(get_db)):
+async def update_evidence(entry_id: str, data: EvidenceEntryIn, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     result = register_service.update_evidence(db, entry_id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Evidence entry not found")
+    audit_service.log_action(db, user_id=user.id, action="update", resource_type="evidence", resource_id=entry_id, request=req)
     return result
 
 
 @router.delete("/registers/evidence/{entry_id}", status_code=204)
-async def delete_evidence(entry_id: str, db: Session = Depends(get_db)):
+async def delete_evidence(entry_id: str, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     if not register_service.delete_evidence(db, entry_id):
         raise HTTPException(status_code=404, detail="Evidence entry not found")
+    audit_service.log_action(db, user_id=user.id, action="delete", resource_type="evidence", resource_id=entry_id, request=req)
 
 
 # ── Register Summary (Dashboard) ─────────────────────────────────────────────
 
 @router.get("/registers/{session_id}/summary", response_model=RegisterSummary)
-async def get_register_summary(session_id: str, db: Session = Depends(get_db)):
+async def get_register_summary(session_id: str, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    verify_session_ownership(session_id, user, db)
     return register_service.get_register_summary(db, session_id)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 # AUDIT PACK EXPORT
-# ═══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/export-audit-pack")
-async def export_audit_pack(request: AuditPackRequest, db: Session = Depends(get_db)):
-    """
-    Export a complete audit pack as a ZIP archive containing all registers
-    as professionally formatted Excel workbooks.
-    """
+async def export_audit_pack(request: AuditPackRequest, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+    """Export a complete audit pack as a ZIP archive."""
     try:
+        verify_session_ownership(request.session_id, user, db)
         zip_bytes = build_audit_pack(
             db,
             session_id=request.session_id,
@@ -685,16 +659,16 @@ async def export_audit_pack(request: AuditPackRequest, db: Session = Depends(get
         safe_name = request.organization_name.replace(" ", "_")[:30]
         filename = f"COMPLAI_Audit_Pack_{safe_name}.zip"
 
+        audit_service.log_action(db, user_id=user.id, action="export", resource_type="audit_pack", session_id=request.session_id, details={"framework": request.framework.value, "organization": request.organization_name}, request=req)
         return StreamingResponse(
             io.BytesIO(zip_bytes),
             media_type="application/zip",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Audit pack export failed: {str(e)}",
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Audit pack export failed: {str(e)}")
 
 
 # ── AI Register Generation ───────────────────────────────────────────────────
@@ -702,7 +676,7 @@ async def export_audit_pack(request: AuditPackRequest, db: Session = Depends(get
 from pydantic import BaseModel as PydanticBaseModel
 
 class GenerateRegisterRequest(PydanticBaseModel):
-    register_type: str  # asset_register | incident_register | supplier_register | training_register | change_log | audit_log
+    register_type: str
     framework: str
     organization_name: str
     industry: str
@@ -737,7 +711,8 @@ REGISTER_PROMPTS = {
 }
 
 @router.post("/generate-register")
-async def generate_register(request: GenerateRegisterRequest):
+@limiter.limit("5/minute")
+async def generate_register(req: Request, request: GenerateRegisterRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Use Claude to generate structured register entries for any register type."""
     reg = REGISTER_PROMPTS.get(request.register_type)
     if not reg:
@@ -764,9 +739,7 @@ Rules:
 
     try:
         result = claude_service._call_claude("architect", prompt, max_tokens=3000)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="register", details={"register_type": request.register_type, "framework": request.framework}, request=req)
         return {"entries": result["data"], "register_type": request.register_type}
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Register generation failed: {str(e)}",
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Register generation failed: {str(e)}")

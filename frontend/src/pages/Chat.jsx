@@ -202,7 +202,14 @@ export default function Chat() {
         references: res.references,
         related_controls: res.related_controls,
       }])
-    } catch {
+    } catch (err) {
+      if (err.isRateLimited) {
+        setMessages(prev => [...prev, {
+          role: 'error',
+          content: `Too many requests. Please wait ${err.retryAfter || 60} seconds before trying again.`,
+        }])
+        return
+      }
       setMessages(prev => [...prev, {
         role: 'error',
         content: 'Something went wrong. Please try again.',

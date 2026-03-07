@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     # Security
     secret_key: str = Field(default="change-this-in-production")
 
+    # Supabase Auth & Storage
+    supabase_url: str = Field(default="", validation_alias="SUPABASE_URL")
+    supabase_anon_key: str = Field(default="", validation_alias="SUPABASE_ANON_KEY")
+    supabase_jwt_secret: str = Field(default="", validation_alias="SUPABASE_JWT_SECRET")
+    supabase_service_role_key: str = Field(default="", validation_alias="SUPABASE_SERVICE_ROLE_KEY")
+
     # CORS
     allowed_origins: str = Field(
         default="http://localhost:3000,http://localhost:5173,https://complai-seven.vercel.app"

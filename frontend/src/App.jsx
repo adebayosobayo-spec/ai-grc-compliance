@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider, useAppContext } from './context/AppContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import { pageView } from './utils/analytics'
 import Dashboard from './pages/Dashboard'
 import Onboarding from './pages/Onboarding'
@@ -11,17 +13,19 @@ import RiskRegister from './pages/RiskRegister'
 import AssetRegister from './pages/AssetRegister'
 import DocumentCentre from './pages/DocumentCentre'
 import Chat from './pages/Chat'
+import Login from './pages/Login'
 import Security from './pages/Security'
 import DPOAssist from './pages/DPOAssist'
 import Verification from './pages/Verification'
 import Assessment from './pages/Assessment'
+import AWSAssessment from './pages/AWSAssessment'
 
 // ── Nav structure: top-level items ──────────────────────────────
 const NAV = [
   {
     type: 'link',
     to: '/',
-    label: 'AI Advisor',
+    label: 'COMPLIANA',
     exact: true,
     icon: ChatBubbleIcon,
   },
@@ -38,6 +42,7 @@ const NAV = [
     children: [
       { to: '/gap-analysis', label: 'Gap Analysis', icon: ChartIcon },
       { to: '/assessment', label: 'Assessment', icon: CheckIcon },
+      { to: '/aws-assessment', label: 'AWS Audit', icon: AWSIcon },
       { to: '/verification', label: 'Verification', icon: ShieldIcon },
       { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
     ],
@@ -280,6 +285,13 @@ function BriefcaseIcon({ className }) {
   return (<svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>)
 }
+function AWSIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+    </svg>
+  )
+}
 
 function SidebarLink({ to, label, icon: Icon, exact }) {
   const location = useLocation()
@@ -294,6 +306,7 @@ function SidebarLink({ to, label, icon: Icon, exact }) {
 
 function AppShell() {
   const { orgProfile, clearProfile } = useAppContext()
+  const { user, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
 
@@ -328,8 +341,8 @@ function AppShell() {
         <SidebarNav />
 
         {/* Profile footer */}
-        {orgProfile && (
-          <div className="px-4 py-3 border-t border-slate-800">
+        <div className="px-4 py-3 border-t border-slate-800 space-y-2">
+          {orgProfile && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-white font-medium truncate max-w-[160px]">
                 {orgProfile.organization_name}
@@ -342,8 +355,23 @@ function AppShell() {
                 Clear
               </button>
             </div>
-          </div>
-        )}
+          )}
+          {user ? (
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-400 truncate max-w-[160px]">{user.email}</p>
+              <button
+                onClick={() => signOut()}
+                className="text-xs text-slate-400 hover:text-red-400 transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="block text-xs text-primary-400 hover:text-primary-300 font-medium">
+              Sign in &rarr;
+            </Link>
+          )}
+        </div>
       </aside>
 
       {/* Mobile sidebar overlay */}
@@ -399,22 +427,27 @@ function AppShell() {
 
         <main className="max-w-5xl mx-auto py-6 px-4 sm:px-6">
           <Routes>
+            {/* Public routes — no login required */}
             <Route path="/" element={<Chat />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/gap-analysis" element={<GapAnalysis />} />
-            <Route path="/policy-generator" element={<PolicyGenerator />} />
-            <Route path="/risk-register" element={<RiskRegister />} />
-            <Route path="/asset-register" element={<AssetRegister />} />
-            <Route path="/documents" element={<DocumentCentre />} />
-            <Route path="/action-plan" element={<ActionPlan />} />
-            <Route path="/assessment" element={<Assessment />} />
-            <Route path="/verification" element={<Verification />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/security" element={<Security />} />
-            <Route path="/dpo-assist" element={<DPOAssist />} />
-            <Route path="/dpia" element={<DPOAssist defaultTab="dpia" />} />
-            <Route path="/hire-dpo" element={<DPOAssist defaultTab="hire" />} />
+            <Route path="/login" element={<Login />} />
+
+            {/* Protected routes — require authentication */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/gap-analysis" element={<ProtectedRoute><GapAnalysis /></ProtectedRoute>} />
+            <Route path="/policy-generator" element={<ProtectedRoute><PolicyGenerator /></ProtectedRoute>} />
+            <Route path="/risk-register" element={<ProtectedRoute><RiskRegister /></ProtectedRoute>} />
+            <Route path="/asset-register" element={<ProtectedRoute><AssetRegister /></ProtectedRoute>} />
+            <Route path="/documents" element={<ProtectedRoute><DocumentCentre /></ProtectedRoute>} />
+            <Route path="/action-plan" element={<ProtectedRoute><ActionPlan /></ProtectedRoute>} />
+            <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
+            <Route path="/aws-assessment" element={<ProtectedRoute><AWSAssessment /></ProtectedRoute>} />
+            <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
+            <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+            <Route path="/dpo-assist" element={<ProtectedRoute><DPOAssist /></ProtectedRoute>} />
+            <Route path="/dpia" element={<ProtectedRoute><DPOAssist defaultTab="dpia" /></ProtectedRoute>} />
+            <Route path="/hire-dpo" element={<ProtectedRoute><DPOAssist defaultTab="hire" /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>
@@ -424,11 +457,13 @@ function AppShell() {
 
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <AppShell />
-      </Router>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <Router>
+          <AppShell />
+        </Router>
+      </AppProvider>
+    </AuthProvider>
   )
 }
 

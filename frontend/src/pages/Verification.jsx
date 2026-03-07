@@ -61,6 +61,10 @@ export default function Verification() {
       const res = await complianceAPI.verifyDocument(formData)
       setResult(res)
     } catch (err) {
+      if (err.isRateLimited) {
+        setError(`Too many requests. Please wait ${err.retryAfter || 60} seconds before trying again.`)
+        return
+      }
       setError('Verification failed. Please check your connection and try again.')
     } finally {
       setLoading(false)

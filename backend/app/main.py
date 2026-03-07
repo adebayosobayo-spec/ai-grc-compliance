@@ -1,11 +1,15 @@
 """
 Main FastAPI application entry point.
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from datetime import datetime
 from app.core.config import settings
-from app.api import compliance
+from app.core.rate_limit import limiter
+from app.api import compliance, audit, storage
 from app.models.schemas import HealthCheck
 from app.database import init_db
 
@@ -14,6 +18,10 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
 )
+
+# Rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS
 app.add_middleware(
@@ -62,6 +70,8 @@ async def health_check():
 
 # Include routers
 app.include_router(compliance.router, prefix=settings.api_prefix)
+app.include_router(audit.router, prefix=settings.api_prefix)
+app.include_router(storage.router, prefix=settings.api_prefix)
 
 if __name__ == "__main__":
     import uvicorn

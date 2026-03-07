@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { supabase } from '../lib/supabase'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
   || (import.meta.env.DEV ? 'http://localhost:8000/api/v1' : '/api/v1')
@@ -12,6 +13,39 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
 })
+
+// ── Request interceptor: attach Supabase JWT if available ─────
+api.interceptors.request.use(async (config) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`
+    }
+  } catch {
+    // No session — continue without auth (public endpoints like chat)
+  }
+  return config
+})
+
+// ── Response interceptor: handle 401 and 429 ─────────────────
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Don't redirect if already on public pages
+      const path = window.location.pathname
+      if (path !== '/' && path !== '/chat' && path !== '/login') {
+        window.location.href = '/login'
+      }
+    }
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.headers['retry-after'] || 60
+      error.retryAfter = parseInt(retryAfter)
+      error.isRateLimited = true
+    }
+    return Promise.reject(error)
+  },
+)
 
 export const complianceAPI = {
   // ── Onboarding ────────────────────────────────────────────
@@ -54,19 +88,19 @@ export const complianceAPI = {
     return response.data
   },
 
-  // ── Chat ──────────────────────────────────────────────────
+  // ── Chat (public — no auth required) ──────────────────────
   chat: async (data) => {
     const response = await api.post('/compliance/chat', data, { timeout: 60000 })
     return response.data
   },
 
-  // ── Email Subscribe ────────────────────────────────────────
+  // ── Email Subscribe (public) ──────────────────────────────
   subscribe: async (data) => {
     const response = await api.post('/compliance/subscribe', data)
     return response.data
   },
 
-  // ── Frameworks ────────────────────────────────────────────
+  // ── Frameworks (public) ───────────────────────────────────
   listFrameworks: async () => {
     const response = await api.get('/compliance/frameworks')
     return response.data
@@ -137,6 +171,22 @@ export const complianceAPI = {
       responseType: 'blob',
       timeout: 60000,
     })
+    return response.data
+  },
+
+  // ── Audit Log ─────────────────────────────────────────────
+  listAuditLogs: async (params = {}) => {
+    const response = await api.get('/audit/logs', { params })
+    return response.data
+  },
+
+  // ── File Storage ──────────────────────────────────────────
+  getUploadUrl: async (data) => {
+    const response = await api.post('/storage/upload-url', data)
+    return response.data
+  },
+  getDownloadUrl: async (path) => {
+    const response = await api.post('/storage/download-url', { path })
     return response.data
   },
 }

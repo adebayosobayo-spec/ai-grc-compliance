@@ -31,6 +31,10 @@ function Assessment() {
       const response = await complianceAPI.performAssessment({ framework, ...formData })
       setResult(response)
     } catch (err) {
+      if (err.isRateLimited) {
+        setError(`Too many requests. Please wait ${err.retryAfter || 60} seconds before trying again.`)
+        return
+      }
       console.error('Assessment failed:', err)
       setError('Assessment failed. Please check the control ID and try again.')
     } finally {
@@ -59,131 +63,151 @@ function Assessment() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="mb-8">
-        <p className="text-xs font-mono text-blue-600 tracking-widest mb-1 uppercase">Audit</p>
-        <h2 className="text-3xl font-black text-slate-900">Compliance Assessment</h2>
-        <p className="mt-1 text-slate-600">
-          Assess control implementation for {framework === 'ISO_27001' ? 'ISO 27001' : 'ISO 42001'}
-        </p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-black text-blue-600 tracking-[0.2em] uppercase mb-2 font-mono">Mission Control / Audit</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Control Assessment</h2>
+          <p className="text-sm text-slate-500 mt-1 font-mono uppercase tracking-tight">AI-assisted implementation audit for {framework.replace('_', ' ')} controls.</p>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-          <span className="text-red-500 flex-shrink-0">✕</span>
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700 font-medium flex items-center gap-3 animate-in slide-in-from-top-2">
+          <span className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600">✕</span>
+          {error}
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Organization Name</label>
-            <input type="text" required className={inputCls} value={formData.organization_name}
-              onChange={(e) => setFormData({ ...formData, organization_name: e.target.value })} />
+      {/* Assessment Console */}
+      <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
+        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 font-mono">Assessment Parameters</h3>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Organisation</label>
+              <input type="text" required
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-mono"
+                value={formData.organization_name}
+                onChange={(e) => setFormData({ ...formData, organization_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Control ID</label>
+              <div className="relative">
+                <input type="text" required
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-mono tracking-tight"
+                  value={formData.control_id}
+                  placeholder={framework === 'ISO_27001' ? 'e.g. A.5.1' : 'e.g. AI.1.1'}
+                  onChange={(e) => setFormData({ ...formData, control_id: e.target.value })} />
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 font-mono">REF_ID</span>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Control ID</label>
-            <input type="text" required className={inputCls} value={formData.control_id}
-              onChange={(e) => setFormData({ ...formData, control_id: e.target.value })}
-              placeholder={framework === 'ISO_27001' ? 'e.g., A.5.1, A.8.1' : 'e.g., AI.1.1, AI.3.2'} />
-            <p className="mt-1 text-xs text-slate-500 font-mono">
-              {framework === 'ISO_27001'
-                ? 'ISO 27001 control ID — e.g., A.5.1 for "Policies for information security"'
-                : 'ISO 42001 control ID — e.g., AI.1.1 for "AI Policy"'}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Evidence / Documentation (Optional)</label>
-            <textarea rows={6} className={inputCls} value={formData.evidence}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Implementation Evidence / Notes</label>
+            <textarea rows={6}
+              className="w-full bg-slate-50 border border-slate-100 rounded-3xl px-6 py-5 text-sm font-medium text-slate-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none leading-relaxed"
+              value={formData.evidence}
               onChange={(e) => setFormData({ ...formData, evidence: e.target.value })}
-              placeholder="Provide evidence of your current implementation, existing policies, procedures, or controls..." />
+              placeholder="Provide evidence of your current implementation, existing policies, or procedural notes..." />
+            <p className="text-[10px] text-slate-400 font-medium px-2">Detailed evidence results in higher precision AI assessments.</p>
           </div>
 
-          <button type="submit" disabled={loading}
-            className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-bold tracking-wide disabled:opacity-40 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-            {loading ? 'Assessing...' : 'Perform Assessment'}
-          </button>
+          <div className="pt-4 flex justify-end">
+            <button type="submit" disabled={loading}
+              className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-sm font-bold shadow-xl shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50">
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  Auditing Implementation...
+                </span>
+              ) : '🔍 Run AI Assessment'}
+            </button>
+          </div>
         </form>
       </div>
 
       {result && (
-        <div className="mt-8 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <div className="flex justify-between items-start mb-4 flex-wrap gap-4">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900">
-                  <span className="font-mono text-blue-600 mr-2">{result.result.control_id}</span>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {/* Assessment Heading Card */}
+          <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm group">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 font-mono tracking-widest">
+                    {result.result.control_id}
+                  </span>
+                  <span className={`text-[10px] font-black px-3 py-1 rounded-lg border uppercase tracking-widest ${getComplianceStyle(result.result.compliance_level)}`}>
+                    {result.result.compliance_level.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-blue-600 transition-colors">
                   {result.result.control_name}
                 </h3>
-                <p className="mt-2 text-slate-600 text-sm">{result.result.control_description}</p>
+                <p className="mt-3 text-slate-600 text-sm leading-relaxed max-w-4xl">
+                  {result.result.control_description}
+                </p>
               </div>
-              <span className={`px-3 py-1 text-xs font-bold rounded font-mono ${getComplianceStyle(result.result.compliance_level)}`}>
-                {result.result.compliance_level.replace(/_/g, ' ').toUpperCase()}
-              </span>
-            </div>
 
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono text-slate-500 uppercase tracking-wide">Compliance Score</span>
-                <span className="text-2xl font-black text-blue-600">{result.result.score}%</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded h-2">
-                <div className="h-2 rounded transition-all"
-                  style={{ width: `${result.result.score}%`, background: getBarColor(result.result.compliance_level) }} />
+              <div className="bg-slate-900 rounded-[2rem] p-6 text-white border border-white/10 min-w-[200px] text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2" />
+                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 font-mono">Assessed Score</p>
+                <p className="text-5xl font-black tracking-tighter">{result.result.score}%</p>
+                <div className="w-full bg-white/10 rounded-full h-1 mt-4 overflow-hidden">
+                  <div className="h-full bg-blue-500 transition-all duration-1000"
+                    style={{ width: `${result.result.score}%` }} />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h4 className="text-xs font-mono text-blue-600 uppercase tracking-widest mb-3">Findings</h4>
-            <MarkdownContent content={result.result.findings} />
+          <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 font-mono">Critical Findings</h4>
+            <div className="text-sm text-slate-700 leading-relaxed font-medium bg-slate-50 border border-slate-100 p-6 rounded-3xl italic">
+              <MarkdownContent content={result.result.findings} />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h4 className="text-xs font-mono text-green-600 uppercase tracking-widest mb-4">Strengths</h4>
-              <ul className="space-y-2">
-                {result.result.strengths.map((strength, index) => (
-                  <li key={index} className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-slate-600 text-sm">{strength}</span>
-                  </li>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
+              <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 font-mono">Implementation Strengths</h4>
+              <div className="space-y-3">
+                {result.result.strengths.map((s, i) => (
+                  <div key={i} className="flex items-start gap-3 p-4 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl transition-all hover:bg-emerald-50">
+                    <div className="w-5 h-5 flex items-center justify-center rounded-lg bg-emerald-500 text-white text-[10px] font-bold">✓</div>
+                    <span className="text-xs font-bold text-emerald-900/80">{s}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h4 className="text-xs font-mono text-red-500 uppercase tracking-widest mb-4">Weaknesses</h4>
-              <ul className="space-y-2">
-                {result.result.weaknesses.map((weakness, index) => (
-                  <li key={index} className="flex items-start">
-                    <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-slate-600 text-sm">{weakness}</span>
-                  </li>
+            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
+              <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-6 font-mono">Gaps & Weaknesses</h4>
+              <div className="space-y-3">
+                {result.result.weaknesses.map((w, i) => (
+                  <div key={i} className="flex items-start gap-3 p-4 bg-red-50/50 border border-red-100/50 rounded-2xl transition-all hover:bg-red-50">
+                    <div className="w-5 h-5 flex items-center justify-center rounded-lg bg-red-500 text-white text-xs">!</div>
+                    <span className="text-xs font-bold text-red-900/80">{w}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h4 className="text-xs font-mono text-blue-600 uppercase tracking-widest mb-4">Recommendations</h4>
-            <ul className="space-y-3">
-              {result.result.recommendations.map((rec, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded bg-gray-100 border border-blue-200 text-blue-600 text-xs font-bold font-mono mr-3">
-                    {index + 1}
+          <div className="bg-slate-900 rounded-[3rem] p-10 text-white border border-white/10">
+            <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-8 font-mono tracking-widest">Remediation Recommendations</h4>
+            <div className="grid md:grid-cols-2 gap-6">
+              {result.result.recommendations.map((rec, i) => (
+                <div key={i} className="flex items-start gap-4 bg-white/5 border border-white/5 p-5 rounded-3xl hover:bg-white/10 transition-all border border-white/10">
+                  <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 text-xs font-black font-mono">
+                    {String(i + 1).padStart(2, '0')}
                   </span>
-                  <span className="text-slate-600 text-sm">{rec}</span>
-                </li>
+                  <span className="text-xs font-bold text-slate-300 leading-relaxed">{rec}</span>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
       )}

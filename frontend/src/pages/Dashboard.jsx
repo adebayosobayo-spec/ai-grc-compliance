@@ -53,6 +53,17 @@ const quickActions = [
       </svg>
     ),
   },
+  {
+    to: '/aws-assessment',
+    label: 'AWS Audit',
+    desc: 'Audit cloud-native ISO 27001 controls',
+    color: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+      </svg>
+    ),
+  },
 ]
 
 // ── Compliance score derived from last gap result ──────────────────
@@ -100,30 +111,79 @@ function Dashboard() {
     }
   }, [orgProfile, sessionId])
 
-  // ── No org profile: onboarding CTA ─────────────────────────────────
+  // ── Checklist item component ─────────────────────────────────────────
+  const ChecklistItem = ({ step, label, description, to, done, active }) => (
+    <Link to={to} className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${active ? 'border-blue-300 bg-blue-50 shadow-sm' : done ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+        {done ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+        ) : step}
+      </div>
+      <div className="min-w-0">
+        <p className={`text-sm font-semibold ${active ? 'text-blue-700' : done ? 'text-emerald-700' : 'text-slate-700'}`}>{label}</p>
+        <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+      </div>
+      {active && <span className="ml-auto text-xs font-bold text-blue-600 uppercase tracking-wide self-center">Start</span>}
+    </Link>
+  )
+
+  const FRAMEWORKS = [
+    { id: 'ISO_27001', name: 'ISO 27001', full: 'Information Security', icon: '🔒' },
+    { id: 'ISO_42001', name: 'ISO 42001', full: 'AI Management', icon: '🤖' },
+    { id: 'GDPR', name: 'GDPR', full: 'EU Data Protection', icon: '🇪🇺' },
+    { id: 'NDPR', name: 'NDPR', full: 'Nigeria Data Protection', icon: '🇳🇬' },
+    { id: 'SOC2', name: 'SOC 2', full: 'Trust Services Criteria', icon: '🛡️' },
+    { id: 'POPIA', name: 'POPIA', full: 'South Africa Privacy', icon: '🇿🇦' },
+  ]
+
+  // ── No org profile: Welcome + Checklist + Framework Cards ──────────
   if (!orgProfile) {
     return (
-      <div className="px-4 py-10 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-sm">
-          <div className="mx-auto w-14 h-14 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center mb-6">
-            <svg className="h-7 w-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+      <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8">
+        {/* Welcome hero */}
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 sm:p-10 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 blur-[100px] -mt-20 -mr-20" />
+          <div className="relative z-10">
+            <p className="text-[10px] font-black text-blue-400 tracking-[0.25em] uppercase mb-3">AI-Powered Compliance</p>
+            <h1 className="text-3xl sm:text-4xl font-black mb-3 leading-tight">Welcome to COMPLAI</h1>
+            <p className="text-slate-300 max-w-lg text-sm leading-relaxed">
+              From gap analysis to audit-ready policies — automate your compliance journey across ISO 27001, ISO 42001, GDPR, and more.
+            </p>
+            <div className="flex items-center gap-3 mt-6">
+              <Link to="/onboarding" className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-900/30 transition-all active:scale-95">
+                Start Onboarding
+              </Link>
+              <Link to="/chat" className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-bold border border-white/20 transition-all">
+                Ask COMPLIANA
+              </Link>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome to COMPLAI</h1>
-          <p className="text-slate-500 mb-8 max-w-md mx-auto">
-            Automate ISO 27001 &amp; ISO 42001 compliance — from gap analysis to audit-ready
-            policies — powered by AI.
-          </p>
-          <Link
-            to="/onboarding"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 transition-colors"
-          >
-            Complete Onboarding
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
+        </div>
+
+        {/* Getting Started Checklist */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6">
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wide mb-1">Getting Started</h2>
+          <p className="text-xs text-slate-500 mb-4">Complete these steps to set up your compliance programme</p>
+          <div className="space-y-2">
+            <ChecklistItem step={1} label="Complete Onboarding" description="Tell us about your organisation, framework, and current security posture" to="/onboarding" active />
+            <ChecklistItem step={2} label="Run Gap Analysis" description="AI identifies gaps between your current state and framework requirements" to="/gap-analysis" />
+            <ChecklistItem step={3} label="Generate Policies" description="Create audit-ready policy documents tailored to your organisation" to="/policy-generator" />
+            <ChecklistItem step={4} label="Upload Evidence" description="Attach evidence artefacts to controls for audit readiness" to="/evidence" />
+          </div>
+        </div>
+
+        {/* Framework Overview Cards */}
+        <div>
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wide mb-4">Supported Frameworks</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {FRAMEWORKS.map(fw => (
+              <div key={fw.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all">
+                <span className="text-2xl">{fw.icon}</span>
+                <p className="text-sm font-bold text-slate-900 mt-2">{fw.name}</p>
+                <p className="text-xs text-slate-500">{fw.full}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -142,94 +202,94 @@ function Dashboard() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
-      {/* ── 3D Hero Panel ─────────────────────────────────────────── */}
-      <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 border border-blue-900/40 shadow-2xl min-h-[260px]">
-        {/* Background grid pattern */}
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(59,130,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.3) 1px, transparent 1px)',
-            backgroundSize: '40px 40px'
-          }}
-        />
-
-        {/* Radial glow */}
+      {/* ── 3D Hero Panel (Premium Cockpit) ─────────────────────────── */}
+      <div className="mb-8 relative overflow-hidden rounded-3xl bg-[#0b192c] border border-blue-900/40 shadow-2xl min-h-[320px] flex flex-col lg:flex-row items-stretch">
+        {/* Decorative background elements */}
         <div className="absolute inset-0 opacity-20"
-          style={{ background: 'radial-gradient(ellipse 60% 60% at 70% 50%, #3b82f6, transparent)' }}
+          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #1e293b, transparent 70%)' }}
+        />
+        <div className="absolute top-0 right-0 w-1/2 h-full opacity-30"
+          style={{ background: 'radial-gradient(circle at 70% 50%, #0ea5e9, transparent 80%)' }}
         />
 
-        <div className="relative flex flex-col lg:flex-row items-center lg:items-stretch gap-4 p-6 sm:p-8">
-          {/* Left: text content */}
-          <div className="flex-1 flex flex-col justify-center z-10">
-            <p className="text-xs font-mono text-blue-400 tracking-widest uppercase mb-2">Compliance Cockpit</p>
-            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2 leading-tight">
-              {orgProfile.organization_name}
-            </h1>
-            <p className="text-blue-200 text-sm mb-5">
-              {FW_FULL[framework] || framework}
-            </p>
+        <div className="relative flex-1 flex flex-col justify-center p-8 sm:p-10 z-10">
+          <p className="text-[10px] font-black text-blue-400 tracking-[0.2em] uppercase mb-3">Global Security Posture</p>
+          <h1 className="text-3xl sm:text-4xl font-black text-white mb-4 leading-[1.1] max-w-xl">
+            Real-time compliance monitoring across your infrastructure.
+          </h1>
 
-            {/* Score badge */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
             {complianceScore !== null ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-5">
                 <div className="flex flex-col">
-                  <p className="text-xs text-blue-400 font-mono uppercase tracking-widest mb-1">Compliance Score</p>
-                  <p className="text-4xl font-black text-white tabular-nums">
+                  <p className="text-5xl font-black text-white tabular-nums tracking-tighter">
                     <AnimatedScore target={complianceScore} />
-                    <span className="text-xl font-semibold text-blue-300 ml-0.5">%</span>
+                    <span className="text-xl font-bold text-blue-400 ml-1">%</span>
                   </p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Aligned with {frameworkLabel}</p>
                 </div>
-                <div className="flex flex-col gap-1 text-xs">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-900/60 border border-blue-700/40 text-blue-200 font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
-                    {lastGapResult?.compliant_controls} / {lastGapResult?.total_controls} controls met
+                <div className="h-10 w-px bg-slate-800 hidden sm:block" />
+                <div className="flex flex-col gap-1.5">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-blue-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                    {lastGapResult?.compliant_controls} / {lastGapResult?.total_controls} Controls Met
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-900/40 border border-red-800/40 text-red-300 font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
-                    {lastGapResult?.gaps?.length ?? 0} gaps identified
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-red-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                    {lastGapResult?.gaps?.length ?? 0} Gaps Identified
                   </span>
                 </div>
               </div>
             ) : (
-              <div>
-                <p className="text-xs text-blue-400 font-mono uppercase tracking-widest mb-2">No analysis yet</p>
-                <Link
-                  to="/gap-analysis"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors"
-                >
-                  Run Gap Analysis
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
+              <p className="text-slate-400 text-sm max-w-sm">
+                No analysis found for <strong>{orgProfile.organization_name}</strong> yet. Run your first check to see your score.
+              </p>
             )}
-
-            {/* Framework tag */}
-            <div className="mt-5 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-900/50 border border-blue-700/40 text-blue-300 text-xs font-semibold font-mono">
-                {frameworkLabel}
-              </span>
-              {orgProfile.industry && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/50 border border-slate-700 text-slate-300 text-xs font-medium">
-                  {orgProfile.industry}
-                </span>
-              )}
-            </div>
           </div>
 
-          {/* Right: 3D Globe */}
-          <div className="flex-shrink-0 w-full lg:w-64 h-52 lg:h-auto relative">
-            <Suspense fallback={
-              <div className="w-full h-full flex items-center justify-center opacity-20">
-                <div className="w-12 h-12 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
-              </div>
-            }>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/gap-analysis"
+              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-900/20 transition-all active:scale-95"
+            >
+              {complianceScore !== null ? 'View Gap Analysis' : 'Run Gap Analysis'}
+            </Link>
+            <Link
+              to="/asset-register"
+              className="px-6 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-bold border border-slate-700 transition-all"
+            >
+              Update Assets
+            </Link>
+          </div>
+        </div>
+
+        {/* Right: 3D Globe with refined container */}
+        <div className="flex-shrink-0 w-full lg:w-[400px] h-64 lg:h-auto relative flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-gradient-to-l from-[#0b192c] to-transparent pointer-events-none z-10" />
+          <div className="w-full h-full relative z-0">
+            <Suspense fallback={null}>
               <ComplianceGlobe score={complianceScore ?? 0} />
             </Suspense>
           </div>
+          {/* Subtle ring overlays to match pencil design */}
+          <div className="absolute w-72 h-72 border border-slate-800 rounded-full opacity-30 pointer-events-none" />
+          <div className="absolute w-56 h-56 border border-slate-700/50 rounded-full opacity-20 pointer-events-none" />
         </div>
       </div>
+
+      {/* ── Next Steps Checklist (no gap analysis yet) ─────────────── */}
+      {!lastGapResult && orgProfile && (
+        <div className="mb-8 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wide mb-1">Next Steps</h2>
+          <p className="text-xs text-slate-500 mb-4">Continue setting up your compliance programme</p>
+          <div className="space-y-2">
+            <ChecklistItem step={1} label="Complete Onboarding" description="Organisation profile created" to="/onboarding" done />
+            <ChecklistItem step={2} label="Run Gap Analysis" description="Identify compliance gaps against your framework" to="/gap-analysis" active />
+            <ChecklistItem step={3} label="Generate Policies" description="Create audit-ready policy documents" to="/policy-generator" />
+            <ChecklistItem step={4} label="Upload Evidence" description="Attach evidence to controls for audit readiness" to="/evidence" />
+          </div>
+        </div>
+      )}
 
       {/* ── Register Summary Cards ───────────────────────────────── */}
       {summaryLoading && (
