@@ -24,7 +24,7 @@ const DPOAssist = lazy(() => import('./pages/DPOAssist'))
 const Verification = lazy(() => import('./pages/Verification'))
 const Assessment = lazy(() => import('./pages/Assessment'))
 const AWSAssessment = lazy(() => import('./pages/AWSAssessment'))
-const LogicComparison = lazy(() => import('./pages/LogicComparison'))
+const ComponentDemo = lazy(() => import('./pages/ComponentDemo'))
 
 function RouteFallback() {
   return (
@@ -92,6 +92,7 @@ const NAV = [
     children: [
       { to: '/security', label: 'Security', icon: LockIcon },
       { to: '/onboarding', label: 'Onboarding', icon: ClipboardIcon },
+      { to: '/ui-demo', label: 'UI Demo', icon: ShieldIcon, id: 'ui-demo-link' },
     ],
   },
 ]
@@ -472,7 +473,7 @@ function AppShell() {
                 <Route path="/dpo-assist" element={<ProtectedRoute><DPOAssist /></ProtectedRoute>} />
                 <Route path="/dpia" element={<ProtectedRoute><DPOAssist defaultTab="dpia" /></ProtectedRoute>} />
                 <Route path="/hire-dpo" element={<ProtectedRoute><DPOAssist defaultTab="hire" /></ProtectedRoute>} />
-                <Route path="/logic-comparison" element={<ProtectedRoute><LogicComparison /></ProtectedRoute>} />
+                <Route path="/ui-demo" element={<ProtectedRoute><ComponentDemo /></ProtectedRoute>} />
               </Routes>
             </Suspense>
           </ErrorBoundary>
