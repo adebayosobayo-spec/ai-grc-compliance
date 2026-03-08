@@ -132,7 +132,9 @@ async def chat(req: Request, request: ChatRequest):
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Chat failed: {str(e)}")
+        import traceback
+        logging.getLogger(__name__).error("Chat failed: %s\n%s", e, traceback.format_exc())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Chat failed: {type(e).__name__}: {str(e)}")
 
 
 @router.get("/frameworks")
