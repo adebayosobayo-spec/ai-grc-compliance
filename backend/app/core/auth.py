@@ -1,13 +1,17 @@
 """Supabase JWT authentication for FastAPI.
 
-Verifies Supabase Auth JWTs using the project's JWT secret (HS256).
-Zero network calls per request — all verification is local.
+Two verification strategies:
+1. Local HS256 verification (if SUPABASE_JWT_SECRET is set) — zero network calls.
+2. Remote verification via Supabase /auth/v1/user endpoint — one network call,
+   but works without the JWT secret.
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
 import jwt
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -16,6 +20,7 @@ from app.core.config import settings
 from app.database import get_db
 from app.models.database_models import OrganizationProfile
 
+logger = logging.getLogger(__name__)
 _bearer = HTTPBearer(auto_error=False)
 
 
@@ -25,29 +30,12 @@ class CurrentUser:
     email: str
 
 
-def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
-) -> CurrentUser:
-    """Decode and validate a Supabase JWT. Returns the authenticated user."""
-    if credentials is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    token = credentials.credentials
-    secret = settings.supabase_jwt_secret
-    if not secret:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Auth not configured on server",
-        )
-
+def _verify_local(token: str) -> CurrentUser:
+    """Verify JWT locally using the HS256 secret."""
     try:
         payload = jwt.decode(
             token,
-            secret,
+            settings.supabase_jwt_secret,
             algorithms=["HS256"],
             audience="authenticated",
         )
@@ -71,8 +59,70 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token missing subject",
         )
-
     return CurrentUser(id=user_id, email=email)
+
+
+def _verify_remote(token: str) -> CurrentUser:
+    """Verify token by calling Supabase Auth /auth/v1/user."""
+    if not settings.supabase_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Auth not configured on server",
+        )
+    try:
+        resp = httpx.get(
+            f"{settings.supabase_url}/auth/v1/user",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "apikey": settings.supabase_anon_key,
+            },
+            timeout=5,
+        )
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Auth service unreachable",
+        )
+
+    if resp.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    data = resp.json()
+    user_id = data.get("id")
+    email = data.get("email", "")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing user",
+        )
+    return CurrentUser(id=user_id, email=email)
+
+
+def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+) -> CurrentUser:
+    """Decode and validate a Supabase JWT. Returns the authenticated user.
+
+    Uses local HS256 verification when JWT secret is available,
+    falls back to Supabase remote verification otherwise.
+    """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = credentials.credentials
+
+    if settings.supabase_jwt_secret:
+        return _verify_local(token)
+    else:
+        return _verify_remote(token)
 
 
 # Optional dependency — returns None instead of 401 for public endpoints
