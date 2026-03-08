@@ -3,7 +3,7 @@ Main FastAPI application entry point.
 """
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -47,6 +47,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch unhandled exceptions and return a safe message."""
+    # Let FastAPI handle its own HTTPExceptions (preserves endpoint error detail)
+    if isinstance(exc, HTTPException):
+        raise exc
     request_id = getattr(request.state, "request_id", "unknown")
     logger.exception("Unhandled error [request_id=%s]", request_id)
     return JSONResponse(
