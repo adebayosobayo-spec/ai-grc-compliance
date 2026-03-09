@@ -71,9 +71,9 @@ class SubscribeRequest(_BaseModel):
 
 
 @router.post("/subscribe")
-async def subscribe(request: SubscribeRequest, db: Session = Depends(get_db)):
+async def subscribe(body: SubscribeRequest, db: Session = Depends(get_db)):
     """Save an email address for the early-access waitlist."""
-    email = request.email.strip().lower()
+    email = body.email.strip().lower()
     if not email or "@" not in email:
         raise HTTPException(status_code=422, detail="Invalid email address")
     try:
@@ -82,8 +82,8 @@ async def subscribe(request: SubscribeRequest, db: Session = Depends(get_db)):
             return {"status": "already_subscribed", "message": "You're already on the list!"}
         subscriber = EmailSubscriber(
             email=email,
-            source=request.source,
-            framework=request.framework,
+            source=body.source,
+            framework=body.framework,
         )
         db.add(subscriber)
         db.commit()
@@ -95,7 +95,7 @@ async def subscribe(request: SubscribeRequest, db: Session = Depends(get_db)):
 
 @router.post("/chat", response_model=ChatResponse)
 @limiter.limit("20/minute")
-async def chat(req: Request, request: ChatRequest):
+async def chat(request: Request, body: ChatRequest):
     """
     COMPLIANA — public AI compliance advisor.
 
@@ -104,9 +104,9 @@ async def chat(req: Request, request: ChatRequest):
     """
     try:
         result = claude_service.chat(
-            framework=request.framework.value,
-            question=request.question,
-            context=request.context,
+            framework=body.framework.value,
+            question=body.question,
+            context=body.context,
         )
 
         ai_data = result["data"]
@@ -122,8 +122,8 @@ async def chat(req: Request, request: ChatRequest):
             answer_md += f"\n\n> **Key point:** {key_point}"
 
         return ChatResponse(
-            framework=request.framework,
-            question=request.question,
+            framework=body.framework,
+            question=body.question,
             answer=answer_md,
             references=ai_data.get("references", []),
             related_controls=ai_data.get("related_controls", []),
@@ -132,8 +132,6 @@ async def chat(req: Request, request: ChatRequest):
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except Exception as e:
-        import traceback
-        logging.getLogger(__name__).error("Chat failed: %s\n%s", e, traceback.format_exc())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Chat failed: {type(e).__name__}: {str(e)}")
 
 
@@ -239,27 +237,27 @@ def _build_practices_summary(req: OnboardingRequest) -> str:
 
 @router.post("/onboarding", response_model=OrganizationProfile)
 async def save_onboarding(
-    request: OnboardingRequest,
-    req: Request,
+    body: OnboardingRequest,
+    request: Request,
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
     """Save organisational onboarding profile and auto-generate initial registers."""
     try:
         session_id = str(uuid.uuid4())
-        summary = _build_practices_summary(request)
+        summary = _build_practices_summary(body)
 
         db_profile = DBOrganizationProfile(
             session_id=session_id,
             user_id=user.id,
-            organization_name=request.organization_name,
-            industry=request.industry,
-            employee_count=request.employee_count,
-            compliance_framework=request.compliance_framework.value,
-            infrastructure_type=request.infrastructure_type,
-            risk_appetite=request.risk_appetite,
-            compliance_timeline=request.compliance_timeline,
-            onboarding_data=request.model_dump(mode='json'),
+            organization_name=body.organization_name,
+            industry=body.industry,
+            employee_count=body.employee_count,
+            compliance_framework=body.compliance_framework.value,
+            infrastructure_type=body.infrastructure_type,
+            risk_appetite=body.risk_appetite,
+            compliance_timeline=body.compliance_timeline,
+            onboarding_data=body.model_dump(mode='json'),
             current_practices_summary=summary,
         )
         db.add(db_profile)
@@ -268,26 +266,26 @@ async def save_onboarding(
 
         profile = OrganizationProfile(
             session_id=session_id,
-            organization_name=request.organization_name,
-            industry=request.industry,
-            employee_count=request.employee_count,
-            compliance_framework=request.compliance_framework,
-            infrastructure_type=request.infrastructure_type,
-            risk_appetite=request.risk_appetite,
-            compliance_timeline=request.compliance_timeline,
-            has_security_policy=request.has_security_policy,
-            has_security_team=request.has_security_team,
-            has_incident_response=request.has_incident_response,
-            existing_certifications=request.existing_certifications,
-            data_types_handled=request.data_types_handled,
-            biggest_concerns=request.biggest_concerns,
+            organization_name=body.organization_name,
+            industry=body.industry,
+            employee_count=body.employee_count,
+            compliance_framework=body.compliance_framework,
+            infrastructure_type=body.infrastructure_type,
+            risk_appetite=body.risk_appetite,
+            compliance_timeline=body.compliance_timeline,
+            has_security_policy=body.has_security_policy,
+            has_security_team=body.has_security_team,
+            has_incident_response=body.has_incident_response,
+            existing_certifications=body.existing_certifications,
+            data_types_handled=body.data_types_handled,
+            biggest_concerns=body.biggest_concerns,
             current_practices_summary=summary,
-            additional_context=request.additional_context,
+            additional_context=body.additional_context,
             created_at=db_profile.created_at,
         )
 
         register_service.auto_generate_from_onboarding(db, session_id, profile)
-        audit_service.log_action(db, user_id=user.id, action="create", resource_type="onboarding", resource_id=session_id, session_id=session_id, details={"organization": request.organization_name, "framework": request.compliance_framework.value}, request=req)
+        audit_service.log_action(db, user_id=user.id, action="create", resource_type="onboarding", resource_id=session_id, session_id=session_id, details={"organization": body.organization_name, "framework": body.compliance_framework.value}, request=request)
         return profile
     except Exception as e:
         db.rollback()
@@ -327,11 +325,11 @@ async def get_onboarding(
 
 @router.post("/verify", response_model=VerificationResponse)
 @limiter.limit("10/minute")
-async def verify_document(req: Request, request: VerificationRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+async def verify_document(request: Request, body: VerificationRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Two-layer document verification (structural + semantic)."""
     try:
-        result = await verification_service.verify_document(request)
-        audit_service.log_action(db, user_id=user.id, action="verify", resource_type="document", details={"framework": request.framework.value if hasattr(request, 'framework') else ""}, request=req)
+        result = await verification_service.verify_document(body)
+        audit_service.log_action(db, user_id=user.id, action="verify", resource_type="document", details={"framework": body.framework.value if hasattr(body, 'framework') else ""}, request=request)
         return result
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
@@ -341,11 +339,11 @@ async def verify_document(req: Request, request: VerificationRequest, db: Sessio
 
 @router.post("/gap-analysis", response_model=GapAnalysisResponse)
 @limiter.limit("5/minute")
-async def perform_gap_analysis(req: Request, request: GapAnalysisRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+async def perform_gap_analysis(request: Request, body: GapAnalysisRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Perform comprehensive gap analysis for ISO 27001 or ISO 42001."""
     try:
-        result = await gap_analysis_service.perform_gap_analysis(request)
-        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="gap_analysis", details={"framework": request.framework.value, "organization": request.organization_name}, request=req)
+        result = await gap_analysis_service.perform_gap_analysis(body)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="gap_analysis", details={"framework": body.framework.value, "organization": body.organization_name}, request=request)
         return result
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
@@ -355,11 +353,11 @@ async def perform_gap_analysis(req: Request, request: GapAnalysisRequest, db: Se
 
 @router.post("/generate-policy", response_model=PolicyGeneratorResponse)
 @limiter.limit("5/minute")
-async def generate_policy(req: Request, request: PolicyGeneratorRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+async def generate_policy(request: Request, body: PolicyGeneratorRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Generate compliance policy documents."""
     try:
-        result = await policy_generator_service.generate_policy(request)
-        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="policy", details={"framework": request.framework.value, "policy_type": request.policy_type}, request=req)
+        result = await policy_generator_service.generate_policy(body)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="policy", details={"framework": body.framework.value, "policy_type": body.policy_type}, request=request)
         return result
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Policy generation failed validation: {str(e)}")
@@ -369,11 +367,11 @@ async def generate_policy(req: Request, request: PolicyGeneratorRequest, db: Ses
 
 @router.post("/assessment", response_model=AssessmentResponse)
 @limiter.limit("5/minute")
-async def perform_assessment(req: Request, request: AssessmentRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+async def perform_assessment(request: Request, body: AssessmentRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Perform compliance assessment for a specific control."""
     try:
-        result = await assessment_service.assess_control(request)
-        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="assessment", details={"framework": request.framework.value, "control_id": request.control_id}, request=req)
+        result = await assessment_service.assess_control(body)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="assessment", details={"framework": body.framework.value, "control_id": body.control_id}, request=request)
         return result
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -383,32 +381,32 @@ async def perform_assessment(req: Request, request: AssessmentRequest, db: Sessi
 
 @router.post("/action-plan", response_model=ActionPlanResponse)
 @limiter.limit("5/minute")
-async def generate_action_plan(req: Request, request: ActionPlanRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+async def generate_action_plan(request: Request, body: ActionPlanRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Generate remediation action plan for identified gaps."""
     try:
         result = claude_service.generate_action_plan(
-            framework=request.framework.value,
-            organization_name=request.organization_name,
-            gaps=request.gaps,
-            priority=request.priority,
-            timeline=request.timeline,
+            framework=body.framework.value,
+            organization_name=body.organization_name,
+            gaps=body.gaps,
+            priority=body.priority,
+            timeline=body.timeline,
         )
 
         ai_data = result["data"]
         actions = [ActionItem(**action) for action in ai_data.get("actions", [])]
 
         response = ActionPlanResponse(
-            framework=request.framework,
-            organization_name=request.organization_name,
+            framework=body.framework,
+            organization_name=body.organization_name,
             plan_date=datetime.now(),
-            priority=request.priority,
+            priority=body.priority,
             total_actions=ai_data.get("total_actions", len(actions)),
             estimated_completion=ai_data.get("estimated_completion", ""),
             actions=actions,
             milestones=ai_data.get("milestones", []),
             budget_estimate=ai_data.get("budget_estimate"),
         )
-        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="action_plan", details={"framework": request.framework.value, "organization": request.organization_name, "total_actions": len(actions)}, request=req)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="action_plan", details={"framework": body.framework.value, "organization": body.organization_name, "total_actions": len(actions)}, request=request)
         return response
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
@@ -648,20 +646,20 @@ async def get_register_summary(session_id: str, db: Session = Depends(get_db), u
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/export-audit-pack")
-async def export_audit_pack(request: AuditPackRequest, req: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+async def export_audit_pack(body: AuditPackRequest, request: Request, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Export a complete audit pack as a ZIP archive."""
     try:
-        verify_session_ownership(request.session_id, user, db)
+        verify_session_ownership(body.session_id, user, db)
         zip_bytes = build_audit_pack(
             db,
-            session_id=request.session_id,
-            org_name=request.organization_name,
-            framework=request.framework.value,
+            session_id=body.session_id,
+            org_name=body.organization_name,
+            framework=body.framework.value,
         )
-        safe_name = request.organization_name.replace(" ", "_")[:30]
+        safe_name = body.organization_name.replace(" ", "_")[:30]
         filename = f"COMPLAI_Audit_Pack_{safe_name}.zip"
 
-        audit_service.log_action(db, user_id=user.id, action="export", resource_type="audit_pack", session_id=request.session_id, details={"framework": request.framework.value, "organization": request.organization_name}, request=req)
+        audit_service.log_action(db, user_id=user.id, action="export", resource_type="audit_pack", session_id=body.session_id, details={"framework": body.framework.value, "organization": body.organization_name}, request=request)
         return StreamingResponse(
             io.BytesIO(zip_bytes),
             media_type="application/zip",
@@ -714,34 +712,34 @@ REGISTER_PROMPTS = {
 
 @router.post("/generate-register")
 @limiter.limit("5/minute")
-async def generate_register(req: Request, request: GenerateRegisterRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
+async def generate_register(request: Request, body: GenerateRegisterRequest, db: Session = Depends(get_db), user: CurrentUser = Depends(get_current_user)):
     """Use Claude to generate structured register entries for any register type."""
-    reg = REGISTER_PROMPTS.get(request.register_type)
+    reg = REGISTER_PROMPTS.get(body.register_type)
     if not reg:
-        raise HTTPException(status_code=400, detail=f"Unknown register type: {request.register_type}")
+        raise HTTPException(status_code=400, detail=f"Unknown register type: {body.register_type}")
 
-    fw_label = "ISO/IEC 42001:2023 (AI Management)" if "42001" in request.framework else "ISO/IEC 27001:2022 (Information Security)"
+    fw_label = "ISO/IEC 42001:2023 (AI Management)" if "42001" in body.framework else "ISO/IEC 27001:2022 (Information Security)"
     columns = reg["columns"]
     example = reg.get("example", "")
 
-    prompt = f"""You are a compliance consultant. {reg['instruction']} for {request.organization_name} in the {request.industry} industry, aligned with {fw_label}.
+    prompt = f"""You are a compliance consultant. {reg['instruction']} for {body.organization_name} in the {body.industry} industry, aligned with {fw_label}.
 
 Organisation context:
-{request.current_practices or 'General organisation with standard IT infrastructure.'}
+{body.current_practices or 'General organisation with standard IT infrastructure.'}
 
 Generate 8-12 realistic entries. Return ONLY a valid JSON array of objects with these keys: {columns}
 
 {f'Example entry: {example}' if example else ''}
 
 Rules:
-- Be specific and realistic for {request.organization_name} and the {request.industry} industry
+- Be specific and realistic for {body.organization_name} and the {body.industry} industry
 - Use real-world examples (e.g. actual software names, realistic department names)
 - Entries must be relevant to {fw_label}
 - Return ONLY the JSON array, no markdown, no explanation"""
 
     try:
         result = claude_service._call_claude("architect", prompt, max_tokens=3000)
-        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="register", details={"register_type": request.register_type, "framework": request.framework}, request=req)
+        audit_service.log_action(db, user_id=user.id, action="generate", resource_type="register", details={"register_type": body.register_type, "framework": body.framework}, request=request)
         return {"entries": result["data"], "register_type": request.register_type}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Register generation failed: {str(e)}")
