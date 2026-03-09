@@ -58,7 +58,9 @@ class GapAnalysisService:
             return get_iso27001_controls()
         if framework == ComplianceFramework.ISO_42001:
             return get_iso42001_controls()
-        raise ValueError(f"Unsupported framework: {framework}")
+        # For non-ISO frameworks (GDPR, NDPR, etc.) we don't have a
+        # built-in control catalogue — Claude handles the full analysis.
+        return []
 
     def _extract_keywords(self, control: Dict) -> Set[str]:
         text = f"{control.get('name', '')} {control.get('description', '')}"
@@ -150,7 +152,10 @@ class GapAnalysisService:
         )
 
         ai_pct = ai_data.get("compliance_percentage", preliminary_pct)
-        compliant_controls = round((ai_pct / 100) * total_controls)
+        ai_total = ai_data.get("total_controls", total_controls) or len(gap_controls)
+        if ai_total and not total_controls:
+            total_controls = ai_total
+        compliant_controls = round((ai_pct / 100) * total_controls) if total_controls else 0
 
         return GapAnalysisResponse(
             framework=request.framework,
