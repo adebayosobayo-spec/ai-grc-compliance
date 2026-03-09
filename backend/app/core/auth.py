@@ -64,17 +64,18 @@ def _verify_local(token: str) -> CurrentUser:
 
 def _verify_remote(token: str) -> CurrentUser:
     """Verify token by calling Supabase Auth /auth/v1/user."""
-    if not settings.supabase_url:
+    url = settings.supabase_url_clean
+    if not url:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Auth not configured on server",
         )
     try:
         resp = httpx.get(
-            f"{settings.supabase_url}/auth/v1/user",
+            f"{url}/auth/v1/user",
             headers={
                 "Authorization": f"Bearer {token}",
-                "apikey": settings.supabase_anon_key,
+                "apikey": settings.supabase_anon_key_clean,
             },
             timeout=5,
         )

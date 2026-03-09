@@ -740,7 +740,7 @@ Rules:
     try:
         result = claude_service._call_claude("architect", prompt, max_tokens=3000)
         audit_service.log_action(db, user_id=user.id, action="generate", resource_type="register", details={"register_type": body.register_type, "framework": body.framework}, request=request)
-        return {"entries": result["data"], "register_type": request.register_type}
+        return {"entries": result["data"], "register_type": body.register_type}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Register generation failed: {str(e)}")
 

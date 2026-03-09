@@ -32,11 +32,23 @@ class Settings(BaseSettings):
     # Security
     secret_key: str = Field(default="change-this-in-production")
 
-    # Supabase Auth & Storage
+    # Supabase Auth & Storage (stripped to avoid \n from env vars)
     supabase_url: str = Field(default="", validation_alias="SUPABASE_URL")
     supabase_anon_key: str = Field(default="", validation_alias="SUPABASE_ANON_KEY")
     supabase_jwt_secret: str = Field(default="", validation_alias="SUPABASE_JWT_SECRET")
     supabase_service_role_key: str = Field(default="", validation_alias="SUPABASE_SERVICE_ROLE_KEY")
+
+    @property
+    def supabase_url_clean(self) -> str:
+        return self.supabase_url.strip().rstrip("/")
+
+    @property
+    def supabase_anon_key_clean(self) -> str:
+        return self.supabase_anon_key.strip()
+
+    @property
+    def supabase_service_role_key_clean(self) -> str:
+        return self.supabase_service_role_key.strip()
 
     # CORS
     allowed_origins: str = Field(

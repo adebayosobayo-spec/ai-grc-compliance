@@ -10,10 +10,15 @@ from app.core.config import settings
 _BUCKET = "evidence-files"
 
 
+def _base_url() -> str:
+    return _base_url()_clean
+
+
 def _headers() -> dict:
+    key = settings.supabase_service_role_key_clean
     return {
-        "apikey": settings.supabase_service_role_key,
-        "Authorization": f"Bearer {settings.supabase_service_role_key}",
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
     }
 
 
@@ -25,7 +30,7 @@ def create_signed_upload_url(
 ) -> dict:
     """Return a short-lived signed URL the frontend can PUT to directly."""
     path = f"{user_id}/{session_id}/{evidence_id}/{filename}"
-    url = f"{settings.supabase_url}/storage/v1/object/upload/sign/{_BUCKET}/{path}"
+    url = f"{_base_url()}/storage/v1/object/upload/sign/{_BUCKET}/{path}"
 
     resp = httpx.post(url, headers=_headers(), timeout=10)
     resp.raise_for_status()
@@ -34,7 +39,7 @@ def create_signed_upload_url(
     # Supabase returns a relative signedURL — make it absolute
     signed = data.get("signedURL") or data.get("url", "")
     if signed.startswith("/"):
-        signed = f"{settings.supabase_url}/storage/v1{signed}"
+        signed = f"{_base_url()}/storage/v1{signed}"
 
     return {"upload_url": signed, "path": f"{_BUCKET}/{path}"}
 
@@ -44,7 +49,7 @@ def create_signed_download_url(path: str, expires_in: int = 3600) -> dict:
     # Strip bucket prefix if caller included it
     clean = path.removeprefix(f"{_BUCKET}/")
     url = (
-        f"{settings.supabase_url}/storage/v1/object/sign/{_BUCKET}/{clean}"
+        f"{_base_url()}/storage/v1/object/sign/{_BUCKET}/{clean}"
     )
     resp = httpx.post(
         url,
@@ -57,6 +62,6 @@ def create_signed_download_url(path: str, expires_in: int = 3600) -> dict:
 
     signed = data.get("signedURL") or data.get("url", "")
     if signed.startswith("/"):
-        signed = f"{settings.supabase_url}/storage/v1{signed}"
+        signed = f"{_base_url()}/storage/v1{signed}"
 
     return {"download_url": signed}
