@@ -2,10 +2,20 @@
 
 from typing import List
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, model_validator
 
 
 class Settings(BaseSettings):
+
+    @model_validator(mode="after")
+    def _strip_strings(self):
+        """Strip whitespace/newlines from all str fields — Vercel env vars often have trailing \\n."""
+        for name, field_info in self.model_fields.items():
+            val = getattr(self, name, None)
+            if isinstance(val, str):
+                object.__setattr__(self, name, val.strip())
+        return self
+
     # Application
     app_name: str = Field(default="Complai - Compliance Intelligence Platform")
     app_version: str = Field(default="2.0.0")
@@ -40,15 +50,15 @@ class Settings(BaseSettings):
 
     @property
     def supabase_url_clean(self) -> str:
-        return self.supabase_url.strip().rstrip("/")
+        return self.supabase_url.rstrip("/")
 
     @property
     def supabase_anon_key_clean(self) -> str:
-        return self.supabase_anon_key.strip()
+        return self.supabase_anon_key
 
     @property
     def supabase_service_role_key_clean(self) -> str:
-        return self.supabase_service_role_key.strip()
+        return self.supabase_service_role_key
 
     # CORS
     allowed_origins: str = Field(
