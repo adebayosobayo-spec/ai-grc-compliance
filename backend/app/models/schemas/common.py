@@ -12,6 +12,13 @@ class ComplianceFramework(str, Enum):
     """Supported compliance frameworks."""
     ISO_27001 = "ISO_27001"
     ISO_42001 = "ISO_42001"
+    NDPR = "NDPR"
+    GDPR = "GDPR"
+    UK_GDPR = "UK_GDPR"
+    POPIA = "POPIA"
+    LGPD = "LGPD"
+    CCPA = "CCPA"
+    PDPA = "PDPA"
 
 
 class ComplianceLevel(str, Enum):
