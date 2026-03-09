@@ -219,9 +219,13 @@ export default function Onboarding() {
       setOrgProfile(profile)
       navigate('/gap-analysis')
     } catch (e) {
-      const msg = e?.response?.data?.detail
-        ? `Error: ${e.response.data.detail}`
-        : 'Failed to save profile. Please try again.'
+      const detail = e?.response?.data?.detail
+      let msg = 'Failed to save profile. Please try again.'
+      if (typeof detail === 'string') {
+        msg = `Error: ${detail}`
+      } else if (Array.isArray(detail)) {
+        msg = detail.map(d => d.msg || JSON.stringify(d)).join('; ')
+      }
       showError(msg)
       console.error('Onboarding error:', e?.response?.data || e)
     } finally {
