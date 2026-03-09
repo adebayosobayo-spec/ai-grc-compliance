@@ -70,19 +70,22 @@ def _verify_remote(token: str) -> CurrentUser:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Auth not configured on server",
         )
+    full_url = f"{url}/auth/v1/user"
+    logger.info("Remote auth URL: %r (len=%d)", full_url, len(full_url))
     try:
         resp = httpx.get(
-            f"{url}/auth/v1/user",
+            full_url,
             headers={
                 "Authorization": f"Bearer {token}",
                 "apikey": settings.supabase_anon_key_clean,
             },
             timeout=5,
         )
-    except httpx.RequestError:
+    except Exception as exc:
+        logger.exception("Remote auth request failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Auth service unreachable",
+            detail=f"Auth service error: {type(exc).__name__}: {exc}",
         )
 
     if resp.status_code != 200:

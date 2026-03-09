@@ -103,6 +103,21 @@ async def health_check():
     )
 
 
+@app.get(f"{settings.api_prefix}/debug-env")
+async def debug_env():
+    """Temporary: show sanitised env var diagnostics."""
+    import os
+    raw = os.environ.get("SUPABASE_URL", "")
+    return {
+        "raw_supabase_url_repr": repr(raw),
+        "raw_len": len(raw),
+        "settings_supabase_url_repr": repr(settings.supabase_url),
+        "settings_len": len(settings.supabase_url),
+        "clean_repr": repr(settings.supabase_url_clean),
+        "clean_len": len(settings.supabase_url_clean),
+    }
+
+
 # Include routers
 app.include_router(compliance.router, prefix=settings.api_prefix)
 app.include_router(audit.router, prefix=settings.api_prefix)
