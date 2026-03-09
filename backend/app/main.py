@@ -46,16 +46,19 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # ── Global exception handler — sanitise error responses ──────────
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Catch unhandled exceptions and return a safe message."""
-    # Let FastAPI handle its own HTTPExceptions (preserves endpoint error detail)
+    """Catch unhandled exceptions and return the actual error for debugging."""
+    # Preserve HTTPException detail (re-raising doesn't work in exception handlers)
     if isinstance(exc, HTTPException):
-        raise exc
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
     request_id = getattr(request.state, "request_id", "unknown")
     logger.exception("Unhandled error [request_id=%s]", request_id)
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "An internal error occurred. Please try again later.",
+            "detail": f"{type(exc).__name__}: {str(exc)}",
             "request_id": request_id,
         },
     )
