@@ -11,7 +11,7 @@ _BUCKET = "evidence-files"
 
 
 def _base_url() -> str:
-    return _base_url()_clean
+    return settings.supabase_url_clean
 
 
 def _headers() -> dict:
