@@ -334,8 +334,11 @@ Rules:
         """Assess a specific control using the 'assessor' role."""
         if framework == "ISO_27001":
             control_info = iso27001.get_control_by_id(control_id)
-        else:
+        elif framework == "ISO_42001":
             control_info = iso42001.get_control_by_id(control_id)
+        else:
+            # Non-ISO frameworks: let Claude assess from its own knowledge
+            control_info = {"id": control_id, "name": control_id, "description": f"{framework} control", "clause_reference": ""}
 
         if not control_info:
             raise ValueError(f"Control {control_id} not found in {framework}")

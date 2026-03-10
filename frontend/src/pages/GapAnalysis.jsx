@@ -112,7 +112,14 @@ function GapAnalysis() {
         return
       }
       console.error('Gap analysis failed:', err)
-      setError('Gap analysis failed. Please check your connection and try again.')
+      const detail = err?.response?.data?.detail
+      if (typeof detail === 'string') {
+        setError(`Gap analysis failed: ${detail}`)
+      } else if (Array.isArray(detail)) {
+        setError(detail.map(d => d.msg || JSON.stringify(d)).join('; '))
+      } else {
+        setError('Gap analysis failed. Please check your connection and try again.')
+      }
     } finally {
       setLoading(false)
     }

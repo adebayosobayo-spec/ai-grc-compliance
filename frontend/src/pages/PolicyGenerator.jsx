@@ -144,7 +144,8 @@ function PolicyGenerator() {
       if (isTimeout) {
         setGenError('Request timed out after 2 minutes. The backend may be overloaded — please restart it and try again.')
       } else if (detail) {
-        setGenError(`Backend error: ${detail}`)
+        const msg = typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map(d => d.msg || JSON.stringify(d)).join('; ') : JSON.stringify(detail)
+        setGenError(`Backend error: ${msg}`)
       } else {
         setGenError(`Failed to generate policy: ${error?.message || 'Unknown error'}. Check the backend terminal for details.`)
       }

@@ -33,7 +33,8 @@ class AssessmentService:
             return get_iso27001_control(control_id)
         if framework == ComplianceFramework.ISO_42001:
             return get_iso42001_control(control_id)
-        raise ValueError(f"Unsupported framework: {framework.value}")
+        # Non-ISO frameworks: return a minimal stub so Claude can still assess
+        return {"id": control_id, "name": control_id, "description": "", "clause_reference": ""}
 
     async def assess_control(self, request: AssessmentRequest) -> AssessmentResponse:
         control_def = self._get_control(request.framework, request.control_id)

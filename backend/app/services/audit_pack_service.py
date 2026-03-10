@@ -160,7 +160,18 @@ def _build_excel(sheet_name: str, build_fn, items) -> bytes:
 
 def _build_readme(org_name: str, framework: str, session_id: str) -> str:
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    fw_label = "ISO/IEC 27001:2022" if framework == "ISO_27001" else "ISO/IEC 42001:2023"
+    _FW_LABELS = {
+        "ISO_27001": "ISO/IEC 27001:2022",
+        "ISO_42001": "ISO/IEC 42001:2023",
+        "GDPR": "EU GDPR",
+        "UK_GDPR": "UK GDPR",
+        "NDPR": "Nigeria NDPR",
+        "POPIA": "South Africa POPIA",
+        "LGPD": "Brazil LGPD",
+        "CCPA": "California CCPA/CPRA",
+        "PDPA": "Singapore/Thailand PDPA",
+    }
+    fw_label = _FW_LABELS.get(framework, framework)
     return f"""COMPLAI — Audit Pack
 {'=' * 60}
 
