@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
+import { complianceAPI } from '../services/api'
 
 const DOCUMENT_TYPES = [
     {
@@ -203,19 +204,13 @@ export default function DocumentCentre() {
         if (!orgProfile) { alert('Please complete onboarding first.'); return }
         setGeneratingDoc(doc.id)
         try {
-            const res = await fetch('/api/v1/compliance/generate-register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    register_type: doc.apiKey,
-                    framework,
-                    organization_name: orgName,
-                    industry: orgProfile.industry || 'Technology',
-                    current_practices: orgProfile.current_practices || '',
-                }),
+            const data = await complianceAPI.generateRegister({
+                register_type: doc.apiKey,
+                framework,
+                organization_name: orgName,
+                industry: orgProfile.industry || 'Technology',
+                current_practices: orgProfile.current_practices_summary || orgProfile.current_practices || '',
             })
-            if (!res.ok) throw new Error('Generation failed')
-            const data = await res.json()
             const entries = Array.isArray(data.entries) ? data.entries : []
             setAllEntries(prev => ({
                 ...prev,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAppContext } from '../context/AppContext'
+import { complianceAPI } from '../services/api'
 
 const LS_KEY = 'complai_assets'
 
@@ -67,19 +68,13 @@ export default function AssetRegister() {
         if (!orgProfile) { alert('Please complete onboarding first.'); return }
         setGenerating(true)
         try {
-            const res = await fetch('/api/v1/compliance/generate-register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    register_type: 'asset_register',
-                    framework,
-                    organization_name: orgName,
-                    industry: orgProfile.industry || 'Technology',
-                    current_practices: orgProfile.current_practices || '',
-                }),
+            const data = await complianceAPI.generateRegister({
+                register_type: 'asset_register',
+                framework,
+                organization_name: orgName,
+                industry: orgProfile.industry || 'Technology',
+                current_practices: orgProfile.current_practices_summary || orgProfile.current_practices || '',
             })
-            if (!res.ok) throw new Error('Generation failed')
-            const data = await res.json()
             const entries = Array.isArray(data.entries) ? data.entries : []
             const mapped = entries.map(e => ({
                 name: e.name || '',

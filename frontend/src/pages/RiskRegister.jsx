@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAppContext } from '../context/AppContext'
+import { complianceAPI } from '../services/api'
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts'
 
 const LIKELIHOOD_LABELS = ['Very Low', 'Low', 'Medium', 'High', 'Very High']
@@ -195,18 +196,12 @@ export default function RiskRegister() {
         if (!orgProfile) { alert('Please complete onboarding first.'); return }
         setGenerating(true)
         try {
-            const gapRes = await fetch('/api/v1/compliance/gap-analysis', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    framework,
-                    organization_name: orgName,
-                    industry: orgProfile.industry || 'Technology',
-                    current_practices: orgProfile.current_practices || 'Basic security practices in place.',
-                }),
+            const gapData = await complianceAPI.performGapAnalysis({
+                framework,
+                organization_name: orgName,
+                industry: orgProfile.industry || 'Technology',
+                current_practices: orgProfile.current_practices_summary || orgProfile.current_practices || 'Basic security practices in place.',
             })
-            if (!gapRes.ok) throw new Error('Gap analysis failed')
-            const gapData = await gapRes.json()
 
             const generated = (gapData.gaps || []).map((g) => ({
                 description: `${g.control_id} — ${g.control_name}: ${g.gap_description}`,

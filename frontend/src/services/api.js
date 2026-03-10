@@ -166,6 +166,10 @@ export const complianceAPI = {
     const response = await api.get(`/compliance/registers/${sessionId}/summary`)
     return response.data
   },
+  generateRegister: async (data) => {
+    const response = await api.post('/compliance/generate-register', data, { timeout: 60000 })
+    return response.data
+  },
   exportAuditPack: async (data) => {
     const response = await api.post('/compliance/export-audit-pack', data, {
       responseType: 'blob',
