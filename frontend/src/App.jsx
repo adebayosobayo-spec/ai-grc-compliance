@@ -7,6 +7,8 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { pageView } from './utils/analytics'
 
 // Eager-load public pages for instant first paint
+import LandingPage from './pages/LandingPage'
+import ComplianceScore from './pages/ComplianceScore'
 import Chat from './pages/Chat'
 import Login from './pages/Login'
 
@@ -24,6 +26,7 @@ const DPOAssist = lazy(() => import('./pages/DPOAssist'))
 const Verification = lazy(() => import('./pages/Verification'))
 const Assessment = lazy(() => import('./pages/Assessment'))
 const AWSAssessment = lazy(() => import('./pages/AWSAssessment'))
+const QuestionnaireAnswerer = lazy(() => import('./pages/QuestionnaireAnswerer'))
 
 function RouteFallback() {
   return (
@@ -37,8 +40,8 @@ function RouteFallback() {
 const NAV = [
   {
     type: 'link',
-    to: '/',
-    label: 'COMPLIANA',
+    to: '/chat',
+    label: 'AI Advisor',
     exact: true,
     icon: ChatBubbleIcon,
   },
@@ -58,6 +61,7 @@ const NAV = [
       { to: '/aws-assessment', label: 'AWS Audit', icon: AWSIcon },
       { to: '/verification', label: 'Verification', icon: ShieldIcon },
       { to: '/action-plan', label: 'Action Plan', icon: ListIcon },
+      { to: '/questionnaire', label: 'Questionnaire AI', icon: ChatBubbleIcon },
     ],
   },
   {
@@ -451,7 +455,6 @@ function AppShell() {
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 {/* Public routes — no login required */}
-                <Route path="/" element={<Chat />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/login" element={<Login />} />
 
@@ -467,6 +470,7 @@ function AppShell() {
                 <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
                 <Route path="/aws-assessment" element={<ProtectedRoute><AWSAssessment /></ProtectedRoute>} />
                 <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
+                <Route path="/questionnaire" element={<ProtectedRoute><QuestionnaireAnswerer /></ProtectedRoute>} />
                 <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
                 <Route path="/dpo-assist" element={<ProtectedRoute><DPOAssist /></ProtectedRoute>} />
                 <Route path="/dpia" element={<ProtectedRoute><DPOAssist defaultTab="dpia" /></ProtectedRoute>} />
@@ -480,12 +484,31 @@ function AppShell() {
   )
 }
 
+function AppRouter() {
+  const location = useLocation()
+
+  // Fire GA4 page_view for public pages outside AppShell
+  useEffect(() => {
+    if (['/', '/compliance-score'].includes(location.pathname)) {
+      pageView(location.pathname)
+    }
+  }, [location.pathname])
+
+  // Public standalone pages — no sidebar shell
+  if (location.pathname === '/') return <LandingPage />
+  if (location.pathname === '/compliance-score') return <ComplianceScore />
+
+  return <AppShell />
+}
+
 function App() {
   return (
     <AuthProvider>
       <AppProvider>
         <Router>
-          <AppShell />
+          <ErrorBoundary>
+            <AppRouter />
+          </ErrorBoundary>
         </Router>
       </AppProvider>
     </AuthProvider>

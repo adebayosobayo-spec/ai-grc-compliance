@@ -22,8 +22,9 @@ from app.knowledge_base import iso27001, iso42001
 
 ROLE_PROMPTS: Dict[str, str] = {
     "architect": (
-        "You are a senior GRC architect specialising in ISO 27001 and ISO 42001 "
-        "compliance frameworks. You perform gap analyses, design remediation "
+        "You are a senior GRC architect specialising in compliance frameworks "
+        "including ISO 27001, ISO 42001, GDPR, NDPR, UK GDPR, POPIA, LGPD, "
+        "CCPA, and PDPA. You perform gap analyses, design remediation "
         "action plans, and advise on control implementation. "
         "Always return structured JSON. Never include markdown fences or "
         "commentary outside the JSON object."
@@ -64,6 +65,24 @@ ROLE_PROMPTS: Dict[str, str] = {
         "- If asked about any data protection law (GDPR, NDPR, POPIA, CCPA, UK GDPR, "
         "LGPD, PDPA) or security/AI standard (ISO 27001, ISO 42001, SOC 2, NIST), "
         "answer accurately even if it falls outside the user's selected framework.\n"
+        "Return ONLY valid JSON — no markdown fences outside the JSON."
+    ),
+    "questionnaire_responder": (
+        "You are a senior security and compliance expert answering vendor security "
+        "questionnaires on behalf of an organisation. You have deep knowledge of "
+        "ISO 27001, ISO 42001, GDPR, NDPR, POPIA, LGPD, CCPA, PDPA, SOC 2, "
+        "HIPAA, PCI DSS, and NIST frameworks.\n\n"
+        "Your task:\n"
+        "- Answer each question accurately based on the organisation's actual "
+        "security posture, policies, and practices as described in their profile.\n"
+        "- Be specific and professional — these answers go to vendors/clients.\n"
+        "- Where the organisation has a control in place, describe it confidently.\n"
+        "- Where a control is partial or missing, answer honestly but frame it "
+        "constructively (e.g. 'We are currently implementing...' or 'This is "
+        "planned for Q2...').\n"
+        "- Never fabricate controls or certifications the organisation does not have.\n"
+        "- Match the tone expected in enterprise security questionnaire responses: "
+        "concise, factual, and professional.\n"
         "Return ONLY valid JSON — no markdown fences outside the JSON."
     ),
 }
@@ -149,6 +168,17 @@ class ClaudeService:
 
     # ── Framework context builder ────────────────────────────────────────
 
+    # Human-readable names for non-ISO frameworks
+    _FRAMEWORK_LABELS = {
+        "NDPR": "Nigeria Data Protection Regulation (NDPR)",
+        "GDPR": "EU General Data Protection Regulation (GDPR)",
+        "UK_GDPR": "UK General Data Protection Regulation (UK GDPR)",
+        "POPIA": "South Africa Protection of Personal Information Act (POPIA)",
+        "LGPD": "Brazil Lei Geral de Proteção de Dados (LGPD)",
+        "CCPA": "California Consumer Privacy Act / CPRA (CCPA)",
+        "PDPA": "Personal Data Protection Act (PDPA)",
+    }
+
     def _get_framework_context(self, framework: str) -> str:
         """Build full control list context for the specified framework."""
         if framework == "ISO_27001":
@@ -158,7 +188,9 @@ class ClaudeService:
             controls = iso42001.get_all_controls()
             info = iso42001.ISO_42001_INFO
         else:
-            return ""
+            # Non-ISO frameworks: return framework name context without control list
+            label = self._FRAMEWORK_LABELS.get(framework, framework)
+            return f"Framework: {label}\n"
 
         context = (
             f"Framework: {info['name']} - {info['full_title']}\n"
@@ -206,7 +238,7 @@ IMPORTANT ACCURACY RULES:
 - Only flag controls as gaps if the organisation's stated practices genuinely do not address them.
 - Do NOT assume something is missing just because it isn't explicitly mentioned — infer reasonable coverage if the practice description implies it.
 - Be realistic: a small company with basic policies can still partially cover many controls.
-- Each gap MUST map to an actual control ID from the framework's Annex A (ISO 27001) or Annex B (ISO 42001).
+- Each gap MUST map to an actual control, article, or requirement from the {framework} framework (e.g. Annex A controls for ISO 27001, Articles for GDPR/NDPR, Sections for CCPA, etc.).
 
 Identify the TOP 8 most critical compliance gaps. Return ONLY valid JSON:
 {{
@@ -478,6 +510,62 @@ Rules:
 - Do not refuse to answer questions about frameworks other than {framework} — answer them accurately."""
 
         result = self._call_claude("advisor", prompt, max_tokens=2048)
+        return result
+
+    # ── Vendor Questionnaire Answering ─────────────────────────────────
+
+    def answer_questionnaire(
+        self,
+        framework: str,
+        organization_context: str,
+        questions: List[str],
+    ) -> Dict[str, Any]:
+        """Answer vendor/client security questionnaire questions using org context."""
+        framework_context = self._get_framework_context(framework)
+
+        questions_block = "\n".join(
+            [f"{i+1}. {q}" for i, q in enumerate(questions)]
+        )
+
+        prompt = f"""{framework_context}
+
+Organisation Profile & Security Posture:
+{organization_context}
+
+The following vendor/client security questionnaire questions need to be answered on behalf of this organisation.
+Answer each question based on the organisation's actual profile, security posture, and compliance framework.
+
+Questions:
+{questions_block}
+
+Return ONLY valid JSON:
+{{
+    "answers": [
+        {{
+            "question_number": 1,
+            "question": "The original question text",
+            "answer": "Professional, accurate answer based on the org's actual posture. 2-4 sentences.",
+            "confidence": "high|medium|low",
+            "confidence_reason": "Why this confidence level — e.g. 'directly evidenced in org profile' or 'inferred from partial controls'"
+        }}
+    ],
+    "summary": {{
+        "total_questions": <number>,
+        "high_confidence": <count>,
+        "medium_confidence": <count>,
+        "low_confidence": <count>,
+        "recommendation": "Brief note on any areas the organisation should strengthen before sending these answers"
+    }}
+}}
+
+Rules:
+- Every answer must be grounded in the organisation's actual profile. Do NOT invent controls or certifications.
+- If the profile does not provide enough information, set confidence to "low" and note what is missing.
+- Answers should be professional and ready to send to a vendor or client.
+- Be specific: reference actual policies, teams, and tools from the profile where possible.
+- For questions about certifications, only claim certifications explicitly listed in the profile."""
+
+        result = self._call_claude("questionnaire_responder", prompt, max_tokens=6000)
         return result
 
     # ── Semantic Policy Verification ─────────────────────────────────────

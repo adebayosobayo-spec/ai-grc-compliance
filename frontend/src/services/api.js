@@ -88,6 +88,12 @@ export const complianceAPI = {
     return response.data
   },
 
+  // ── Score Analysis (public — no auth required) ─────────────
+  getScoreAnalysis: async (data) => {
+    const response = await api.post('/compliance/score-analysis', data, { timeout: 60000 })
+    return response.data
+  },
+
   // ── Chat (public — no auth required) ──────────────────────
   chat: async (data) => {
     const response = await api.post('/compliance/chat', data, { timeout: 60000 })
@@ -175,6 +181,12 @@ export const complianceAPI = {
       responseType: 'blob',
       timeout: 60000,
     })
+    return response.data
+  },
+
+  // ── Questionnaire Answering ─────────────────────────────────
+  answerQuestionnaire: async (data) => {
+    const response = await api.post('/compliance/answer-questionnaire', data, { timeout: 120000 })
     return response.data
   },
 

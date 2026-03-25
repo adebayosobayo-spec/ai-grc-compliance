@@ -31,6 +31,8 @@ from app.models.schemas import (
     VerificationRequest,
     VerificationResponse,
     VerificationCheck,
+    # Questionnaire schemas
+    QuestionnaireRequest, QuestionnaireResponse,
     # Register schemas
     RiskEntryIn, RiskEntryOut,
     AssetEntryIn, AssetEntryOut,
@@ -61,6 +63,200 @@ router = APIRouter(prefix="/compliance", tags=["compliance"])
 # ══════════════════════════════════════════════════════════════════════════════
 # PUBLIC ENDPOINTS (no authentication required)
 # ══════════════════════════════════════════════════════════════════════════════
+
+# ── Quick Score Analysis (public, AI-enhanced) ────────────────
+
+class QuickScoreRequest(_BaseModel):
+    framework: str
+    answers: Dict[str, str]  # e.g. {"policy": "yes", "risk": "partial", ...}
+
+
+# Map of question IDs to their text, per framework (mirrors frontend)
+_SCORE_QUESTIONS: Dict[str, Dict[str, str]] = {
+    "ISO_27001": {
+        "policy": "Documented Information Security Policy",
+        "risk": "Regular risk assessments",
+        "access": "Access control procedures (role-based access, MFA)",
+        "incident": "Incident response plan",
+        "awareness": "Security awareness training for staff",
+        "asset": "Asset inventory (hardware, software, data)",
+        "vendor": "Third-party/vendor security risk assessments",
+        "bcp": "Business continuity / disaster recovery plan",
+    },
+    "ISO_42001": {
+        "ai_policy": "Documented AI governance policy",
+        "ai_risk": "Risk assessments on AI systems",
+        "ai_inventory": "Inventory of all AI systems in use",
+        "ai_bias": "Testing AI outputs for bias and fairness",
+        "ai_transparency": "Explainability of AI decision-making",
+        "ai_data": "Controls over data used to train/operate AI",
+        "ai_human": "Human oversight for high-risk AI decisions",
+        "ai_monitor": "Monitoring AI systems for performance drift or errors",
+    },
+    "NDPR": {
+        "dpo": "Appointed a Data Protection Officer",
+        "notice": "Privacy notice displayed before collecting data",
+        "consent": "Explicit consent before processing personal data",
+        "rights": "Data subjects can request access/correction/deletion",
+        "audit": "Annual Data Protection Audit filed with NITDA",
+        "transfer": "Safeguards for cross-border data transfers",
+        "breach": "Data breach notification procedure",
+        "thirdparty": "Third-party data protection agreements",
+    },
+    "GDPR": {
+        "lawful": "Documented lawful basis for each processing activity",
+        "privacy": "Clear, accessible privacy notice",
+        "dpo": "Appointed a Data Protection Officer (if required)",
+        "dpia": "Data Protection Impact Assessments for high-risk processing",
+        "rights": "Fulfil data subject rights requests within 30 days",
+        "breach": "Notify supervisory authority of a breach within 72 hours",
+        "ropa": "Records of Processing Activities (RoPA)",
+        "transfer": "Adequate safeguards for international data transfers",
+    },
+    "UK_GDPR": {
+        "lawful": "Documented lawful basis for each processing activity",
+        "privacy": "Clear, accessible privacy notice",
+        "dpo": "Appointed a Data Protection Officer (if required)",
+        "dpia": "Data Protection Impact Assessments for high-risk processing",
+        "rights": "Fulfil data subject rights requests within 30 days",
+        "breach": "Notify the ICO of a breach within 72 hours",
+        "ropa": "Records of Processing Activities (RoPA)",
+        "ico": "Registered with the ICO",
+    },
+    "POPIA": {
+        "officer": "Appointed Information Officer and registered with Regulator",
+        "consent": "Consent or lawful ground for processing",
+        "notice": "Notify data subjects about how their data is processed",
+        "rights": "Data subjects can access/correct/delete personal information",
+        "security": "Appropriate security safeguards to protect personal information",
+        "breach": "Process to notify Regulator and data subjects of breaches",
+        "thirdparty": "Written agreements with operators (processors)",
+        "transfer": "Safeguards for cross-border data transfers",
+    },
+    "LGPD": {
+        "basis": "Documented legal basis for each data processing activity",
+        "dpo": "Appointed a Data Protection Officer (Encarregado)",
+        "consent": "Specific, informed consent where required",
+        "rights": "Data subjects can exercise rights (access, deletion, portability)",
+        "notice": "Clear information about data processing to data subjects",
+        "security": "Technical and administrative security measures",
+        "report": "Incident response plan for reporting breaches to ANPD",
+        "transfer": "Safeguards for international data transfers",
+    },
+    "CCPA": {
+        "notice": "Notice at Collection disclosing data practices",
+        "optout": "Do Not Sell or Share My Personal Information option",
+        "rights": "Consumers can request access/deletion/correction of data",
+        "nondiscrimination": "Consumers not discriminated against for exercising rights",
+        "privacy_policy": "Privacy policy updated annually with CCPA disclosures",
+        "vendor": "Contracts with service providers limiting data use",
+        "sensitive": "Opt-in consent before processing sensitive personal information",
+        "training": "Staff trained on handling consumer privacy requests",
+    },
+    "PDPA": {
+        "consent": "Consent before collecting/using/disclosing personal data",
+        "purpose": "Data collection limited to what is necessary",
+        "notice": "Notify individuals of purposes for data collection",
+        "access": "Individuals can request access/correction of personal data",
+        "security": "Reasonable security arrangements to protect personal data",
+        "retention": "Data retention policy; data deleted when no longer needed",
+        "transfer": "Adequate protection for overseas data transfers",
+        "dpo": "Appointed a Data Protection Officer",
+    },
+}
+
+
+@router.post("/score-analysis")
+@limiter.limit("5/minute")
+async def quick_score_analysis(request: Request, body: QuickScoreRequest):
+    """
+    AI-enhanced compliance score analysis — public, no auth required.
+
+    Takes the user's self-assessment answers and returns AI-interpreted
+    insights with actual control/article mappings and recommendations.
+    """
+    questions = _SCORE_QUESTIONS.get(body.framework)
+    if not questions:
+        raise HTTPException(status_code=400, detail=f"Unsupported framework: {body.framework}")
+
+    # Build a summary of answers for Claude
+    lines = []
+    for q_id, q_text in questions.items():
+        answer = body.answers.get(q_id, "not answered")
+        lines.append(f"- {q_text}: {answer}")
+    answers_summary = "\n".join(lines)
+
+    _FW_LABELS = {
+        "ISO_27001": "ISO/IEC 27001:2022",
+        "ISO_42001": "ISO/IEC 42001:2023",
+        "NDPR": "Nigeria Data Protection Regulation (NDPR)",
+        "GDPR": "EU General Data Protection Regulation (GDPR)",
+        "UK_GDPR": "UK General Data Protection Regulation (UK GDPR)",
+        "POPIA": "South Africa Protection of Personal Information Act (POPIA)",
+        "LGPD": "Brazil Lei Geral de Proteção de Dados (LGPD)",
+        "CCPA": "California Consumer Privacy Act / CPRA (CCPA)",
+        "PDPA": "Personal Data Protection Act (PDPA)",
+    }
+    fw_label = _FW_LABELS.get(body.framework, body.framework)
+
+    prompt = f"""An organisation just completed a quick {fw_label} self-assessment. Here are their answers:
+
+{answers_summary}
+
+Based on these answers, provide an AI-interpreted compliance analysis. Be accurate — only flag genuine gaps based on the answers given.
+
+Return ONLY valid JSON:
+{{
+    "ai_score": <number 0-100, your honest assessment of their compliance level>,
+    "summary": "2-3 sentence plain-English assessment written for a non-technical executive. Be encouraging but honest.",
+    "control_gaps": [
+        {{
+            "area": "Short area name e.g. 'Incident Response'",
+            "control_ref": "The specific {fw_label} control, article, or section reference (e.g. 'Annex A 5.24' for ISO 27001, 'Article 33' for GDPR, 'Section 2.3' for NDPR)",
+            "status": "missing|partial",
+            "plain_english": "One sentence explaining why this matters, written for a non-technical reader"
+        }}
+    ],
+    "top_recommendations": [
+        {{
+            "priority": 1,
+            "action": "Specific, concrete action they should take first",
+            "effort": "Low|Medium|High",
+            "impact": "What risk this addresses in plain English"
+        }},
+        {{
+            "priority": 2,
+            "action": "Second priority action",
+            "effort": "Low|Medium|High",
+            "impact": "What risk this addresses"
+        }},
+        {{
+            "priority": 3,
+            "action": "Third priority action",
+            "effort": "Low|Medium|High",
+            "impact": "What risk this addresses"
+        }}
+    ],
+    "strengths": ["Area where they are doing well based on 'yes' answers"],
+    "risk_level": "low|medium|high|critical"
+}}
+
+Rules:
+- ai_score must reflect the ACTUAL answers, not a guess. If most answers are 'yes', the score should be high.
+- control_gaps should ONLY include areas where the answer was 'no' or 'partial'.
+- control_ref must be a real, accurate reference from {fw_label}.
+- Write everything in plain English a small business owner can understand.
+- strengths should acknowledge what they're already doing right.
+- Be encouraging and practical, not scary or overly technical."""
+
+    try:
+        result = claude_service._call_claude("advisor", prompt, max_tokens=1500)
+        return {"analysis": result["data"], "framework": body.framework}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Score analysis failed: {type(e).__name__}: {str(e)}")
+
 
 # ── Email Subscriber ─────────────────────────────────────────
 
@@ -377,6 +573,82 @@ async def perform_assessment(request: Request, body: AssessmentRequest, db: Sess
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Assessment failed: {str(e)}")
+
+
+@router.post("/answer-questionnaire", response_model=QuestionnaireResponse)
+@limiter.limit("5/minute")
+async def answer_questionnaire(
+    request: Request,
+    body: QuestionnaireRequest,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Answer vendor/client security questionnaire questions using the org's onboarded context."""
+    # Fetch the user's organization profile
+    db_profile = (
+        db.query(DBOrganizationProfile)
+        .filter(DBOrganizationProfile.user_id == user.id)
+        .order_by(DBOrganizationProfile.created_at.desc())
+        .first()
+    )
+    if not db_profile:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please complete onboarding first — we need your company profile to answer questionnaires accurately.",
+        )
+
+    # Build rich org context from the profile + onboarding data
+    data = db_profile.onboarding_data or {}
+    org_context = (
+        f"Organisation: {db_profile.organization_name}\n"
+        f"Industry: {db_profile.industry}\n"
+        f"Employee count: {db_profile.employee_count}\n"
+        f"Compliance framework: {db_profile.compliance_framework}\n"
+        f"Infrastructure: {db_profile.infrastructure_type}\n"
+        f"Risk appetite: {db_profile.risk_appetite}\n"
+        f"Compliance timeline: {db_profile.compliance_timeline}\n"
+        f"Security policy in place: {data.get('has_security_policy', 'unknown')}\n"
+        f"Dedicated security team: {data.get('has_security_team', 'unknown')}\n"
+        f"Incident response plan: {data.get('has_incident_response', 'unknown')}\n"
+        f"Business continuity plan: {data.get('has_business_continuity', 'unknown')}\n"
+        f"Risk assessments performed: {data.get('performs_risk_assessments', 'unknown')}\n"
+        f"Asset inventory: {data.get('has_asset_inventory', 'unknown')}\n"
+        f"Identity management: {data.get('uses_identity_management', 'unknown')}\n"
+        f"Third-party vendors: {data.get('has_third_party_vendors', 'unknown')}\n"
+        f"Remote workers: {data.get('has_remote_workers', 'unknown')}\n"
+        f"Cloud providers: {', '.join(data.get('cloud_providers', [])) or 'not specified'}\n"
+        f"Data types handled: {', '.join(data.get('data_types_handled', [])) or 'not specified'}\n"
+        f"Existing certifications: {', '.join(data.get('existing_certifications', [])) or 'none'}\n"
+        f"Biggest concerns: {', '.join(data.get('biggest_concerns', [])) or 'not specified'}\n"
+        f"Current practices: {db_profile.current_practices_summary}\n"
+        f"Additional context: {data.get('additional_context', 'none')}"
+    )
+
+    try:
+        result = claude_service.answer_questionnaire(
+            framework=body.framework.value,
+            organization_context=org_context,
+            questions=body.questions,
+        )
+        audit_service.log_action(
+            db,
+            user_id=user.id,
+            action="generate",
+            resource_type="questionnaire_answers",
+            details={"framework": body.framework.value, "question_count": len(body.questions)},
+            request=request,
+        )
+        response_data = result["data"]
+        return QuestionnaireResponse(
+            answers=response_data.get("answers", []),
+            summary=response_data.get("summary", {}),
+            organization_name=db_profile.organization_name,
+            framework=body.framework.value,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Questionnaire answering failed: {str(e)}")
 
 
 @router.post("/action-plan", response_model=ActionPlanResponse)
@@ -718,7 +990,18 @@ async def generate_register(request: Request, body: GenerateRegisterRequest, db:
     if not reg:
         raise HTTPException(status_code=400, detail=f"Unknown register type: {body.register_type}")
 
-    fw_label = "ISO/IEC 42001:2023 (AI Management)" if "42001" in body.framework else "ISO/IEC 27001:2022 (Information Security)"
+    _FW_LABELS = {
+        "ISO_27001": "ISO/IEC 27001:2022 (Information Security)",
+        "ISO_42001": "ISO/IEC 42001:2023 (AI Management)",
+        "NDPR": "Nigeria Data Protection Regulation (NDPR)",
+        "GDPR": "EU General Data Protection Regulation (GDPR)",
+        "UK_GDPR": "UK General Data Protection Regulation (UK GDPR)",
+        "POPIA": "South Africa Protection of Personal Information Act (POPIA)",
+        "LGPD": "Brazil Lei Geral de Proteção de Dados (LGPD)",
+        "CCPA": "California Consumer Privacy Act / CPRA (CCPA)",
+        "PDPA": "Personal Data Protection Act (PDPA)",
+    }
+    fw_label = _FW_LABELS.get(body.framework, body.framework)
     columns = reg["columns"]
     example = reg.get("example", "")
 

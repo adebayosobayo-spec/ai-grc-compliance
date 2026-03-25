@@ -65,6 +65,14 @@ from app.models.schemas.chat import (
     ChatResponse,
 )
 
+# ── questionnaire ─────────────────────────────────────────────────────────────
+from app.models.schemas.questionnaire import (
+    QuestionnaireRequest,
+    QuestionnaireAnswer,
+    QuestionnaireSummary,
+    QuestionnaireResponse,
+)
+
 # ── registers ─────────────────────────────────────────────────────────────────
 from app.models.schemas.registers import (
     RiskEntryIn,
@@ -121,6 +129,11 @@ __all__ = [
     # chat
     "ChatRequest",
     "ChatResponse",
+    # questionnaire
+    "QuestionnaireRequest",
+    "QuestionnaireAnswer",
+    "QuestionnaireSummary",
+    "QuestionnaireResponse",
     # registers
     "RiskEntryIn",
     "RiskEntryOut",

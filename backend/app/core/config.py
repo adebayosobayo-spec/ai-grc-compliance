@@ -62,7 +62,7 @@ class Settings(BaseSettings):
 
     # CORS
     allowed_origins: str = Field(
-        default="http://localhost:3000,http://localhost:5173,https://complai-seven.vercel.app"
+        default="http://localhost:3000,http://localhost:5173,https://complai-seven.vercel.app,https://complai.pages.dev"
     )
 
     @property
