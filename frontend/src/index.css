@@ -115,5 +115,4 @@ code, pre, .font-mono {
 
 @layer base {
   * { @apply outline-none; }
-  input, select, textarea { color-scheme: dark; }
 }
