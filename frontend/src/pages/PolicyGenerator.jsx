@@ -5,7 +5,7 @@ import { useAppContext } from '../context/AppContext'
 import { generatePolicyPDF } from '../utils/generatePolicyPDF'
 import { MarkdownContent as SectionContent } from '../utils/MarkdownContent'
 
-const inputCls = 'mt-1 block w-full bg-white border border-gray-300 text-slate-900 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400'
+const inputCls = 'mt-1 block w-full bg-white/[0.04] border border-white/[0.10] text-slate-100 rounded-xl py-2.5 px-3.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm placeholder-slate-600 transition-colors'
 
 const MOCK_POLICY = {
   policy: {
@@ -58,22 +58,22 @@ function LoadingPanel({ elapsed }) {
   const progress = Math.min((elapsed / 35) * 95, 95)
 
   return (
-    <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+    <div className="mt-6 bg-[#111827] rounded-xl border border-white/[0.06] p-6 text-center">
       <div className="mb-4">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border-2 border-blue-600 mb-3"
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border-2 border-primary-500 mb-3"
           style={{ animation: 'spin 1.4s linear infinite', borderTopColor: 'transparent' }}>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
-        <p className="text-slate-900 font-bold text-sm">Generating Policy Document</p>
-        <p className="text-slate-600 text-xs mt-1 font-mono">
+        <p className="text-slate-100 font-bold text-sm">Generating Policy Document</p>
+        <p className="text-slate-400 text-xs mt-1 font-mono">
           {LOADING_MESSAGES[msgIndex]}
         </p>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3">
+      <div className="w-full bg-white/[0.07] rounded-full h-1 mb-3">
         <div
-          className="h-1.5 rounded-full transition-all duration-1000 bg-blue-600"
+          className="h-1 rounded-full transition-all duration-1000 bg-gradient-to-r from-primary-600 to-primary-400"
           style={{ width: `${progress}%` }}
         />
       </div>

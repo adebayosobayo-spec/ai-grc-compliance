@@ -333,7 +333,7 @@ function AppShell() {
   }, [location.pathname])
 
   return (
-    <div className="min-h-screen bg-[#FAFBFC] flex">
+    <div className="min-h-screen bg-[#0A0F1E] flex">
       {/* Skip navigation — accessibility (WCAG 2.4.1) */}
       <a
         href="#main-content"
@@ -423,27 +423,27 @@ function AppShell() {
       {/* Main content area */}
       <div className="flex-1 lg:pl-64">
         {/* Top bar — mobile */}
-        <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4">
-          <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-md text-slate-600 hover:bg-gray-100">
+        <header className="lg:hidden sticky top-0 z-10 bg-[#060B18] border-b border-white/[0.06] h-14 flex items-center justify-between px-4">
+          <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-md text-slate-400 hover:bg-white/[0.07] cursor-pointer transition-colors">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
           </button>
           <div className="flex items-center gap-2">
             <span className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black bg-gradient-to-br from-primary-500 to-primary-700">C</span>
-            <span className="text-sm font-black tracking-widest text-slate-900">COMPLAI</span>
+            <span className="text-sm font-black tracking-widest text-white">COMPLAI</span>
           </div>
           <div className="w-8" />
         </header>
 
         {/* Onboarding banner */}
         {!orgProfile && (
-          <div className="bg-primary-50/80 backdrop-blur-sm border-b border-primary-100 px-4 py-2.5">
+          <div className="bg-primary-500/[0.08] border-b border-primary-500/20 px-4 py-2.5">
             <div className="max-w-5xl mx-auto flex items-center justify-between text-sm">
-              <p className="text-primary-800 font-medium">
+              <p className="text-primary-300 font-medium">
                 Complete onboarding to generate personalised compliance assessments and policies.
               </p>
-              <Link to="/onboarding" className="font-bold text-primary-600 hover:text-primary-700 whitespace-nowrap transition-colors duration-150 ml-4">
+              <Link to="/onboarding" className="font-bold text-primary-400 hover:text-primary-300 whitespace-nowrap transition-colors duration-150 ml-4">
                 Start Now &rarr;
               </Link>
             </div>

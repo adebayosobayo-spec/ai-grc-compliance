@@ -124,17 +124,17 @@ function Dashboard() {
 
   // ── Checklist item component ─────────────────────────────────────────
   const ChecklistItem = ({ step, label, description, to, done, active }) => (
-    <Link to={to} className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${active ? 'border-blue-300 bg-blue-50 shadow-sm' : done ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+    <Link to={to} className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${active ? 'border-primary-500/40 bg-primary-500/[0.07]' : done ? 'border-emerald-500/20 bg-emerald-500/[0.05]' : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]'}`}>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${done ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : active ? 'bg-primary-600 text-white' : 'bg-white/[0.06] text-slate-500'}`}>
         {done ? (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
         ) : step}
       </div>
       <div className="min-w-0">
-        <p className={`text-sm font-semibold ${active ? 'text-blue-700' : done ? 'text-emerald-700' : 'text-slate-700'}`}>{label}</p>
+        <p className={`text-sm font-semibold ${active ? 'text-primary-300' : done ? 'text-emerald-400' : 'text-slate-300'}`}>{label}</p>
         <p className="text-xs text-slate-500 mt-0.5">{description}</p>
       </div>
-      {active && <span className="ml-auto text-xs font-bold text-blue-600 uppercase tracking-wide self-center">Start</span>}
+      {active && <span className="ml-auto text-xs font-bold text-primary-400 uppercase tracking-wide self-center">Start →</span>}
     </Link>
   )
 
@@ -172,8 +172,8 @@ function Dashboard() {
         </div>
 
         {/* Getting Started Checklist */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6">
-          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wide mb-1">Getting Started</h2>
+        <div className="bg-[#111827] border border-white/[0.06] rounded-2xl p-6">
+          <h2 className="text-sm font-black text-slate-100 uppercase tracking-wide mb-1">Getting Started</h2>
           <p className="text-xs text-slate-500 mb-4">Complete these steps to set up your compliance programme</p>
           <div className="space-y-2">
             <ChecklistItem step={1} label="Complete Onboarding" description="Tell us about your organisation, framework, and current security posture" to="/onboarding" active />
@@ -188,9 +188,11 @@ function Dashboard() {
           <h2 className="text-sm font-black text-slate-900 uppercase tracking-wide mb-4">Supported Frameworks</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {FRAMEWORKS.map(fw => (
-              <div key={fw.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all">
-                <span className="text-2xl">{fw.icon}</span>
-                <p className="text-sm font-bold text-slate-900 mt-2">{fw.name}</p>
+              <div key={fw.id} className="bg-[#111827] border border-white/[0.06] rounded-xl p-4 hover:border-primary-500/40 transition-all cursor-default">
+                <div className="w-7 h-7 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center mb-2">
+                  <span className="text-primary-400 text-xs font-black">{fw.name.slice(0,2)}</span>
+                </div>
+                <p className="text-sm font-bold text-slate-100 mt-2">{fw.name}</p>
                 <p className="text-xs text-slate-500">{fw.full}</p>
               </div>
             ))}
@@ -290,8 +292,8 @@ function Dashboard() {
 
       {/* ── Next Steps Checklist (no gap analysis yet) ─────────────── */}
       {!lastGapResult && orgProfile && (
-        <div className="mb-8 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wide mb-1">Next Steps</h2>
+        <div className="mb-8 bg-[#111827] border border-white/[0.06] rounded-xl p-6">
+          <h2 className="text-sm font-black text-slate-100 uppercase tracking-wide mb-1">Next Steps</h2>
           <p className="text-xs text-slate-500 mb-4">Continue setting up your compliance programme</p>
           <div className="space-y-2">
             <ChecklistItem step={1} label="Complete Onboarding" description="Organisation profile created" to="/onboarding" done />
@@ -306,9 +308,9 @@ function Dashboard() {
       {summaryLoading && (
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 animate-pulse">
-              <div className="h-4 w-16 bg-gray-100 rounded mb-3" />
-              <div className="h-8 w-12 bg-gray-100 rounded" />
+            <div key={i} className="bg-[#111827] border border-white/[0.06] rounded-xl p-5 animate-pulse">
+              <div className="h-4 w-16 bg-white/[0.07] rounded mb-3" />
+              <div className="h-8 w-12 bg-white/[0.07] rounded" />
             </div>
           ))}
         </div>
@@ -319,12 +321,12 @@ function Dashboard() {
           {summaryCards.map((card) => (
             <div
               key={card.label}
-              className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm"
+              className="bg-[#111827] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.12] transition-colors"
             >
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                 {card.label}
               </p>
-              <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+              <p className={`text-3xl font-black tabular-nums ${card.color}`}>{card.value}</p>
             </div>
           ))}
         </div>
@@ -332,43 +334,43 @@ function Dashboard() {
 
       {/* ── Last Gap Analysis ────────────────────────────────────── */}
       {lastGapResult && (
-        <div className="mb-8 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="mb-8 bg-[#111827] border border-white/[0.06] rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
               Last Gap Analysis
             </h2>
             <Link
               to="/gap-analysis"
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+              className="text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors"
             >
               Run New Analysis &rarr;
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">
+            <div className="bg-white/[0.03] border border-white/[0.06] p-4 rounded-xl">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">
                 Compliance Level
               </p>
-              <p className="text-base font-bold text-slate-900 capitalize">
+              <p className="text-base font-bold text-slate-100 capitalize">
                 {lastGapResult.overall_compliance_level?.replace(/_/g, ' ')}
               </p>
             </div>
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">
+            <div className="bg-white/[0.03] border border-white/[0.06] p-4 rounded-xl">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">
                 Compliant Controls
               </p>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-black text-primary-400 tabular-nums">
                 {lastGapResult.compliant_controls}
                 <span className="text-base font-normal text-slate-500">
                   {' '}/ {lastGapResult.total_controls}
                 </span>
               </p>
             </div>
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">
+            <div className="bg-white/[0.03] border border-white/[0.06] p-4 rounded-xl">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">
                 Gaps Identified
               </p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-black text-red-400 tabular-nums">
                 {lastGapResult.gaps?.length ?? 0}
               </p>
             </div>
@@ -378,7 +380,7 @@ function Dashboard() {
 
       {/* ── Quick Actions ────────────────────────────────────────── */}
       <div className="mb-8">
-        <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-4">
+        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
           Quick Actions
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -386,12 +388,12 @@ function Dashboard() {
             <Link
               key={action.to}
               to={action.to}
-              className="group bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all"
+              className="group bg-[#111827] border border-white/[0.06] rounded-xl p-5 hover:border-primary-500/40 hover:shadow-[0_0_0_1px_rgba(99,102,241,0.1)] transition-all cursor-pointer"
             >
-              <div className={`w-10 h-10 rounded-lg border flex items-center justify-center mb-3 ${action.color}`}>
+              <div className={`w-10 h-10 rounded-xl border flex items-center justify-center mb-3 ${action.color}`}>
                 {action.icon}
               </div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-sm font-semibold text-slate-200 mb-1 group-hover:text-primary-300 transition-colors">
                 {action.label}
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">{action.desc}</p>
@@ -401,15 +403,15 @@ function Dashboard() {
       </div>
 
       {/* ── Framework Info ────────────────────────────────────────── */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">
+      <div className="bg-[#111827] border border-white/[0.06] rounded-xl p-6">
+        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
           Framework
         </h2>
-        <h3 className="text-lg font-bold text-slate-900 mb-4">
+        <h3 className="text-lg font-bold text-slate-100 mb-4">
           {FW_FULL[framework] || framework}
         </h3>
 
-        <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+        <p className="text-sm text-slate-400 mb-4 leading-relaxed">
           {framework === 'ISO_27001' ? 'ISO/IEC 27001 is the international standard for information security management systems (ISMS). It provides a systematic approach to managing sensitive company information so that it remains secure.'
             : framework === 'ISO_42001' ? 'ISO/IEC 42001 is the first international standard for AI management systems. It helps organisations develop, provide, and use AI responsibly through a comprehensive management framework.'
               : framework === 'NDPR' ? 'The Nigeria Data Protection Regulation (NDPR) governs the collection, storage, and processing of personal data of Nigerian residents. It establishes rights of data subjects and obligations for data controllers.'
@@ -433,8 +435,8 @@ function Dashboard() {
                         : framework === 'CCPA' ? ['Right to know, delete, and opt-out', 'Do Not Sell/Share requirements', 'Privacy notices and consent mechanisms']
                           : ['Consent-based data processing', 'Data Protection Officer requirements', 'Cross-border transfer restrictions']
           ).map((item) => (
-            <li key={item} className="flex items-start gap-2 text-sm text-slate-600">
-              <span className="text-blue-600 flex-shrink-0 mt-0.5">&rarr;</span>
+            <li key={item} className="flex items-start gap-2 text-sm text-slate-400">
+              <span className="text-primary-500 flex-shrink-0 mt-0.5">&rarr;</span>
               {item}
             </li>
           ))}
