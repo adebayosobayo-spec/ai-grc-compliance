@@ -109,13 +109,14 @@ function NavItem({ to, label, icon: Icon, exact, onClick }) {
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${active
-        ? 'bg-primary-600 text-white'
-        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 ${active
+        ? 'bg-primary-500/[0.12] text-primary-300 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.22)]'
+        : 'text-slate-400 hover:bg-white/[0.055] hover:text-slate-100'
         }`}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
       <span>{label}</span>
+      {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-400 animate-pulse-subtle" />}
     </Link>
   )
 }
@@ -130,23 +131,22 @@ function NavGroup({ label, icon: GroupIcon, children, onChildClick }) {
     <div>
       <button
         onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isChildActive
-          ? 'text-white bg-slate-800'
-          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 ${isChildActive
+          ? 'text-slate-100 bg-white/[0.07]'
+          : 'text-slate-400 hover:bg-white/[0.055] hover:text-slate-100'
           }`}
       >
         <GroupIcon className="w-4 h-4 flex-shrink-0" />
         <span className="flex-1 text-left">{label}</span>
         <svg
-          className={`w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''
-            }`}
+          className={`w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
       </button>
       {open && (
-        <div className="mt-0.5 ml-3 pl-3 border-l border-slate-700 space-y-0.5">
+        <div className="mt-0.5 ml-3 pl-3 border-l border-white/[0.07] space-y-0.5">
           {children.map(child => {
             const active = location.pathname === child.to
             return (
@@ -154,9 +154,9 @@ function NavGroup({ label, icon: GroupIcon, children, onChildClick }) {
                 key={child.to}
                 to={child.to}
                 onClick={onChildClick}
-                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors ${active
-                  ? 'text-white font-semibold bg-primary-600/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm cursor-pointer transition-all duration-200 ${active
+                  ? 'text-primary-300 font-semibold bg-primary-500/[0.12]'
+                  : 'text-slate-500 hover:text-slate-100 hover:bg-white/[0.055]'
                   }`}
               >
                 <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -343,19 +343,19 @@ function AppShell() {
       </a>
 
       {/* Sidebar — desktop */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-slate-900" role="navigation" aria-label="Main navigation">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-navy-900 border-r border-white/[0.04]" role="navigation" aria-label="Main navigation">
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-800">
-          <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black bg-primary-600">C</span>
+        <div className="flex items-center gap-3 px-5 h-16 border-b border-white/[0.06]">
+          <span className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-black bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-900/50">C</span>
           <span className="text-base font-black tracking-widest text-white">COMPLAI</span>
         </div>
 
         {/* Framework badge */}
         {orgProfile && (
           <div className="px-4 pt-4 pb-2">
-            <div className="bg-slate-800 rounded-lg px-3 py-2 text-xs">
-              <p className="text-slate-400 font-medium">Framework</p>
-              <p className="text-primary-400 font-bold font-mono mt-0.5">
+            <div className="rounded-xl px-3 py-2.5 text-xs bg-white/[0.04] border border-white/[0.07]">
+              <p className="text-slate-500 font-medium uppercase tracking-wider text-[10px]">Framework</p>
+              <p className="text-primary-400 font-bold font-mono mt-1">
                 {{ ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }[orgProfile.compliance_framework] || orgProfile.compliance_framework}
               </p>
             </div>
@@ -366,16 +366,16 @@ function AppShell() {
         <SidebarNav />
 
         {/* Profile footer */}
-        <div className="px-4 py-3 border-t border-slate-800 space-y-2">
+        <div className="px-4 py-3 border-t border-white/[0.06] space-y-2">
           {orgProfile && (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-white font-medium truncate max-w-[160px]">
+              <p className="text-sm text-slate-200 font-semibold truncate max-w-[160px]">
                 {orgProfile.organization_name}
               </p>
               <button
                 onClick={clearProfile}
                 title="Clear profile"
-                className="text-slate-400 hover:text-red-400 transition-colors text-xs px-1"
+                className="text-slate-500 hover:text-red-400 transition-colors duration-150 text-xs px-1 cursor-pointer"
               >
                 Clear
               </button>
@@ -383,16 +383,16 @@ function AppShell() {
           )}
           {user ? (
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-400 truncate max-w-[160px]">{user.email}</p>
+              <p className="text-xs text-slate-500 truncate max-w-[160px]">{user.email}</p>
               <button
                 onClick={() => signOut()}
-                className="text-xs text-slate-400 hover:text-red-400 transition-colors"
+                className="text-xs text-slate-500 hover:text-red-400 transition-colors duration-150 cursor-pointer"
               >
                 Sign out
               </button>
             </div>
           ) : (
-            <Link to="/login" className="block text-xs text-primary-400 hover:text-primary-300 font-medium">
+            <Link to="/login" className="block text-xs text-primary-400 hover:text-primary-300 font-medium transition-colors duration-150">
               Sign in &rarr;
             </Link>
           )}
@@ -403,13 +403,13 @@ function AppShell() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="fixed inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="fixed inset-y-0 left-0 w-64 bg-slate-900 z-50 flex flex-col">
-            <div className="flex items-center justify-between px-5 h-16 border-b border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black bg-primary-600">C</span>
+          <aside className="fixed inset-y-0 left-0 w-64 bg-navy-900 border-r border-white/[0.04] z-50 flex flex-col">
+            <div className="flex items-center justify-between px-5 h-16 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-black bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-900/50">C</span>
                 <span className="text-base font-black tracking-widest text-white">COMPLAI</span>
               </div>
-              <button onClick={() => setMobileOpen(false)} className="text-slate-400 hover:text-white p-1">
+              <button onClick={() => setMobileOpen(false)} className="text-slate-400 hover:text-white p-1 cursor-pointer transition-colors duration-150">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -430,7 +430,7 @@ function AppShell() {
             </svg>
           </button>
           <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-md flex items-center justify-center text-white text-xs font-black bg-primary-600">C</span>
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black bg-gradient-to-br from-primary-500 to-primary-700">C</span>
             <span className="text-sm font-black tracking-widest text-slate-900">COMPLAI</span>
           </div>
           <div className="w-8" />
@@ -438,12 +438,12 @@ function AppShell() {
 
         {/* Onboarding banner */}
         {!orgProfile && (
-          <div className="bg-primary-50 border-b border-primary-100 px-4 py-2.5">
+          <div className="bg-primary-50/80 backdrop-blur-sm border-b border-primary-100 px-4 py-2.5">
             <div className="max-w-5xl mx-auto flex items-center justify-between text-sm">
-              <p className="text-primary-800">
+              <p className="text-primary-800 font-medium">
                 Complete onboarding to generate personalised compliance assessments and policies.
               </p>
-              <Link to="/onboarding" className="font-bold text-primary-600 hover:text-primary-700 whitespace-nowrap">
+              <Link to="/onboarding" className="font-bold text-primary-600 hover:text-primary-700 whitespace-nowrap transition-colors duration-150 ml-4">
                 Start Now &rarr;
               </Link>
             </div>
