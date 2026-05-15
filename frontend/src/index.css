@@ -1,118 +1,134 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Design tokens ───────────────────────────────────────────────── */
+/* ── Custom easing curves (Emil: built-in easings are too weak) ─── */
 :root {
-  --bg-base:       #0A0F1E;
-  --bg-sidebar:    #060B18;
-  --bg-card:       #111827;
-  --border-subtle: rgba(255,255,255,0.06);
-  --border-mid:    rgba(255,255,255,0.10);
-  --text-primary:  #F1F5F9;
-  --text-muted:    #64748B;
-  --radius-card:   14px;
-  --transition:    180ms cubic-bezier(0.4,0,0.2,1);
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --bg-base:    #0A0F1E;
+  --bg-card:    #111827;
+  --radius-card: 16px;
 }
 
 body {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-base);
-  color: var(--text-primary);
+  color: #F1F5F9;
   line-height: 1.6;
 }
 
 code, pre, .font-mono {
-  font-family: 'JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace;
 }
 
-/* ── Scrollbar ───────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #6366F1; }
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #1E293B; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #2563EB; }
+::selection { background: #2563EB; color: #fff; }
 
-::selection { background: #6366F1; color: #fff; }
-
-/* ── Component layer ─────────────────────────────────────────────── */
-@layer components {
-
-  /* Dark card */
-  .card-dark {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-card);
-    transition: border-color var(--transition), box-shadow var(--transition);
-  }
-  .card-dark:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 0 0 1px rgba(99,102,241,0.1), 0 8px 24px rgba(0,0,0,0.3);
-  }
-
-  /* Dark input */
-  .input-dark {
-    display: block;
-    width: 100%;
-    padding: 11px 14px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 10px;
-    color: #F1F5F9;
-    font-size: 0.875rem;
-    font-family: inherit;
-    transition: border-color var(--transition), box-shadow var(--transition);
-    outline: none;
-    box-sizing: border-box;
-  }
-  .input-dark::placeholder { color: #475569; }
-  .input-dark:focus {
-    border-color: #6366F1;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-  }
-
-  /* Badges */
-  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; }
-  .badge-green  { background: rgba(34,197,94,0.12);  color: #4ADE80; border: 1px solid rgba(34,197,94,0.20); }
-  .badge-red    { background: rgba(239,68,68,0.12);  color: #F87171; border: 1px solid rgba(239,68,68,0.20); }
-  .badge-amber  { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.20); }
-  .badge-indigo { background: rgba(99,102,241,0.12); color: #A5B4FC; border: 1px solid rgba(99,102,241,0.20); }
-
-  /* Progress */
-  .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; }
-  .progress-fill  { height: 100%; background: linear-gradient(90deg,#6366F1,#818CF8); border-radius: 99px; transition: width 1s ease; }
-
-  /* Sidebar nav */
-  .sidebar-link {
-    @apply flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer;
-    transition: background var(--transition), color var(--transition);
-  }
-  .sidebar-link.active { background: rgba(99,102,241,0.12); color: #A5B4FC; box-shadow: inset 0 0 0 1px rgba(99,102,241,0.22); }
-  .sidebar-link:not(.active) { color: #475569; }
-  .sidebar-link:not(.active):hover { background: rgba(255,255,255,0.05); color: #CBD5E1; }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-  }
+/* ── Button press feedback (Emil: every pressable needs :active) ─ */
+.btn-press {
+  transition: transform 160ms var(--ease-out),
+              opacity   160ms var(--ease-out);
+}
+.btn-press:active {
+  transform: scale(0.97);
 }
 
-/* ── Prose (dark) ────────────────────────────────────────────────── */
-.prose { color: #CBD5E1; }
-.prose h1,.prose h2,.prose h3,.prose h4 { color: #F1F5F9; font-weight: 700; }
-.prose strong { color: #F1F5F9; }
-.prose code { color: #A5B4FC; background: rgba(99,102,241,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.875em; }
-.prose pre { background: #0D1426; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; }
-.prose hr   { border-color: rgba(255,255,255,0.08); }
-.prose a    { color: #818CF8; }
-.prose table { border-color: rgba(255,255,255,0.07); }
-.prose thead { background: rgba(255,255,255,0.04); }
-.prose th,.prose td { border-color: rgba(255,255,255,0.07); color: #CBD5E1; padding: 8px 12px; }
-.prose th { color: #F1F5F9; font-weight: 600; }
+/* ── Stagger entry (Emil: items appearing together should cascade) */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
 
-@layer base {
-  * { @apply outline-none; }
+.stagger-children > * {
+  animation: slideUpFade 380ms var(--ease-out) backwards;
+}
+.stagger-children > *:nth-child(1)  { animation-delay:   0ms; }
+.stagger-children > *:nth-child(2)  { animation-delay:  55ms; }
+.stagger-children > *:nth-child(3)  { animation-delay: 110ms; }
+.stagger-children > *:nth-child(4)  { animation-delay: 165ms; }
+.stagger-children > *:nth-child(5)  { animation-delay: 220ms; }
+.stagger-children > *:nth-child(6)  { animation-delay: 275ms; }
+.stagger-children > *:nth-child(7)  { animation-delay: 330ms; }
+
+/* ── Page fade-in ──────────────────────────────────────────────── */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.page-enter {
+  animation: pageFadeIn 320ms var(--ease-out) both;
+}
+
+/* ── FAQ accordion (grid trick — no JS height measurement needed) */
+.faq-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms var(--ease-out);
+}
+.faq-body.open {
+  grid-template-rows: 1fr;
+}
+.faq-body > div {
+  overflow: hidden;
+}
+
+/* ── Score ring stroke animation ───────────────────────────────── */
+@keyframes strokeDraw {
+  from { stroke-dashoffset: var(--circ); }
+  to   { stroke-dashoffset: var(--offset); }
+}
+.score-ring-fill {
+  animation: strokeDraw 900ms var(--ease-out) 200ms both;
+}
+
+/* ── Hover lift (gate behind pointer:fine to avoid mobile issues) */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift {
+    transition: transform 220ms var(--ease-out),
+                box-shadow 220ms var(--ease-out),
+                border-color 220ms var(--ease-out);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  }
+  .hover-lift-sm:hover { transform: translateY(-1px); }
+}
+
+/* ── Input focus glow ──────────────────────────────────────────── */
+.input-glow {
+  transition: border-color 160ms var(--ease-out),
+              box-shadow   160ms var(--ease-out);
+}
+.input-glow:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  outline: none;
+}
+
+/* ── Reduced motion (Emil: fewer/gentler, not zero) ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-children > * { animation: none; opacity: 1; }
+  .page-enter            { animation: none; opacity: 1; }
+  .score-ring-fill       { animation: none; }
+  .faq-body {
+    transition: none;
+  }
+  .btn-press:active { transform: none; }
+  .hover-lift,
+  .hover-lift-sm    { transition: none; }
+  .hover-lift:hover,
+  .hover-lift-sm:hover { transform: none; }
 }

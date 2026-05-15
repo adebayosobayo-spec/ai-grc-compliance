@@ -1,200 +1,142 @@
 import React, { useState } from 'react'
-import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const FEATURES = [
-  {
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-      </svg>
-    ),
-    label: 'ISO 27001, GDPR, NDPR & 6 more frameworks',
-  },
-  {
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-      </svg>
-    ),
-    label: 'AI-powered gap analysis in under 60 seconds',
-  },
-  {
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-      </svg>
-    ),
-    label: 'Audit-ready policy documents, auto-generated',
-  },
-  {
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-      </svg>
-    ),
-    label: 'Real-time compliance score across your org',
-  },
-]
-
-const FRAMEWORKS = ['ISO 27001', 'GDPR', 'NDPR', 'SOC 2', 'POPIA', 'UK GDPR', 'CCPA', 'PDPA']
-
-export default function Login() {
-  const [mode, setMode] = useState('signin')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [signUpDone, setSignUpDone] = useState(false)
-
+export default function Auth() {
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from?.pathname || '/dashboard'
+
+  const [mode, setMode]   = useState('signin')  // 'signin' | 'signup'
+  const [email, setEmail] = useState('')
+  const [pass, setPass]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
+  const [done, setDone]       = useState(false)
+
+  const isSignUp = mode === 'signup'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError(null)
+    setError('')
     setLoading(true)
     try {
-      if (mode === 'signup') {
-        await signUp(email, password)
-        setSignUpDone(true)
+      if (isSignUp) {
+        await signUp(email, pass)
+        setDone(true)
       } else {
-        await signIn(email, password)
-        navigate(from, { replace: true })
+        await signIn(email, pass)
+        navigate('/results')
       }
     } catch (err) {
-      setError(err.message || 'Authentication failed')
+      setError(err.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  if (signUpDone) {
+  const inputCls =
+    'w-full bg-white/[0.04] border border-white/[0.10] text-slate-100 placeholder-slate-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all'
+
+  if (done) {
     return (
-      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm bg-[#111827] rounded-2xl border border-white/[0.07] p-8 text-center">
-          <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center px-6">
+        <div className="max-w-sm w-full text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-slate-100 mb-2">Check your email</h2>
-          <p className="text-sm text-slate-400 mb-6">
-            We sent a confirmation link to <strong className="text-slate-200">{email}</strong>. Click the link to activate your account.
+          <h2 className="text-2xl font-black text-white mb-2">Check your email</h2>
+          <p className="text-slate-400 text-sm leading-relaxed mb-6">
+            We sent a confirmation link to <strong className="text-slate-200">{email}</strong>.
+            Click the link to activate your account.
           </p>
-          <button
-            onClick={() => { setSignUpDone(false); setMode('signin') }}
-            className="text-sm font-semibold text-primary-400 hover:text-primary-300 cursor-pointer transition-colors"
-          >
-            Back to sign in
-          </button>
+          <Link to="/" className="text-sm text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-150 cursor-pointer">
+            Back to home
+          </Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] flex">
+    <div className="min-h-screen bg-[#0A0F1E] flex flex-col">
 
-      {/* ── Left brand panel ─────────────────────────────────────── */}
-      <div className="hidden lg:flex flex-col justify-between w-[460px] flex-shrink-0 bg-[#060B18] border-r border-white/[0.05] p-12">
-        <div>
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-14">
-            <span className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-900/50">C</span>
-            <span className="text-xl font-black tracking-widest text-white">COMPLAI</span>
+      {/* Nav */}
+      <nav className="border-b border-white/[0.06]">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
+          <Link to="/" className="flex items-center gap-2.5 cursor-pointer">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
+              <span className="text-white text-xs font-black">C</span>
+            </div>
+            <span className="text-sm font-black tracking-widest text-white">COMPLAI</span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="max-w-sm w-full">
+
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-black text-white mb-2">
+              {isSignUp ? 'Create your account' : 'Welcome back'}
+            </h1>
+            <p className="text-slate-400 text-sm">
+              {isSignUp
+                ? 'Save your assessment results and access your policies anytime.'
+                : 'Sign in to access your assessment and policies.'}
+            </p>
           </div>
 
-          <p className="text-[11px] font-bold text-primary-400 uppercase tracking-[0.18em] mb-3">AI-Powered GRC</p>
-          <h1 className="text-[2rem] font-black text-white leading-[1.15] mb-4">
-            Compliance that<br />works at the speed<br />of your business.
-          </h1>
-          <p className="text-slate-400 text-sm leading-relaxed mb-10">
-            From gap analysis to audit-ready policies — automate your entire compliance programme in one platform.
-          </p>
-
-          <div className="space-y-3">
-            {FEATURES.map((f, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0 text-primary-400">
-                  {f.icon}
-                </span>
-                <span className="text-sm text-slate-300">{f.label}</span>
-              </div>
+          {/* Mode toggle */}
+          <div className="flex bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 mb-8">
+            {['signin', 'signup'].map(m => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setError('') }}
+                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer ${
+                  mode === m
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {m === 'signin' ? 'Sign In' : 'Sign Up'}
+              </button>
             ))}
           </div>
-        </div>
-
-        {/* Framework badges */}
-        <div>
-          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">Supported Frameworks</p>
-          <div className="flex flex-wrap gap-2">
-            {FRAMEWORKS.map(fw => (
-              <span key={fw} className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] font-semibold text-slate-400">
-                {fw}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Right form panel ─────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[360px]">
-
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
-            <span className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black bg-gradient-to-br from-primary-500 to-primary-700">C</span>
-            <span className="text-xl font-black tracking-widest text-white">COMPLAI</span>
-          </div>
-
-          <h2 className="text-2xl font-black text-white mb-1">
-            {mode === 'signin' ? 'Welcome back' : 'Create your account'}
-          </h2>
-          <p className="text-slate-400 text-sm mb-8">
-            {mode === 'signin'
-              ? 'Sign in to your compliance dashboard'
-              : 'Start your compliance journey — it only takes a minute'}
-          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="login-email" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Work Email
+              <label htmlFor="auth-email" className="block text-xs font-semibold text-slate-400 mb-1.5">
+                Email
               </label>
               <input
-                id="login-email"
-                type="email"
-                required
+                id="auth-email" type="email" required placeholder="you@company.com"
+                value={email} onChange={e => setEmail(e.target.value)}
+                className={inputCls}
                 autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-dark"
-                placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label htmlFor="login-password" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label htmlFor="auth-pass" className="block text-xs font-semibold text-slate-400 mb-1.5">
                 Password
               </label>
               <input
-                id="login-password"
-                type="password"
-                required
-                minLength={6}
-                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-dark"
-                placeholder={mode === 'signup' ? 'Min. 6 characters' : '••••••••'}
+                id="auth-pass" type="password" required placeholder="••••••••"
+                value={pass} onChange={e => setPass(e.target.value)}
+                className={inputCls}
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                minLength={8}
               />
+              {isSignUp && (
+                <p className="text-xs text-slate-600 mt-1.5">Minimum 8 characters</p>
+              )}
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3" role="alert">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-xs text-red-400 font-medium">
                 {error}
               </div>
             )}
@@ -202,35 +144,41 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 mt-1 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer"
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl text-sm transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {mode === 'signup' ? 'Creating account...' : 'Signing in...'}
-                </span>
+                <>
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  {isSignUp ? 'Creating account…' : 'Signing in…'}
+                </>
               ) : (
-                mode === 'signup' ? 'Create Account' : 'Sign In'
+                isSignUp ? 'Create Account' : 'Sign In'
               )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-6">
-            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+          <p className="text-center text-xs text-slate-600 mt-6">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
-              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null) }}
-              className="text-primary-400 hover:text-primary-300 font-semibold cursor-pointer transition-colors"
+              onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setError('') }}
+              className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-150 cursor-pointer"
             >
-              {mode === 'signin' ? 'Sign up free' : 'Sign in'}
+              {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
           </p>
 
-          <p className="text-center text-xs text-slate-600 mt-8">
-            By continuing you agree to our{' '}
-            <span className="text-slate-500">Terms of Service</span>
-            {' & '}
-            <span className="text-slate-500">Privacy Policy</span>
-          </p>
+          <div className="mt-8 pt-6 border-t border-white/[0.06] text-center">
+            <p className="text-xs text-slate-600 mb-3">Just want to take the assessment?</p>
+            <Link
+              to="/assessment"
+              className="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-150 cursor-pointer"
+            >
+              Start free assessment — no account needed
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
