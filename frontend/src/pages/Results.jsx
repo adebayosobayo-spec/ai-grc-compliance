@@ -1,339 +1,284 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-/* ── helpers ──────────────────────────────────────────────────── */
-function status(score) {
-  if (score < 25) return { label:'Not Ready',   desc:'Urgent action needed',        stroke:'#EF4444', text:'#fca5a5', bg:'rgba(239,68,68,0.08)',  border:'rgba(239,68,68,0.25)'  }
-  if (score < 50) return { label:'Developing',  desc:'Multiple gaps to address',     stroke:'#F59E0B', text:'#fcd34d', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.25)' }
-  if (score < 75) return { label:'Progressing', desc:'Good foundation, refine gaps', stroke:'#3B82F6', text:'#93b4fd', bg:'rgba(59,130,246,0.08)',  border:'rgba(59,130,246,0.25)'  }
-  return              { label:'Ready',       desc:'Investor-ready governance',   stroke:'#10B981', text:'#6ee7b7', bg:'rgba(16,185,129,0.08)',  border:'rgba(16,185,129,0.25)'  }
-}
-function barColor(s) {
-  if (s < 25) return '#EF4444'
-  if (s < 50) return '#F59E0B'
-  if (s < 75) return '#3B82F6'
-  return '#10B981'
-}
-function impStyle(impact) {
-  if (impact==='CRITICAL') return { bg:'rgba(239,68,68,0.09)',  border:'rgba(239,68,68,0.28)',  color:'#fca5a5' }
-  if (impact==='HIGH')     return { bg:'rgba(245,158,11,0.09)', border:'rgba(245,158,11,0.28)', color:'#fcd34d' }
-  return                          { bg:'rgba(59,130,246,0.09)',  border:'rgba(59,130,246,0.28)', color:'#93b4fd' }
+function statusOf(s) {
+  if (s < 25) return { label:'NOT_READY',   tag:'tag-red',   color:'var(--red)',   bar:'var(--red)'   }
+  if (s < 50) return { label:'DEVELOPING',  tag:'tag-amber', color:'var(--amber)', bar:'var(--amber)' }
+  if (s < 75) return { label:'PROGRESSING', tag:'tag-blue',  color:'var(--blue)',  bar:'var(--blue)'  }
+  return              { label:'READY',       tag:'tag-green', color:'var(--green)', bar:'var(--green)' }
 }
 
-/* ── Count-up hook ────────────────────────────────────────────── */
-function useCountUp(target, ms = 1200) {
-  const [v, setV] = useState(0)
-  useEffect(() => {
-    let id, t0 = null
-    const go = ts => {
-      if (!t0) t0 = ts
-      const p = Math.min((ts - t0) / ms, 1)
-      setV(Math.round((1 - Math.pow(1-p, 3)) * target))
-      if (p < 1) id = requestAnimationFrame(go)
+function impTag(impact) {
+  if (impact==='CRITICAL') return 'tag-red'
+  if (impact==='HIGH')     return 'tag-amber'
+  return 'tag-blue'
+}
+
+function useCount(target, ms=1200) {
+  const [v,setV] = useState(0)
+  useEffect(()=>{
+    let id, t0=null
+    const go=ts=>{
+      if(!t0) t0=ts
+      const p=Math.min((ts-t0)/ms,1)
+      setV(Math.round((1-Math.pow(1-p,3))*target))
+      if(p<1) id=requestAnimationFrame(go)
     }
-    id = requestAnimationFrame(go)
-    return () => cancelAnimationFrame(id)
-  }, [target, ms])
+    id=requestAnimationFrame(go)
+    return ()=>cancelAnimationFrame(id)
+  },[target,ms])
   return v
 }
 
-/* ── Animated bar ─────────────────────────────────────────────── */
-function Bar({ score, delay = 0 }) {
+function BlockBar({ pct, total=30, color='var(--green)' }) {
   const [w, setW] = useState(0)
-  useEffect(() => {
-    const t = setTimeout(() => setW(score), 120 + delay)
-    return () => clearTimeout(t)
-  }, [score, delay])
-  const c = barColor(score)
+  useEffect(()=>{ const t=setTimeout(()=>setW(pct),100); return ()=>clearTimeout(t) },[pct])
+  const f = Math.round((w/100)*total)
   return (
-    <div style={{ height:5, background:'rgba(255,255,255,0.05)', borderRadius:99, overflow:'hidden' }}>
-      <div style={{ width:`${w}%`, height:'100%', borderRadius:99, background:c,
-        boxShadow:`0 0 6px ${c}55`,
-        transition:`width 900ms cubic-bezier(0.32,0.72,0,1) ${delay}ms` }}/>
-    </div>
+    <span style={{letterSpacing:0,fontSize:11}}>
+      {Array.from({length:total},(_,i)=>(
+        <span key={i} style={{color:i<f?color:'var(--t4)',transition:`color ${300+i*15}ms`}}>█</span>
+      ))}
+    </span>
   )
 }
 
-/* ── Score ring ───────────────────────────────────────────────── */
-function Ring({ score }) {
-  const st = status(score)
-  const r = 64, circ = 2*Math.PI*r, offset = circ - (score/100)*circ
-  const display = useCountUp(score, 1300)
+function RingScore({ score }) {
+  const r=70, circ=2*Math.PI*r, offset=circ-(score/100)*circ
+  const st=statusOf(score), display=useCount(score,1300)
   return (
-    <div style={{ position:'relative', display:'inline-flex', flexShrink:0 }}>
-      <svg width={160} height={160} style={{ transform:'rotate(-90deg)' }}>
-        <circle cx={80} cy={80} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={11}/>
-        <circle cx={80} cy={80} r={r} fill="none" stroke={st.stroke} strokeWidth={11}
-          strokeLinecap="round" strokeDasharray={circ}
-          className="ring-anim"
-          style={{ '--full':circ, '--gap':offset,
-            filter:`drop-shadow(0 0 9px ${st.stroke}55)` }}/>
+    <div style={{position:'relative',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>
+      <svg width={160} height={160} style={{transform:'rotate(-90deg)'}}>
+        <circle cx={80} cy={80} r={r} fill="none" stroke="var(--grid2)" strokeWidth={6}/>
+        <circle cx={80} cy={80} r={r} fill="none" stroke={st.color} strokeWidth={6}
+          strokeLinecap="square" strokeDasharray={circ}
+          className="ring-anim" style={{'--full':circ,'--gap':offset}}/>
       </svg>
-      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column',
-        alignItems:'center', justifyContent:'center', textAlign:'center', userSelect:'none' }}>
-        <span style={{ fontFamily:'Space Grotesk, sans-serif', fontSize:38, fontWeight:700,
-          color:st.text, lineHeight:1, fontVariantNumeric:'tabular-nums' }}>{display}%</span>
-        <span style={{ fontSize:11, color:'var(--t3)', marginTop:4, fontWeight:500 }}>{st.label}</span>
+      <div style={{position:'absolute',textAlign:'center',userSelect:'none'}}>
+        <span style={{fontSize:40,fontWeight:700,color:st.color,lineHeight:1,
+          fontFamily:'JetBrains Mono, monospace',fontVariantNumeric:'tabular-nums'}}>
+          {display}%
+        </span>
+        <div style={{fontSize:9,color:'var(--t3)',marginTop:4,letterSpacing:'0.08em'}}>
+          {st.label}
+        </div>
       </div>
     </div>
   )
 }
 
-/* ── Arrow icon ───────────────────────────────────────────────── */
-const Arr = ({s=15}) => (
-  <svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-)
-
-/* ── Page ─────────────────────────────────────────────────────── */
 export default function Results() {
   const navigate = useNavigate()
   const [results, setResults] = useState(null)
   const [company, setCompany] = useState(null)
 
-  useEffect(() => {
-    const r = localStorage.getItem('complai_results')
-    const c = localStorage.getItem('complai_company')
-    if (!r) { navigate('/assessment'); return }
+  useEffect(()=>{
+    const r=localStorage.getItem('complai_results')
+    const c=localStorage.getItem('complai_company')
+    if(!r){navigate('/assessment');return}
     setResults(JSON.parse(r))
-    if (c) setCompany(JSON.parse(c))
-  }, [navigate])
+    if(c) setCompany(JSON.parse(c))
+  },[navigate])
 
-  if (!results) return null
-  const { overallScore, sectionScores, topGaps } = results
-  const st = status(overallScore)
+  if(!results) return null
+  const {overallScore, sectionScores, topGaps} = results
+  const st = statusOf(overallScore)
 
   return (
-    <div style={{ background:'var(--bg)', minHeight:'100dvh' }} className="mesh page-in">
+    <div style={{background:'var(--bg)',minHeight:'100dvh'}} className="term-in">
 
-      {/* ── Floating nav ── */}
-      <nav style={{
-        position:'fixed', top:18, left:'50%', transform:'translateX(-50%)',
-        zIndex:100, width:'min(760px, calc(100vw - 28px))',
-        display:'flex', alignItems:'center', gap:12,
-        padding:'7px 7px 7px 20px',
-        background:'rgba(8,14,28,0.85)',
-        backdropFilter:'blur(24px) saturate(1.8)',
-        WebkitBackdropFilter:'blur(24px) saturate(1.8)',
-        border:'1px solid var(--b2)', borderRadius:999,
-        boxShadow:'inset 0 1px 0 var(--b3), 0 8px 40px rgba(0,0,0,0.45)',
-      }}>
-        <Link to="/" style={{ display:'flex', alignItems:'center', gap:8, textDecoration:'none', flexShrink:0 }}>
-          <div style={{ width:24, height:24, borderRadius:7, background:'var(--blue)',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            boxShadow:'0 0 10px var(--blue-glow)' }}>
-            <span style={{ color:'#fff', fontSize:10, fontWeight:800, fontFamily:'Space Grotesk, sans-serif' }}>C</span>
-          </div>
-          <span style={{ fontFamily:'Space Grotesk, sans-serif', fontWeight:700, fontSize:12,
-            letterSpacing:'0.12em', color:'#fff' }}>COMPLAI</span>
+      {/* ── Nav ── */}
+      <nav className="term-nav">
+        <Link to="/" className="term-nav-cell" style={{color:'var(--green)',fontWeight:700,minWidth:120}}>
+          COMPLAI
         </Link>
-        <div style={{ flex:1 }}/>
-        <Link to="/assessment" style={{ fontSize:12, color:'var(--t3)', textDecoration:'none',
-          padding:'6px 12px', borderRadius:999,
-          transition:'color 150ms, background 150ms' }}
-          onMouseEnter={e=>{ e.currentTarget.style.color='var(--t1)'; e.currentTarget.style.background='var(--b0)' }}
-          onMouseLeave={e=>{ e.currentTarget.style.color='var(--t3)'; e.currentTarget.style.background='transparent' }}>
-          Retake
+        <div className="term-nav-cell" style={{color:'var(--t3)',fontSize:10}}>
+          ASSESSMENT_RESULTS
+        </div>
+        <div style={{flex:1,borderRight:'1px solid var(--grid)'}}/>
+        <Link to="/assessment" className="term-nav-cell" style={{color:'var(--t2)',fontSize:12}}>
+          RETAKE()
         </Link>
-        <Link to="/policies" className="btn btn-amber"
-          style={{ fontSize:12, padding:'8px 9px 8px 18px' }}>
-          Generate Policies — $299
-          <span className="btn-icon" style={{ width:26, height:26 }}><Arr s={13}/></span>
+        <Link to="/policies" className="term-nav-cell term-nav-cta">
+          ▶ GENERATE_POLICIES — $299
         </Link>
       </nav>
 
-      <main style={{ maxWidth:1100, margin:'0 auto', padding:'100px 24px 80px',
-        display:'flex', flexDirection:'column', gap:16 }}>
+      {/* ── Status bar ── */}
+      <div className="status-bar">
+        <div className="status-cell">
+          <div className={`status-dot ${overallScore>=75?'dot-green':overallScore>=50?'dot-amber':'dot-red'}`}/>
+          <span style={{color:st.color}}>STATUS: {st.label}</span>
+        </div>
+        <div className="status-cell">
+          COMPANY: <span style={{color:'var(--t1)',marginLeft:6}}>{company?.companyName||'—'}</span>
+        </div>
+        <div className="status-cell">
+          SCORE: <span style={{color:st.color,marginLeft:6,fontWeight:700}}>{overallScore}%</span>
+        </div>
+        <div className="status-cell">
+          GAPS_FOUND: <span style={{color:'var(--red)',marginLeft:6}}>{topGaps.length}</span>
+        </div>
+        <div style={{flex:1}}/>
+        <div className="status-cell" style={{borderLeft:'1px solid var(--grid)',borderRight:'none',fontSize:9}}>
+          ISO_42001:2023 SELF-ASSESSMENT · NOT_A_FORMAL_AUDIT
+        </div>
+      </div>
 
-        {/* ── Hero score card ── */}
-        <div className="card reveal">
-          <div className="card-inner" style={{ padding:'clamp(28px,4vw,52px)' }}>
-            <div style={{ display:'grid', gridTemplateColumns:'auto 1fr auto',
-              gap:40, alignItems:'center' }}
-              className="max-md:grid-cols-1 max-md:gap-6">
-              <Ring score={overallScore}/>
-              <div>
-                <p style={{ fontSize:11, color:'var(--t3)', fontWeight:600,
-                  letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:10 }}>
-                  {company?.companyName || 'Your Company'} · ISO 42001 Readiness
-                </p>
-                <h1 style={{ fontFamily:'Space Grotesk, sans-serif',
-                  fontSize:'clamp(22px,3.5vw,34px)', fontWeight:700,
-                  color:'var(--t1)', letterSpacing:'-0.025em', marginBottom:14 }}>
-                  Your Readiness Score
-                </h1>
-                <div style={{ display:'inline-flex', alignItems:'center', gap:8,
-                  padding:'5px 14px', borderRadius:999,
-                  border:`1px solid ${st.border}`, background:st.bg, marginBottom:14 }}>
-                  <span style={{ fontFamily:'Space Grotesk, sans-serif', fontSize:11,
-                    fontWeight:700, color:st.text, letterSpacing:'0.08em', textTransform:'uppercase' }}>
-                    {st.label} — {st.desc}
-                  </span>
-                </div>
-                <p style={{ fontSize:14, color:'var(--t2)', lineHeight:1.72, maxWidth:'52ch' }}>
-                  {overallScore < 50
-                    ? 'Significant gaps to close before your next investor meeting. Every gap is fixable — the right policies turn weaknesses into governance proof.'
-                    : overallScore < 75
-                    ? 'Solid foundation. Targeted policies will get you to investor-ready governance quickly.'
-                    : 'Strong posture. Download your policies to formalise and evidence your practices for auditors.'}
-                </p>
-              </div>
-              <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                <Link to="/policies" className="btn btn-amber"
-                  style={{ whiteSpace:'nowrap', justifyContent:'center', padding:'13px 13px 13px 22px', fontSize:14 }}>
-                  Generate Policies
-                  <span className="btn-icon"><Arr/></span>
-                </Link>
-                <span style={{ fontSize:11, color:'var(--t3)' }}>$299 · one-time</span>
-              </div>
+      {/* ── Main grid ── */}
+      <div style={{display:'grid',gridTemplateColumns:'300px 1fr',
+        minHeight:'calc(100dvh - 72px)'}}
+        className="max-md:grid-cols-1">
+
+        {/* Left column: score + quick stats */}
+        <div style={{borderRight:'1px solid var(--grid)',display:'flex',flexDirection:'column'}}>
+
+          {/* Score panel */}
+          <div style={{padding:'32px 24px',borderBottom:'1px solid var(--grid)',
+            display:'flex',flexDirection:'column',alignItems:'center',gap:16}}>
+            <div style={{fontSize:10,color:'var(--t3)',letterSpacing:'0.08em',alignSelf:'flex-start'}}>
+              OVERALL_READINESS_SCORE
             </div>
+            <RingScore score={overallScore}/>
+            <div className={`tag ${st.tag}`} style={{alignSelf:'stretch',textAlign:'center',padding:'8px'}}>
+              {st.label}
+            </div>
+            <p style={{fontSize:11,color:'var(--t2)',lineHeight:1.7,textAlign:'center'}}>
+              {overallScore<50
+                ? 'Multiple critical gaps. Significant risk in investor due diligence.'
+                : overallScore<75
+                ? 'Good foundation. Address gaps before fundraising.'
+                : 'Strong posture. Formalise with signed policies.'}
+            </p>
+          </div>
+
+          {/* Section mini-scores */}
+          <div style={{flex:1}}>
+            {sectionScores.map((s,i)=>{
+              const ss=statusOf(s.score)
+              return (
+                <div key={s.id} style={{
+                  display:'grid',gridTemplateColumns:'40px 1fr 50px',
+                  gap:0, padding:'10px 16px', alignItems:'center',
+                  borderBottom:i<sectionScores.length-1?'1px solid var(--grid)':'none',
+                }}>
+                  <span style={{fontSize:10,color:'var(--t3)',fontWeight:600}}>{s.id}</span>
+                  <div>
+                    <div style={{fontSize:9,color:'var(--t3)',marginBottom:4,
+                      letterSpacing:'0.04em',overflow:'hidden',whiteSpace:'nowrap',
+                      textOverflow:'ellipsis'}}>{s.title}</div>
+                    <BlockBar pct={s.score} total={16} color={ss.color}/>
+                  </div>
+                  <span style={{fontSize:13,fontWeight:700,color:ss.color,
+                    textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{s.score}%</span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Generate CTA */}
+          <div style={{padding:16,borderTop:'1px solid var(--grid)'}}>
+            <Link to="/policies" className="tbtn tbtn-solid"
+              style={{width:'100%',justifyContent:'center',fontSize:12}}>
+              ▶ GENERATE_POLICIES()
+            </Link>
+            <p style={{fontSize:10,color:'var(--t3)',textAlign:'center',marginTop:8}}>
+              $299 · ONE_TIME · 30_DAY_GUARANTEE
+            </p>
           </div>
         </div>
 
-        {/* ── Control breakdown bento ── */}
+        {/* Right column: gap table + detail */}
         <div>
-          <h2 style={{ fontFamily:'Space Grotesk, sans-serif', fontSize:18, fontWeight:700,
-            color:'var(--t1)', marginBottom:14, letterSpacing:'-0.015em' }}>
-            Control-by-Control Breakdown
-          </h2>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}
-            className="stagger max-md:grid-cols-1">
-            {sectionScores.map((s, i) => (
-              <div key={s.id} className="card card-hover">
-                <div className="card-inner" style={{ padding:20 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, marginBottom:14 }}>
-                    <div>
-                      <p style={{ fontSize:10, color:'var(--t3)', fontFamily:'JetBrains Mono, monospace',
-                        marginBottom:5 }}>ISO {s.control}</p>
-                      <p style={{ fontFamily:'Space Grotesk, sans-serif', fontSize:13, fontWeight:600,
-                        color:'var(--t1)', lineHeight:1.3 }}>{s.title}</p>
-                    </div>
-                    <span style={{ fontFamily:'Space Grotesk, sans-serif', fontSize:24, fontWeight:700,
-                      color:barColor(s.score), flexShrink:0, lineHeight:1,
-                      fontVariantNumeric:'tabular-nums' }}>{s.score}%</span>
-                  </div>
-                  <Bar score={s.score} delay={i * 80}/>
-                  <div style={{ marginTop:12 }}>
-                    {s.gaps.length === 0
-                      ? <p style={{ fontSize:12, color:'var(--emerald)', display:'flex', gap:5,
-                          alignItems:'center', fontWeight:600 }}>
-                          <svg width={13} height={13} viewBox="0 0 13 13" fill="none">
-                            <path d="M2 6.5l3 3 6-6" stroke="#10B981" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          All controls addressed
-                        </p>
-                      : <p style={{ fontSize:12, color:'var(--t3)', lineHeight:1.5,
-                          overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>
-                          <span style={{ color:'var(--t2)', fontWeight:600 }}>Gap: </span>{s.gaps[0]}
-                        </p>
-                    }
-                  </div>
+
+          {/* Control detail table */}
+          <div style={{borderBottom:'1px solid var(--grid)'}}>
+            <div style={{padding:'8px 20px',borderBottom:'1px solid var(--grid)',
+              background:'var(--bg1)',fontSize:10,color:'var(--t3)',
+              display:'flex',gap:16,alignItems:'center'}}>
+              <span style={{color:'var(--green)',fontWeight:700}}>CONTROL_BREAKDOWN</span>
+              <span>│</span>
+              <span>6 ISO 42001 CONTROL AREAS</span>
+            </div>
+
+            {/* Table header */}
+            <div style={{display:'grid',gridTemplateColumns:'60px 200px 1fr 60px 120px',
+              gap:0,borderBottom:'1px solid var(--grid)',
+              padding:'8px 20px',background:'var(--bg2)'}}>
+              {['CTRL','AREA','COVERAGE','SCORE','STATUS'].map(h=>(
+                <span key={h} style={{fontSize:9,color:'var(--t4)',fontWeight:700,letterSpacing:'0.08em'}}>{h}</span>
+              ))}
+            </div>
+
+            {sectionScores.map((s,i)=>{
+              const ss=statusOf(s.score)
+              return (
+                <div key={s.id} style={{display:'grid',
+                  gridTemplateColumns:'60px 200px 1fr 60px 120px',
+                  gap:0,padding:'12px 20px',alignItems:'center',
+                  borderBottom:i<sectionScores.length-1?'1px solid var(--grid)':'none',
+                  background:i%2===0?'transparent':'rgba(255,255,255,0.01)'}}>
+                  <span style={{fontSize:10,color:'var(--green)',fontWeight:700}}>{s.id}</span>
+                  <span style={{fontSize:10,color:'var(--t2)',overflow:'hidden',
+                    whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{s.title}</span>
+                  <BlockBar pct={s.score} total={20} color={ss.color}/>
+                  <span style={{fontSize:13,fontWeight:700,color:ss.color,
+                    fontVariantNumeric:'tabular-nums'}}>{s.score}%</span>
+                  <div className={`tag ${ss.tag}`} style={{fontSize:9}}>{ss.label}</div>
                 </div>
+              )
+            })}
+          </div>
+
+          {/* Top gaps */}
+          {topGaps.length>0 && (
+            <div>
+              <div style={{padding:'8px 20px',borderBottom:'1px solid var(--grid)',
+                background:'var(--bg1)',fontSize:10,color:'var(--t3)',
+                display:'flex',gap:16,alignItems:'center'}}>
+                <span style={{color:'var(--red)',fontWeight:700}}>PRIORITY_GAPS</span>
+                <span>│</span>
+                <span>TOP {topGaps.length} GAPS BY INVESTOR IMPACT</span>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Top gaps ── */}
-        {topGaps.length > 0 && (
-          <div>
-            <h2 style={{ fontFamily:'Space Grotesk, sans-serif', fontSize:18, fontWeight:700,
-              color:'var(--t1)', marginBottom:14, letterSpacing:'-0.015em' }}>
-              Top {topGaps.length} Gaps — Prioritised by Impact
-            </h2>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }} className="stagger">
-              {topGaps.map((gap, i) => {
-                const is = impStyle(gap.impact)
-                return (
-                  <div key={i} className="card card-hover">
-                    <div className="card-inner" style={{ padding:'16px 20px',
-                      display:'flex', alignItems:'flex-start', gap:16 }}>
-                      <span style={{ flexShrink:0, width:30, height:30, borderRadius:9,
-                        background:'var(--b0)', border:'1px solid var(--b1)',
-                        display:'flex', alignItems:'center', justifyContent:'center',
-                        fontFamily:'JetBrains Mono, monospace', fontSize:11, fontWeight:600, color:'var(--t3)' }}>
-                        {i+1}
-                      </span>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6, flexWrap:'wrap' }}>
-                          <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.09em',
-                            fontFamily:'Space Grotesk, sans-serif',
-                            padding:'2px 8px', borderRadius:6,
-                            border:`1px solid ${is.border}`, background:is.bg, color:is.color }}>
-                            {gap.impact}
-                          </span>
-                          <span style={{ fontSize:11, color:'var(--t3)', fontWeight:500 }}>{gap.sectionTitle}</span>
-                        </div>
-                        <p style={{ fontSize:14, color:'var(--t1)', lineHeight:1.65, fontWeight:450 }}>{gap.question}</p>
-                      </div>
-                    </div>
+              {topGaps.map((gap,i)=>(
+                <div key={i} style={{display:'grid',
+                  gridTemplateColumns:'36px 80px 120px 1fr',
+                  gap:12,padding:'14px 20px',alignItems:'flex-start',
+                  borderBottom:i<topGaps.length-1?'1px solid var(--grid)':'none'}}>
+                  <span style={{fontSize:11,fontWeight:700,color:'var(--t3)',
+                    fontFamily:'JetBrains Mono,monospace'}}>
+                    {String(i+1).padStart(2,'0')}
+                  </span>
+                  <div className={`tag ${impTag(gap.impact)}`} style={{fontSize:9,alignSelf:'flex-start'}}>
+                    {gap.impact}
                   </div>
-                )
-              })}
+                  <span style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.04em',paddingTop:2}}>
+                    {gap.section}_{gap.sectionTitle.split('_')[0]}
+                  </span>
+                  <span style={{fontSize:12,color:'var(--t1)',lineHeight:1.6}}>{gap.question}</span>
+                </div>
+              ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── CTA ── */}
-        <div className="card reveal"
-          style={{ borderColor:'rgba(37,99,235,0.22)',
-            boxShadow:'inset 0 1px 0 var(--b3), 0 0 60px rgba(37,99,235,0.06)' }}>
-          <div className="card-inner" style={{
-            padding:'clamp(28px,4vw,48px)', textAlign:'center',
-            background:'radial-gradient(ellipse 80% 80% at 50% 0%, rgba(37,99,235,0.07), transparent)',
-          }}>
-            <h2 style={{ fontFamily:'Space Grotesk, sans-serif',
-              fontSize:'clamp(20px,3vw,30px)', fontWeight:700,
-              color:'var(--t1)', letterSpacing:'-0.025em', marginBottom:10 }}>
-              Fix these gaps with 7 customised ISO 42001 policies
-            </h2>
-            <p style={{ fontSize:14, color:'var(--t2)', maxWidth:'52ch',
-              margin:'0 auto 28px', lineHeight:1.72 }}>
-              Ready-to-sign Word documents pre-filled with{' '}
-              <strong style={{ color:'var(--t1)' }}>{company?.companyName || 'your company'}</strong>'s details.
-              Show investors your governance proof in one afternoon.
-            </p>
-            <div style={{ display:'flex', justifyContent:'center', gap:12, flexWrap:'wrap' }}>
-              <Link to="/policies" className="btn btn-amber"
-                style={{ fontSize:15, padding:'13px 13px 13px 24px' }}>
-                Generate My ISO 42001 Policies — $299
-                <span className="btn-icon"><Arr/></span>
-              </Link>
-              <Link to="/assessment" className="btn btn-ghost" style={{ fontSize:14 }}>Retake assessment</Link>
-            </div>
-            <p style={{ fontSize:12, color:'var(--t3)', marginTop:16 }}>
-              30-day money-back guarantee · One-time payment
-            </p>
-          </div>
-        </div>
-
-        {/* ── Email capture ── */}
-        <div className="card reveal">
-          <div className="card-inner" style={{ padding:'20px 24px',
-            display:'flex', alignItems:'center', gap:20, flexWrap:'wrap' }}>
-            <div style={{ flex:1, minWidth:180 }}>
-              <p style={{ fontFamily:'Space Grotesk, sans-serif', fontSize:14, fontWeight:600,
-                color:'var(--t1)', marginBottom:3 }}>Email me my assessment results</p>
-              <p style={{ fontSize:12, color:'var(--t3)' }}>Get a copy of this report in your inbox.</p>
-            </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <input type="email" defaultValue={company?.email || ''} placeholder="you@company.com"
-                className="inp" style={{ width:210 }}/>
-              <button className="btn btn-blue"
-                style={{ padding:'11px 18px', borderRadius:12, fontSize:13, gap:0 }}>
-                Send
+          {/* Email capture */}
+          <div style={{padding:'20px',borderTop:'1px solid var(--grid)',
+            display:'flex',gap:12,alignItems:'center',flexWrap:'wrap',
+            background:'var(--bg1)'}}>
+            <span style={{fontSize:11,color:'var(--t2)',flex:1,minWidth:200}}>
+              EMAIL_REPORT() → get a copy of this assessment in your inbox
+            </span>
+            <div style={{display:'flex',gap:0}}>
+              <input type="email" defaultValue={company?.email||''}
+                placeholder="ceo@company.com" className="term-input"
+                style={{width:220,borderRight:'none'}}/>
+              <button className="tbtn tbtn-green" style={{borderLeft:'none',fontSize:12}}>
+                SEND()
               </button>
             </div>
           </div>
         </div>
-      </main>
-
-      <footer style={{ borderTop:'1px solid var(--b1)', padding:'24px', textAlign:'center' }}>
-        <p style={{ fontSize:12, color:'var(--t3)', margin:0 }}>
-          © {new Date().getFullYear()} COMPLAI · Self-assessment, not a formal ISO 42001 audit.
-        </p>
-      </footer>
+      </div>
     </div>
   )
 }

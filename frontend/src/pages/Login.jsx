@@ -5,134 +5,179 @@ import { useAuth } from '../context/AuthContext'
 export default function Auth() {
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
-  const [mode, setMode]     = useState('signin')
-  const [email, setEmail]   = useState('')
-  const [pass, setPass]     = useState('')
+  const [mode, setMode]   = useState('signin')
+  const [email, setEmail] = useState('')
+  const [pass, setPass]   = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState('')
   const [done, setDone]     = useState(false)
   const isSignUp = mode === 'signup'
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+  const submit = async e => {
+    e.preventDefault(); setError('')
     setLoading(true)
     try {
       if (isSignUp) { await signUp(email, pass); setDone(true) }
       else { await signIn(email, pass); navigate('/results') }
-    } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.')
-    } finally { setLoading(false) }
+    } catch (err) { setError(err.message || 'AUTH_ERROR: UNEXPECTED_FAILURE') }
+    finally { setLoading(false) }
   }
 
   if (done) return (
-    <div style={{ background: 'var(--bg-base)', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} className="mesh-bg">
-      <div style={{ maxWidth: 380, width: '100%', textAlign: 'center' }} className="page-enter">
-        <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-          <svg width={28} height={28} viewBox="0 0 28 28" fill="none"><path d="M5 14l6 6 12-12" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div style={{ background:'var(--bg)', minHeight:'100dvh', display:'flex', flexDirection:'column' }}
+      className="term-in">
+      <nav className="term-nav">
+        <Link to="/" className="term-nav-cell" style={{ color:'var(--green)', fontWeight:700, minWidth:120 }}>COMPLAI</Link>
+        <div className="term-nav-cell" style={{ color:'var(--green)', fontSize:10 }}>EMAIL_SENT</div>
+      </nav>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
+        <div className="tbox" style={{ maxWidth:480, width:'100%' }}>
+          <div className="tbox-header">
+            <span style={{ color:'var(--green)' }}>●</span>
+            CONFIRM_EMAIL — ACTION_REQUIRED
+          </div>
+          <div className="tbox-body">
+            <p style={{ fontSize:13, color:'var(--t1)', marginBottom:12, fontWeight:600 }}>
+              VERIFICATION_EMAIL_SENT()
+            </p>
+            <p style={{ fontSize:12, color:'var(--t2)', lineHeight:1.7, marginBottom:20 }}>
+              Sent to: <span style={{ color:'var(--green)' }}>{email}</span><br/>
+              Click the link in the email to activate your account.
+            </p>
+            <Link to="/" className="tbtn" style={{ fontSize:12 }}>← BACK_TO_HOME()</Link>
+          </div>
         </div>
-        <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Check your email</h2>
-        <p style={{ fontSize: 15, color: 'var(--text-sub)', lineHeight: 1.7, margin: '0 0 28px' }}>
-          We sent a confirmation link to <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>. Click the link to activate your account.
-        </p>
-        <Link to="/" className="btn-ghost" style={{ justifyContent: 'center', width: '100%' }}>Back to home</Link>
       </div>
     </div>
   )
 
   return (
-    <div style={{ background: 'var(--bg-base)', minHeight: '100dvh', display: 'flex', flexDirection: 'column' }} className="mesh-bg">
-      {/* Nav */}
-      <nav style={{ padding: '20px 32px', borderBottom: '1px solid var(--line)' }}>
-        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{ width: 26, height: 26, borderRadius: 8, background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 12px rgba(37,99,235,0.30)' }}>
-            <span style={{ color: '#fff', fontSize: 11, fontWeight: 800, fontFamily: 'Space Grotesk, sans-serif' }}>C</span>
-          </div>
-          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.12em', color: '#fff' }}>COMPLAI</span>
+    <div style={{ background:'var(--bg)', minHeight:'100dvh', display:'flex', flexDirection:'column' }}
+      className="term-in">
+      <nav className="term-nav">
+        <Link to="/" className="term-nav-cell" style={{ color:'var(--green)', fontWeight:700, minWidth:120 }}>COMPLAI</Link>
+        <div className="term-nav-cell" style={{ color:'var(--t3)', fontSize:10 }}>
+          {isSignUp ? 'CREATE_ACCOUNT' : 'AUTHENTICATE'}
+        </div>
+        <div style={{ flex:1, borderRight:'1px solid var(--grid)' }}/>
+        <Link to="/assessment" className="term-nav-cell" style={{ color:'var(--t2)', fontSize:12 }}>
+          SKIP → FREE_ASSESSMENT()
         </Link>
       </nav>
 
-      {/* Form */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-        <div style={{ maxWidth: 400, width: '100%' }} className="page-enter">
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px,4vw,34px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
-              {isSignUp ? 'Create your account' : 'Welcome back'}
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
+        <div style={{ maxWidth:500, width:'100%' }}>
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:10, color:'var(--green)', fontWeight:700,
+              letterSpacing:'0.1em', marginBottom:10 }}>
+              ▸ {isSignUp ? 'REGISTER_NEW_ACCOUNT()' : 'AUTHENTICATE_USER()'}
+            </div>
+            <h1 style={{ fontSize:'clamp(20px,3vw,28px)', fontWeight:700, color:'var(--t1)',
+              letterSpacing:'-0.02em', marginBottom:6 }}>
+              {isSignUp ? 'CREATE_ACCOUNT()' : 'SIGN_IN()'}
             </h1>
-            <p style={{ fontSize: 14, color: 'var(--text-sub)', margin: 0 }}>
-              {isSignUp ? 'Save your assessment and access policies anytime.' : 'Sign in to access your assessment and policies.'}
+            <p style={{ fontSize:12, color:'var(--t2)', lineHeight:1.7 }}>
+              {isSignUp
+                ? 'Save your assessment results and access policies anytime.'
+                : 'Access your assessment results and policy downloads.'}
             </p>
           </div>
 
           {/* Mode toggle */}
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 4, marginBottom: 24 }}>
-            {['signin', 'signup'].map(m => (
-              <button key={m} onClick={() => { setMode(m); setError('') }}
-                style={{
-                  flex: 1, padding: '9px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                  fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, fontWeight: 600,
-                  background: mode === m ? 'var(--blue)' : 'transparent',
-                  color: mode === m ? '#fff' : 'var(--text-muted)',
-                  transition: 'background 180ms var(--crisp), color 180ms var(--crisp)',
-                  boxShadow: mode === m ? '0 2px 8px rgba(37,99,235,0.25)' : 'none',
-                }}>
-                {m === 'signin' ? 'Sign In' : 'Sign Up'}
+          <div style={{ display:'flex', marginBottom:20, borderBottom:'1px solid var(--grid)' }}>
+            {['signin','signup'].map(m=>(
+              <button key={m} onClick={()=>{setMode(m);setError('')}}
+                style={{ flex:1, padding:'10px 16px', background:mode===m?'var(--green2)':'transparent',
+                  border:'none', borderRight:m==='signin'?'1px solid var(--grid)':'none',
+                  borderBottom:mode===m?`2px solid var(--green)`:'2px solid transparent',
+                  cursor:'pointer', fontSize:12, fontWeight:700,
+                  color:mode===m?'var(--green)':'var(--t3)',
+                  fontFamily:'JetBrains Mono, monospace',
+                  letterSpacing:'0.04em', transition:'all 120ms' }}>
+                {m==='signin'?'SIGN_IN()':'REGISTER()'}
               </button>
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label htmlFor="auth-email" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 7 }}>Email</label>
-              <input id="auth-email" type="email" required placeholder="you@company.com"
-                value={email} onChange={e => setEmail(e.target.value)}
-                className="input-premium" autoComplete="email" />
-            </div>
-            <div>
-              <label htmlFor="auth-pass" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 7 }}>Password</label>
-              <input id="auth-pass" type="password" required placeholder="••••••••"
-                value={pass} onChange={e => setPass(e.target.value)}
-                className="input-premium" autoComplete={isSignUp ? 'new-password' : 'current-password'} minLength={8} />
-              {isSignUp && <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>Minimum 8 characters</p>}
-            </div>
-
-            {error && (
-              <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: 12 }}>
-                <p style={{ fontSize: 12, color: '#fca5a5', margin: 0 }}>{error}</p>
+          <form onSubmit={submit}>
+            <div className="tbox">
+              <div style={{ display:'grid', gridTemplateColumns:'140px 1fr',
+                borderBottom:'1px solid var(--grid)' }}>
+                <label htmlFor="auth-email"
+                  style={{ padding:'12px', fontSize:10, color:'var(--t3)', fontWeight:600,
+                    letterSpacing:'0.04em', borderRight:'1px solid var(--grid)',
+                    background:'var(--bg1)', display:'flex', alignItems:'center' }}>
+                  EMAIL_ADDRESS
+                </label>
+                <input id="auth-email" type="email" required placeholder="ceo@company.com"
+                  value={email} onChange={e=>setEmail(e.target.value)}
+                  className="term-input" style={{ border:'none', padding:'12px' }}
+                  autoComplete="email"/>
               </div>
-            )}
 
-            <button type="submit" disabled={loading} className="btn-primary"
-              style={{ justifyContent: 'center', opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, padding: '13px 14px 13px 22px', marginTop: 4 }}>
-              {loading ? (
-                <>
-                  <div style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                  {isSignUp ? 'Creating account…' : 'Signing in…'}
-                </>
-              ) : isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
+              <div style={{ display:'grid', gridTemplateColumns:'140px 1fr' }}>
+                <label htmlFor="auth-pass"
+                  style={{ padding:'12px', fontSize:10, color:'var(--t3)', fontWeight:600,
+                    letterSpacing:'0.04em', borderRight:'1px solid var(--grid)',
+                    background:'var(--bg1)', display:'flex', alignItems:'center' }}>
+                  PASSWORD
+                </label>
+                <input id="auth-pass" type="password" required placeholder="••••••••"
+                  value={pass} onChange={e=>setPass(e.target.value)}
+                  className="term-input" style={{ border:'none', padding:'12px' }}
+                  autoComplete={isSignUp?'new-password':'current-password'} minLength={8}/>
+              </div>
+
+              {error && (
+                <div style={{ padding:'10px 14px', background:'rgba(239,68,68,0.08)',
+                  borderTop:'1px solid var(--red)', fontSize:11, color:'var(--red)' }}>
+                  {error}
+                </div>
+              )}
+
+              <div style={{ padding:14, borderTop:'1px solid var(--grid)', background:'var(--bg2)' }}>
+                <button type="submit" disabled={loading} className="tbtn tbtn-solid"
+                  style={{ width:'100%', justifyContent:'center', fontSize:13,
+                    opacity:loading?0.7:1, cursor:loading?'not-allowed':'pointer' }}>
+                  {loading
+                    ? <><div style={{ width:13, height:13, border:'2px solid rgba(0,0,0,0.2)',
+                        borderTopColor:'var(--bg)', borderRadius:'50%',
+                        animation:'spin 0.7s linear infinite' }}/> AUTHENTICATING…</>
+                    : `▶ ${isSignUp ? 'CREATE_ACCOUNT()' : 'SIGN_IN()'}`
+                  }
+                </button>
+                {isSignUp && <p style={{ fontSize:10, color:'var(--t3)', textAlign:'center', marginTop:8 }}>
+                  MIN_PASSWORD_LENGTH: 8_CHARS
+                </p>}
+              </div>
+            </div>
           </form>
 
-          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', marginTop: 20 }}>
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setError('') }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#93b4fd', fontWeight: 600, fontSize: 13, padding: 0, transition: 'color 160ms' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#bfdbfe'}
-              onMouseLeave={e => e.currentTarget.style.color = '#93b4fd'}>
-              {isSignUp ? 'Sign in' : 'Sign up'}
+          <div style={{ marginTop:16, textAlign:'center' }}>
+            <span style={{ fontSize:11, color:'var(--t3)' }}>
+              {isSignUp ? 'ALREADY_REGISTERED? ' : 'NO_ACCOUNT? '}
+            </span>
+            <button onClick={()=>{setMode(isSignUp?'signin':'signup');setError('')}}
+              style={{ background:'none', border:'none', cursor:'pointer',
+                color:'var(--green)', fontSize:11, fontWeight:700,
+                fontFamily:'JetBrains Mono, monospace', padding:0 }}>
+              {isSignUp ? 'SIGN_IN()' : 'REGISTER()'}
             </button>
-          </p>
+          </div>
 
-          <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--line)', textAlign: 'center' }}>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Just want to take the assessment?</p>
-            <Link to="/assessment" className="btn-ghost" style={{ justifyContent: 'center', width: '100%', fontSize: 13 }}>
-              Start free assessment — no account needed
+          <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid var(--grid)',
+            textAlign:'center' }}>
+            <p style={{ fontSize:10, color:'var(--t3)', marginBottom:10 }}>
+              NO_ACCOUNT_REQUIRED_FOR_FREE_ASSESSMENT
+            </p>
+            <Link to="/assessment" className="tbtn tbtn-green"
+              style={{ fontSize:12, width:'100%', justifyContent:'center', display:'flex' }}>
+              ▶ RUN_FREE_ASSESSMENT()
             </Link>
           </div>
         </div>
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
