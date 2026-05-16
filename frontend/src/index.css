@@ -9,30 +9,41 @@
    Bloomberg Terminal × Linear × raw governance data
    ═══════════════════════════════════════════════════════ */
 :root {
-  --bg:      #070B12;
-  --bg1:     #0B1018;
-  --bg2:     #0F1520;
-  --bg3:     #141C28;
+  color-scheme: dark;
 
-  --grid:    #1A2336;   /* 1px grid lines */
-  --grid2:   #243347;   /* highlighted grid */
+  --bg:      #060A10;   /* true near-black */
+  --bg1:     #0A1019;
+  --bg2:     #0E1622;
+  --bg3:     #131D2D;
 
-  --t1:      #E2E8F0;
-  --t2:      #7A8FA6;
-  --t3:      #3D5068;
-  --t4:      #253040;
+  --grid:    #1C2B3D;   /* 1px grid lines — visible but not harsh */
+  --grid2:   #253A52;   /* highlighted grid */
 
-  --green:   #00FF94;   /* terminal green — primary accent */
-  --green2:  rgba(0,255,148,0.08);
-  --green3:  rgba(0,255,148,0.15);
+  --t1:      #EDF2F8;   /* primary text — bright */
+  --t2:      #8BA0B8;   /* secondary text */
+  --t3:      #506478;   /* muted labels — was too dark, now readable */
+  --t4:      #2E404F;   /* ghost / empty bars */
 
-  --amber:   #F59E0B;
-  --red:     #EF4444;
-  --blue:    #3B82F6;
+  --green:   #00FF94;   /* terminal green — the only accent */
+  --green2:  rgba(0,255,148,0.09);
+  --green3:  rgba(0,255,148,0.16);
+
+  --amber:   #F5A623;
+  --red:     #F04747;
+  --blue:    #4D9EFF;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+/* ── Reset ───────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0; padding: 0;
+  border-color: var(--grid);   /* override Tailwind's gray-200 default */
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg);       /* prevent white flash on load */
+}
 
 body {
   font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
@@ -41,11 +52,12 @@ body {
   background: var(--bg);
   color: var(--t1);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
 /* Everything is monospace */
-h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, label {
+h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, label, textarea {
   font-family: 'JetBrains Mono', 'Menlo', monospace;
 }
 
@@ -55,22 +67,6 @@ h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, label {
 ::-webkit-scrollbar-thumb { background: var(--grid2); }
 ::-webkit-scrollbar-thumb:hover { background: var(--green); }
 ::selection { background: var(--green); color: var(--bg); }
-
-/* ── Grid overlay (fixed, pointer-events-none) ───────────
-   Creates the Bloomberg-style horizontal scan lines        */
-body::before {
-  content: '';
-  position: fixed; inset: 0; z-index: 1;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent 0px,
-    transparent 23px,
-    rgba(26,35,54,0.25) 23px,
-    rgba(26,35,54,0.25) 24px
-  );
-  opacity: 0.4;
-}
 
 /* ── Terminal header bar ─────────────────────────────────── */
 .term-nav {
@@ -87,6 +83,7 @@ body::before {
   font-size: 11px; font-weight: 600;
   letter-spacing: 0.04em;
   text-decoration: none;
+  color: inherit;
   white-space: nowrap;
   transition: background 120ms, color 120ms;
 }
@@ -94,11 +91,11 @@ body::before {
 .term-nav-cell.active { color: var(--green); }
 .term-nav-cta {
   background: var(--green);
-  color: var(--bg);
+  color: var(--bg) !important;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
-.term-nav-cta:hover { background: #00e085; }
+.term-nav-cta:hover { background: #00e688; }
 
 /* ── Status bar ──────────────────────────────────────────── */
 .status-bar {
@@ -122,9 +119,9 @@ body::before {
   width: 6px; height: 6px; border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.dot-amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
-.dot-red   { background: var(--red);   box-shadow: 0 0 6px var(--red);   }
+.dot-green { background: var(--green); box-shadow: 0 0 8px rgba(0,255,148,0.7); }
+.dot-amber { background: var(--amber); box-shadow: 0 0 8px rgba(245,166,35,0.7); }
+.dot-red   { background: var(--red);   box-shadow: 0 0 8px rgba(240,71,71,0.7); }
 
 /* ── Terminal box (sharp, no border-radius) ──────────────── */
 .tbox {
@@ -163,10 +160,15 @@ body::before {
   font-size: 13px;
   padding: 10px 14px;
   outline: none;
-  transition: border-color 120ms;
+  transition: border-color 120ms, box-shadow 120ms;
+  -webkit-appearance: none;
+  appearance: none;
 }
-.term-input::placeholder { color: var(--t3); }
-.term-input:focus { border-color: var(--green); }
+.term-input::placeholder { color: var(--t4); }
+.term-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px rgba(0,255,148,0.2);
+}
 
 .term-select {
   width: 100%;
@@ -197,7 +199,7 @@ body::before {
   transition: background 120ms, border-color 120ms, color 120ms;
   white-space: nowrap;
 }
-.tbtn:hover { border-color: var(--t2); background: var(--bg3); }
+.tbtn:hover { border-color: var(--t2); background: var(--bg3); color: var(--t1); }
 .tbtn:active { transform: translateY(1px); }
 
 .tbtn-green {
@@ -205,7 +207,7 @@ body::before {
   background: var(--green2);
   color: var(--green);
 }
-.tbtn-green:hover { background: var(--green3); }
+.tbtn-green:hover { background: var(--green3); color: var(--green); }
 
 .tbtn-solid {
   border-color: var(--green);
@@ -213,29 +215,29 @@ body::before {
   color: var(--bg);
   font-weight: 700;
 }
-.tbtn-solid:hover { background: #00e085; border-color: #00e085; }
+.tbtn-solid:hover { background: #00e688; border-color: #00e688; color: var(--bg); }
 
 .tbtn-amber {
   border-color: var(--amber);
-  background: rgba(245,158,11,0.10);
+  background: rgba(245,166,35,0.10);
   color: var(--amber);
 }
-.tbtn-amber:hover { background: rgba(245,158,11,0.18); }
+.tbtn-amber:hover { background: rgba(245,166,35,0.18); color: var(--amber); }
 
 /* ── Label / tag ─────────────────────────────────────────── */
 .tag {
   display: inline-flex; align-items: center;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border: 1px solid var(--grid2);
   background: var(--bg2);
   font-size: 10px; font-weight: 600;
   letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--t3);
+  color: var(--t2);
 }
-.tag-green { border-color: var(--green); color: var(--green); background: var(--green2); }
-.tag-amber { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,0.08); }
-.tag-red   { border-color: var(--red);   color: var(--red);   background: rgba(239,68,68,0.08); }
-.tag-blue  { border-color: var(--blue);  color: var(--blue);  background: rgba(59,130,246,0.08); }
+.tag-green { border-color: var(--green);  color: var(--green);  background: var(--green2); }
+.tag-amber { border-color: var(--amber);  color: var(--amber);  background: rgba(245,166,35,0.09); }
+.tag-red   { border-color: var(--red);    color: var(--red);    background: rgba(240,71,71,0.09); }
+.tag-blue  { border-color: var(--blue);   color: var(--blue);   background: rgba(77,158,255,0.09); }
 
 /* ── Animations ──────────────────────────────────────────── */
 @keyframes termIn {
