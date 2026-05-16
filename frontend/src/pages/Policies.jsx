@@ -2,52 +2,72 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
 const POLICIES = [
-  { num: 1, title: 'AI Governance Policy',                   desc: 'Governance framework, roles, board review, and approval processes.',                             pages: '3–4 pages' },
-  { num: 2, title: 'Data Governance Policy for AI',          desc: 'Data quality standards, bias mitigation, privacy controls, and training data documentation.',     pages: '4–5 pages' },
-  { num: 3, title: 'AI System Development & Testing Policy', desc: 'Testing requirements (bias, adversarial, fairness), version control, and deployment gates.',      pages: '4–5 pages' },
-  { num: 4, title: 'AI System Deployment & Monitoring Policy', desc: 'Deployment checklists, real-time monitoring, incident response tiers, and audit logging.',      pages: '4–5 pages' },
-  { num: 5, title: 'Third-Party AI Vendor Policy',           desc: 'Vendor approval process, DPA requirements, approved vendor register, and breach escalation.',     pages: '3–4 pages' },
-  { num: 6, title: 'AI Ethics & Bias Mitigation Policy',     desc: 'Ethics principles, bias testing standards, user transparency obligations, and escalation.',       pages: '4–5 pages' },
-  { num: 7, title: 'Incident Response Policy for AI Systems', desc: 'Incident tiers (Critical/High/Medium), response procedures, post-incident review, and templates.', pages: '3–4 pages' },
+  { num: 1, title: 'AI Governance Policy',                     desc: 'Governance framework, roles, board review, and approval processes.',                          pages: '3–4 pages' },
+  { num: 2, title: 'Data Governance Policy for AI',            desc: 'Data quality standards, bias mitigation, privacy controls, and training data documentation.',  pages: '4–5 pages' },
+  { num: 3, title: 'AI System Development & Testing Policy',   desc: 'Testing (bias, adversarial, fairness), version control, and deployment gates.',               pages: '4–5 pages' },
+  { num: 4, title: 'AI System Deployment & Monitoring Policy', desc: 'Deployment checklists, real-time monitoring, incident response tiers, and audit logging.',     pages: '4–5 pages' },
+  { num: 5, title: 'Third-Party AI Vendor Policy',             desc: 'Vendor approval, DPA requirements, approved vendor register, and breach escalation.',          pages: '3–4 pages' },
+  { num: 6, title: 'AI Ethics & Bias Mitigation Policy',       desc: 'Ethics principles, bias testing standards, user transparency obligations, and escalation.',    pages: '4–5 pages' },
+  { num: 7, title: 'Incident Response Policy for AI Systems',  desc: 'Incident tiers (Critical/High/Medium), response procedures, post-incident review, templates.', pages: '3–4 pages' },
 ]
 
 const PLANS = [
   {
     id: 'one_time', name: 'Policy Generator', priceLabel: '$299', period: 'one-time',
-    features: ['7 customised ISO 42001 policies', 'Pre-filled with your company details', 'Ready-to-sign Word documents (.docx)', 'PDF readiness report', '3 months ISO 42001 email updates', '30-day money-back guarantee'],
+    badge: null,
+    features: ['7 customised ISO 42001 policies', 'Pre-filled with your company details', 'Ready-to-sign Word documents (.docx)', 'Professional PDF readiness report', '3 months ISO 42001 email updates', '30-day money-back guarantee'],
     cta: 'Pay $299 — Get All 7 Policies',
   },
   {
-    id: 'combo', name: 'Policies + Monthly Updates', priceLabel: '$299 + $29/mo', period: 'one-time + monthly',
+    id: 'combo', name: 'Policies + Updates', priceLabel: '$299 + $29/mo', period: 'one-time + monthly',
     badge: 'Best Value',
     features: ['Everything in Policy Generator, plus:', 'Monthly policy updates as ISO 42001 evolves', 'ISO 42001 regulatory change alerts', 'Ongoing compliance monitoring guidance', 'Priority email support', 'Cancel anytime'],
     cta: 'Pay $299 + Start Monthly Updates',
   },
   {
     id: 'monthly', name: 'Monthly Updates Only', priceLabel: '$29/mo', period: 'per month',
-    features: ['Monthly policy update notifications', 'ISO 42001 change alerts', 'Access to updated policy templates', 'Cancel anytime'],
+    badge: null,
+    features: ['Monthly policy update notifications', 'ISO 42001 change alerts', 'Updated policy templates', 'Cancel anytime'],
     cta: 'Subscribe for $29/mo',
   },
 ]
 
-function IconCheck() {
+/* ── icons ─────────────────────────────────────────────────────── */
+function ArrowRight({ size = 15 }) {
   return (
-    <svg className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
-function IconDownload() {
+function CheckMark({ size = 13 }) {
   return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    <svg width={size} height={size} viewBox="0 0 13 13" fill="none">
+      <path d="M2 6.5l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
-function IconDoc() {
+function DownloadIcon({ size = 14 }) {
   return (
-    <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M8 2v8M5 7l3 3 3-3M3 13h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function DocIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M9 1H4a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V6L9 1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M9 1v5h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 9h6M5 11.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+function LockIcon({ size = 13 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 13 13" fill="none">
+      <rect x="2" y="5.5" width="9" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M4.5 5.5V4a2 2 0 014 0v1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   )
 }
@@ -56,54 +76,59 @@ function IconDoc() {
 function PlanCard({ plan, selected, onSelect }) {
   const active = selected === plan.id
   return (
-    <button
-      onClick={() => onSelect(plan.id)}
-      aria-pressed={active}
-      className="w-full text-left rounded-2xl p-5 cursor-pointer"
+    <button onClick={() => onSelect(plan.id)} aria-pressed={active}
       style={{
-        transition: 'border-color 180ms var(--ease-out), background 180ms var(--ease-out), box-shadow 180ms var(--ease-out)',
-        borderWidth: active ? 2 : 1,
-        borderStyle: 'solid',
-        borderColor: active ? 'rgba(37,99,235,0.6)' : 'rgba(255,255,255,0.07)',
-        background: active ? 'rgba(37,99,235,0.07)' : '#111827',
-        boxShadow: active ? '0 0 24px rgba(37,99,235,0.10)' : 'none',
-      }}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-bold text-slate-100">{plan.name}</span>
-            {plan.badge && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black text-[10px] font-black">{plan.badge}</span>
-            )}
+        width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+      }}>
+      <div style={{
+        borderRadius: 18,
+        padding: 20,
+        border: `${active ? 2 : 1}px solid ${active ? 'rgba(37,99,235,0.55)' : 'rgba(255,255,255,0.08)'}`,
+        background: active ? 'rgba(37,99,235,0.07)' : 'rgba(255,255,255,0.02)',
+        boxShadow: active ? '0 0 28px rgba(37,99,235,0.09)' : 'none',
+        transition: 'border-color 180ms var(--crisp), background 180ms var(--crisp), box-shadow 180ms var(--crisp)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{plan.name}</span>
+              {plan.badge && (
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#0d0d0d', background: '#f59e0b', padding: '2px 8px', borderRadius: 999, letterSpacing: '0.06em', fontFamily: 'Space Grotesk, sans-serif' }}>
+                  {plan.badge}
+                </span>
+              )}
+            </div>
+            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1 }}>{plan.priceLabel}</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 0' }}>{plan.period}</p>
           </div>
-          <p className="text-xl font-black text-white">{plan.priceLabel}</p>
-          <p className="text-xs text-slate-500">{plan.period}</p>
-        </div>
-        {/* Radio indicator (Emil: visual feedback on selection) */}
-        <div className="flex-shrink-0 mt-1 w-5 h-5 rounded-full flex items-center justify-center"
-          style={{
-            border: `2px solid ${active ? '#2563EB' : 'rgba(255,255,255,0.20)'}`,
-            background: active ? '#2563EB' : 'transparent',
-            transition: 'border-color 180ms var(--ease-out), background 180ms var(--ease-out)',
+          {/* Radio indicator */}
+          <div style={{
+            width: 20, height: 20, borderRadius: '50%', flexShrink: 0, marginTop: 2,
+            border: `2px solid ${active ? 'var(--blue)' : 'rgba(255,255,255,0.20)'}`,
+            background: active ? 'var(--blue)' : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'border-color 180ms var(--crisp), background 180ms var(--crisp)',
           }}>
-          {active && <div className="w-2 h-2 rounded-full bg-white" />}
+            {active && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#fff' }} />}
+          </div>
         </div>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {plan.features.map(f => (
+            <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--text-sub)' }}>
+              <span style={{ color: '#10b981', marginTop: 1, flexShrink: 0 }}><CheckMark /></span>{f}
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="mt-3 space-y-1.5">
-        {plan.features.map(f => (
-          <li key={f} className="flex items-start gap-2 text-xs text-slate-400"><IconCheck />{f}</li>
-        ))}
-      </ul>
     </button>
   )
 }
 
-/* ── Payment form ────────────────────────────────────────────────── */
+/* ── Payment form ─────────────────────────────────────────────────── */
 function PaymentForm({ plan, company, onSuccess }) {
-  const [form, setForm]     = useState({ email: company?.email || '', card: '', expiry: '', cvc: '' })
+  const [form, setForm] = useState({ email: company?.email || '', card: '', expiry: '', cvc: '' })
   const [loading, setLoading] = useState(false)
-  const [error, setError]   = useState('')
+  const [error, setError]     = useState('')
 
   const handlePay = async (e) => {
     e.preventDefault()
@@ -111,122 +136,123 @@ function PaymentForm({ plan, company, onSuccess }) {
     if (!form.email || !form.card || !form.expiry || !form.cvc) { setError('Please fill in all payment details.'); return }
     setLoading(true)
     await new Promise(r => setTimeout(r, 1800))
-    localStorage.setItem('complai_paid', JSON.stringify({ plan: plan.id, date: new Date().toISOString() }))
+    localStorage.setItem('complai_paid', JSON.stringify({ plan: plan?.id, date: new Date().toISOString() }))
     setLoading(false)
     onSuccess()
   }
 
-  const fmtCard   = v => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
-  const fmtExpiry = v => v.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(\d)/, '$1/$2')
-
-  const inputCls = 'w-full bg-white/[0.04] border border-white/[0.10] text-slate-100 placeholder-slate-600 rounded-xl px-4 py-3 text-sm input-glow'
+  const fmtCard   = v => v.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim()
+  const fmtExpiry = v => v.replace(/\D/g,'').slice(0,4).replace(/(\d{2})(\d)/,'$1/$2')
 
   return (
-    <form onSubmit={handlePay} className="space-y-4">
+    <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <label htmlFor="pay-email" className="block text-xs font-semibold text-slate-400 mb-1.5">Email</label>
-        <input id="pay-email" type="email" required placeholder="you@company.com"
-          value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className={inputCls} />
+        <label htmlFor="pay-email" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 7 }}>Email</label>
+        <input id="pay-email" type="email" required placeholder="you@company.com" className="input-premium"
+          value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
       </div>
       <div>
-        <label htmlFor="pay-card" className="block text-xs font-semibold text-slate-400 mb-1.5">Card Number</label>
-        <input id="pay-card" type="text" required placeholder="1234 5678 9012 3456"
-          value={form.card} onChange={e => setForm(p => ({ ...p, card: fmtCard(e.target.value) }))}
-          maxLength={19} className={`${inputCls} font-mono`} />
+        <label htmlFor="pay-card" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 7 }}>Card number</label>
+        <input id="pay-card" type="text" required placeholder="1234 5678 9012 3456" className="input-premium"
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
+          value={form.card} maxLength={19}
+          onChange={e => setForm(p => ({ ...p, card: fmtCard(e.target.value) }))} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
-          <label htmlFor="pay-expiry" className="block text-xs font-semibold text-slate-400 mb-1.5">Expiry</label>
-          <input id="pay-expiry" type="text" required placeholder="MM/YY"
-            value={form.expiry} onChange={e => setForm(p => ({ ...p, expiry: fmtExpiry(e.target.value) }))}
-            maxLength={5} className={`${inputCls} font-mono`} />
+          <label htmlFor="pay-expiry" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 7 }}>Expiry</label>
+          <input id="pay-expiry" type="text" required placeholder="MM/YY" className="input-premium"
+            style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            value={form.expiry} maxLength={5}
+            onChange={e => setForm(p => ({ ...p, expiry: fmtExpiry(e.target.value) }))} />
         </div>
         <div>
-          <label htmlFor="pay-cvc" className="block text-xs font-semibold text-slate-400 mb-1.5">CVC</label>
-          <input id="pay-cvc" type="text" required placeholder="123"
-            value={form.cvc} onChange={e => setForm(p => ({ ...p, cvc: e.target.value.replace(/\D/g,'').slice(0,4) }))}
-            maxLength={4} className={`${inputCls} font-mono`} />
+          <label htmlFor="pay-cvc" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 7 }}>CVC</label>
+          <input id="pay-cvc" type="text" required placeholder="123" className="input-premium"
+            style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            value={form.cvc} maxLength={4}
+            onChange={e => setForm(p => ({ ...p, cvc: e.target.value.replace(/\D/g,'').slice(0,4) }))} />
         </div>
       </div>
 
-      {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+      {error && <p style={{ fontSize: 12, color: '#fca5a5', margin: 0, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: 10, border: '1px solid rgba(239,68,68,0.20)' }}>{error}</p>}
 
-      <button type="submit" disabled={loading}
-        className="btn-press w-full py-4 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 disabled:cursor-not-allowed text-black font-black rounded-2xl text-sm cursor-pointer flex items-center justify-center gap-2"
-        style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)', boxShadow: '0 6px 20px rgba(245,158,11,0.25)' }}>
+      <button type="submit" disabled={loading} className="btn-cta"
+        style={{ justifyContent: 'center', opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, padding: '14px 14px 14px 22px' }}>
         {loading ? (
           <>
-            <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+            <div style={{ width: 16, height: 16, border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#0d0d0d', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
             Processing…
           </>
-        ) : plan.cta}
+        ) : (
+          <>{plan?.cta || 'Complete Purchase'}<span className="btn-icon"><ArrowRight /></span></>
+        )}
       </button>
 
-      <div className="flex items-center justify-center gap-2 text-xs text-slate-600">
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-        </svg>
-        Secured by Stripe · 30-day money-back guarantee
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)' }}>
+        <LockIcon /> Secured by Stripe · 30-day money-back guarantee
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </form>
   )
 }
 
-/* ── Post-payment download ────────────────────────────────────────── */
+/* ── Download section ─────────────────────────────────────────────── */
 function DownloadSection({ company }) {
   return (
-    <div className="space-y-5 page-enter">
-      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 flex items-start gap-4">
-        <svg className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} className="page-enter">
+      <div style={{ padding: '16px 20px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 16, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        <svg width={20} height={20} viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+          <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.5-5l-2-2 1.5-1.5 .5.5 3.5-3.5 1.5 1.5-5 5z" fill="#10b981" />
         </svg>
         <div>
-          <p className="text-sm font-bold text-emerald-300 mb-1">Payment successful — your policies are ready</p>
-          <p className="text-xs text-emerald-400/70">
-            Pre-filled with <strong>{company?.companyName || 'your company'}</strong>'s details. Review, sign, and file with your compliance team.
+          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, fontWeight: 600, color: '#6ee7b7', margin: '0 0 3px' }}>Payment successful — your policies are ready</p>
+          <p style={{ fontSize: 12, color: 'rgba(110,231,183,0.70)', margin: 0, lineHeight: 1.5 }}>
+            Pre-filled with <strong>{company?.companyName || 'your company'}</strong>'s details. Review, sign, and share with your CTO, CFO, and General Counsel.
           </p>
         </div>
       </div>
 
-      <div className="space-y-2 stagger-children">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} className="stagger">
         {POLICIES.map(policy => (
-          <div key={policy.num}
-            className="bg-[#111827] border border-white/[0.07] rounded-2xl p-4 flex items-center gap-4 hover-lift"
-            style={{ transition: 'border-color 200ms var(--ease-out), transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out)' }}>
-            <IconDoc />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-100">{policy.title}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{policy.pages} · Word (.docx)</p>
+          <div key={policy.num} className="bezel hover-lift">
+            <div className="bezel-inner" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(37,99,235,0.10)', border: '1px solid rgba(37,99,235,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#93b4fd' }}>
+                <DocIcon />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 2px' }}>{policy.title}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>{policy.pages} · Word (.docx) · Ready to sign</p>
+              </div>
+              <button className="btn-ghost" style={{ flexShrink: 0, gap: 6, padding: '8px 14px', fontSize: 12 }}>
+                <DownloadIcon size={13} /> Download
+              </button>
             </div>
-            <button
-              className="btn-press flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex-shrink-0 cursor-pointer"
-              style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)' }}>
-              <IconDownload />Download
-            </button>
           </div>
         ))}
 
         {/* PDF report */}
-        <div className="bg-[#111827] border border-white/[0.07] rounded-2xl p-4 flex items-center gap-4 hover-lift"
-          style={{ transition: 'border-color 200ms var(--ease-out), transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out)' }}>
-          <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
-          <div className="flex-1">
-            <p className="text-sm font-bold text-slate-100">ISO 42001 Readiness Report (PDF)</p>
-            <p className="text-xs text-slate-500 mt-0.5">8–12 pages · Investor-ready · Includes roadmap</p>
+        <div className="bezel hover-lift">
+          <div className="bezel-inner" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fbbf24' }}>
+              <DocIcon />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 2px' }}>ISO 42001 Readiness Report (PDF)</p>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>8–12 pages · Investor-ready · Includes roadmap</p>
+            </div>
+            <button className="btn-ghost" style={{ flexShrink: 0, gap: 6, padding: '8px 14px', fontSize: 12 }}>
+              <DownloadIcon size={13} /> Export PDF
+            </button>
           </div>
-          <button
-            className="btn-press flex items-center gap-2 px-4 py-2 bg-white/[0.06] hover:bg-white/[0.10] text-slate-200 text-xs font-bold rounded-xl border border-white/[0.08] flex-shrink-0 cursor-pointer"
-            style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)' }}>
-            <IconDownload />Export PDF
-          </button>
         </div>
       </div>
 
-      <div className="text-center">
-        <Link to="/results" className="text-sm text-slate-500 hover:text-slate-300 cursor-pointer"
-          style={{ transition: 'color 160ms var(--ease-out)' }}>
+      <div style={{ textAlign: 'center', marginTop: 8 }}>
+        <Link to="/results" style={{ fontSize: 13, color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 160ms' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
           Back to Gap Analysis
         </Link>
       </div>
@@ -250,69 +276,90 @@ export default function Policies() {
   const activePlan = PLANS.find(p => p.id === selected)
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] text-slate-100 page-enter">
+    <div style={{ background: 'var(--bg-base)', minHeight: '100dvh' }} className="mesh-bg page-enter">
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-[#0A0F1E]/95 backdrop-blur-md border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 cursor-pointer">
-            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center"
-              style={{ boxShadow: '0 0 12px rgba(37,99,235,0.30)' }}>
-              <span className="text-white text-xs font-black">C</span>
-            </div>
-            <span className="text-sm font-black tracking-widest text-white">COMPLAI</span>
+      {/* ── Floating pill nav ── */}
+      <nav style={{
+        position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 50, width: 'min(640px, calc(100vw - 32px))',
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '8px 12px 8px 20px',
+        background: 'rgba(9,15,28,0.80)',
+        backdropFilter: 'blur(20px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderRadius: 999,
+        boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 32px rgba(0,0,0,0.35)',
+      }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 7, background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, fontFamily: 'Space Grotesk, sans-serif' }}>C</span>
+          </div>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.12em', color: '#fff' }}>COMPLAI</span>
+        </Link>
+        <div style={{ flex: 1 }} />
+        {!paid && (
+          <Link to="/results" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none', padding: '6px 12px', borderRadius: 999, transition: 'color 160ms, background 160ms' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}>
+            Back to Results
           </Link>
-          {!paid && (
-            <Link to="/results" className="text-xs text-slate-500 hover:text-slate-300 cursor-pointer"
-              style={{ transition: 'color 160ms var(--ease-out)' }}>
-              Back to Results
-            </Link>
-          )}
-        </div>
+        )}
       </nav>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '100px 24px 80px' }}>
         {paid ? (
-          <div className="max-w-2xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-black text-white mb-2">Your 7 ISO 42001 Policies Are Ready</h1>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Download, review, and sign each policy. Share with your CTO, CFO, General Counsel, and board.
+          /* ── Post-payment ── */
+          <div style={{ maxWidth: 640, margin: '0 auto' }}>
+            <div style={{ marginBottom: 32 }}>
+              <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px,4vw,38px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+                Your 7 ISO 42001 Policies Are Ready
+              </h1>
+              <p style={{ fontSize: 15, color: 'var(--text-sub)', margin: 0, lineHeight: 1.65 }}>
+                Download, review, and sign. Share with your CTO, CFO, General Counsel, and board.
               </p>
             </div>
             <DownloadSection company={company} />
           </div>
         ) : (
-          <div className="grid lg:grid-cols-[1fr_420px] gap-8 items-start">
+          /* ── Pre-payment ── */
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 32, alignItems: 'start' }} className="max-md:grid-cols-1">
 
             {/* Left: plan selection + policy list */}
-            <div className="space-y-8">
-              <div>
-                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Choose Your Plan</p>
-                <h1 className="text-3xl font-black text-white mb-2">Get Your ISO 42001 Policies</h1>
-                <p className="text-slate-400 text-sm leading-relaxed max-w-lg">
+            <div>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(37,99,235,0.25)', background: 'rgba(37,99,235,0.08)', color: '#93b4fd', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 16 }}>
+                  Choose your plan
+                </div>
+                <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px,4vw,40px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+                  Get Your ISO 42001 Policies
+                </h1>
+                <p style={{ fontSize: 15, color: 'var(--text-sub)', margin: 0, lineHeight: 1.65, maxWidth: '48ch' }}>
                   7 customised, ready-to-sign policies pre-filled with your company's details.
                 </p>
               </div>
 
-              <div className="space-y-3 stagger-children">
-                {PLANS.map(plan => (
-                  <PlanCard key={plan.id} plan={plan} selected={selected} onSelect={setSelected} />
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 40 }} className="stagger">
+                {PLANS.map(plan => <PlanCard key={plan.id} plan={plan} selected={selected} onSelect={setSelected} />)}
               </div>
 
+              {/* Policy list */}
               <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">What You Get — All 7 Policies</p>
-                <div className="space-y-2.5 stagger-children">
+                <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.10em', margin: '0 0 16px' }}>
+                  What you get — all 7 policies
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} className="stagger">
                   {POLICIES.map(policy => (
-                    <div key={policy.num} className="flex items-start gap-4 p-4 bg-[#111827] border border-white/[0.06] rounded-xl">
-                      <span className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xs font-black text-blue-400 font-mono flex-shrink-0">
-                        {policy.num}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-100">{policy.title}</p>
-                        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{policy.desc}</p>
-                        <p className="text-[10px] text-slate-600 mt-1">{policy.pages} · Word (.docx) · Ready to sign</p>
+                    <div key={policy.num} className="bezel">
+                      <div className="bezel-inner" style={{ padding: '14px 18px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                        <span style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(37,99,235,0.10)', border: '1px solid rgba(37,99,235,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 600, color: '#93b4fd', flexShrink: 0 }}>
+                          {policy.num}
+                        </span>
+                        <div>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 3px' }}>{policy.title}</p>
+                          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.5 }}>{policy.desc}</p>
+                          <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontFamily: 'JetBrains Mono, monospace' }}>{policy.pages} · .docx · Ready to sign</p>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -321,23 +368,26 @@ export default function Policies() {
             </div>
 
             {/* Right: sticky payment panel */}
-            <div className="lg:sticky lg:top-24">
-              <div className="bg-[#111827] border border-white/[0.07] rounded-2xl p-7"
-                style={{ boxShadow: '0 0 40px rgba(0,0,0,0.3)' }}>
-                <div className="mb-6">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Order Summary</p>
-                  <p className="text-2xl font-black text-white">{activePlan?.priceLabel}</p>
-                  <p className="text-xs text-slate-500">{activePlan?.name} · {activePlan?.period}</p>
+            <div style={{ position: 'sticky', top: 90 }}>
+              <div className="bezel" style={{ boxShadow: '0 0 60px rgba(0,0,0,0.40), 0 24px 48px -12px rgba(0,0,0,0.45)' }}>
+                <div className="bezel-inner" style={{ padding: 28 }}>
+                  <div style={{ marginBottom: 22, paddingBottom: 20, borderBottom: '1px solid var(--line)' }}>
+                    <p style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Order summary</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 2px', letterSpacing: '-0.02em' }}>{activePlan?.priceLabel}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>{activePlan?.name} · {activePlan?.period}</p>
+                  </div>
+                  <PaymentForm plan={activePlan} company={company} onSuccess={() => setPaid(true)} />
                 </div>
-                <PaymentForm plan={activePlan} company={company} onSuccess={() => setPaid(true)} />
               </div>
             </div>
           </div>
         )}
       </main>
 
-      <footer className="border-t border-white/[0.06] py-6 text-center text-xs text-slate-600 mt-16">
-        © {new Date().getFullYear()} COMPLAI · 30-day money-back guarantee on all purchases
+      <footer style={{ borderTop: '1px solid var(--line)', padding: '24px', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+          © {new Date().getFullYear()} COMPLAI · 30-day money-back guarantee on all purchases
+        </p>
       </footer>
     </div>
   )

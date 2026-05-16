@@ -1,87 +1,82 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-/* ─── data ────────────────────────────────────────────────────────── */
-const STEPS = [
-  { num: '01', title: 'Answer 40 Questions', desc: 'Walk through 6 sections covering governance, data, development, monitoring, vendors, and ethics. Takes 10–15 minutes.' },
-  { num: '02', title: 'Get Your Readiness Score', desc: 'Instantly see your ISO 42001 readiness percentage and a full gap analysis across all control areas.' },
-  { num: '03', title: 'Download 7 Policies', desc: 'Pay $299 once and download 7 customised, ready-to-sign Word documents tailored to your company.' },
-  { num: '04', title: 'Show Investors', desc: 'Export a professional PDF report that proves governance maturity to Series A investors and auditors.' },
-]
-
+/* ── data ─────────────────────────────────────────────────────── */
 const FAQS = [
-  { q: 'What is ISO 42001?', a: 'ISO 42001 is the international standard for AI management systems — the governance framework investors and enterprise customers increasingly require. It covers AI policy, risk management, data governance, monitoring, and ethics.' },
-  { q: 'Who needs ISO 42001?', a: 'Any company building or deploying AI — especially startups raising Series A or selling to enterprise. Investors ask "are you ISO 42001 compliant?" during due diligence. Getting ahead of this is the smart move.' },
-  { q: 'Is this a real assessment?', a: "Yes. The 40 questions map directly to ISO 42001 control areas (A.2, A.5, A.6, A.7, A.8, A.9, A.10). This is a self-assessment — for formal certification you'll need an external auditor." },
-  { q: 'Can I get a refund on the policy generator?', a: "Yes. 30-day money-back guarantee on the $299 policy generator. If the policies don't meet your needs, email us for a full refund — no questions asked." },
+  { q: 'What is ISO 42001?', a: 'ISO 42001 is the international standard for AI management systems — the governance framework investors and enterprise customers are starting to require. It covers AI policy, risk management, data governance, monitoring, and ethics. Think SOC 2 for AI.' },
+  { q: 'Who needs ISO 42001?', a: 'Any company building or deploying AI — especially startups approaching Series A or selling into enterprise. Investors ask "are you ISO 42001 compliant?" during due diligence. Getting ahead of this question is a competitive advantage.' },
+  { q: 'Is this a real assessment?', a: 'Yes. The 40 questions map directly to ISO 42001 control areas (A.2, A.5, A.6, A.7, A.8, A.9, A.10). Your score reflects real gaps. This is a rigorous self-assessment — for formal certification you need an external auditor.' },
+  { q: 'What happens after I pay $299?', a: 'You immediately get 7 Word documents pre-filled with your company details, ready to review and sign. Plus a professional PDF readiness report for investors and 3 months of ISO 42001 update emails.' },
+  { q: 'Do you offer a refund?', a: '30-day money-back guarantee, no questions asked. Email us within 30 days of purchase and we will refund you in full.' },
 ]
 
-const PRICING = [
-  {
-    name: 'Assessment',
-    price: 'Free',
-    sub: 'Always free',
-    features: ['40-question ISO 42001 assessment', 'Readiness score (0–100%)', 'Gap analysis across 6 controls', 'Top 5 gaps prioritised by impact', 'PDF readiness report'],
-    cta: 'Take Free Assessment', to: '/assessment', highlight: false,
-  },
-  {
-    name: 'Policy Generator', price: '$299', sub: 'One-time payment',
-    badge: 'Most Popular',
-    features: ['Everything in Free, plus:', '7 customised ISO 42001 policies', 'Pre-filled with your company details', 'Ready-to-sign Word documents (.docx)', '30-day money-back guarantee', '3 months of email updates'],
-    cta: 'Get All 7 Policies', to: '/policies', highlight: true,
-  },
-  {
-    name: 'Policy Updates', price: '$29', sub: 'per month',
-    features: ['Everything in Policy Generator, plus:', 'Monthly policy updates', 'ISO 42001 change alerts', 'Ongoing compliance monitoring', 'Priority email support'],
-    cta: 'Subscribe', to: '/policies', highlight: false,
-  },
+const CONTROLS = [
+  { id: 'A.2', label: 'AI Governance', pct: 45, color: '#f59e0b' },
+  { id: 'A.6', label: 'Data Governance', pct: 22, color: '#ef4444' },
+  { id: 'A.5', label: 'Development', pct: 38, color: '#f59e0b' },
+  { id: 'A.8', label: 'Monitoring', pct: 18, color: '#ef4444' },
+  { id: 'A.9', label: 'Vendors', pct: 60, color: '#3b82f6' },
+  { id: 'A.10', label: 'Ethics', pct: 55, color: '#3b82f6' },
 ]
 
-/* ─── icons ──────────────────────────────────────────────────────── */
-function IconCheck({ className = 'w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5' }) {
+/* ── icons (SVG only — no emoji, no icon libraries assumed) ──── */
+function ArrowRight({ size = 16 }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
-function IconX({ className = 'w-4 h-4 text-red-400 flex-shrink-0 mt-0.5' }) {
+function CheckMark({ size = 14 }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
-function IconChevron({ open }) {
+function ChevronDown({ size = 14 }) {
   return (
-    <svg
-      className="w-4 h-4 flex-shrink-0 text-slate-400"
-      style={{ transition: 'transform 280ms cubic-bezier(0.23,1,0.32,1)', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-      fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function Shield({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M8 1.5l5.5 2v4.5c0 3-2.5 5.5-5.5 6.5C2.5 13.5 0 11 0 8V3.5L8 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
     </svg>
   )
 }
 
-/* ─── FAQ item with grid accordion (Emil: no JS height measurement) */
-function FAQItem({ q, a }) {
+/* ── FAQ item ─────────────────────────────────────────────────── */
+function FaqItem({ q, a }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border border-white/[0.08] rounded-2xl overflow-hidden hover-lift-sm" style={{ transition: 'border-color 200ms var(--ease-out)' }}>
+    <div
+      className="border-b"
+      style={{ borderColor: 'var(--line)' }}
+    >
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-6 py-5 text-left gap-4 cursor-pointer hover:bg-white/[0.025]"
-        style={{ transition: 'background 180ms var(--ease-out)' }}
+        className="w-full flex items-center justify-between py-5 text-left gap-6 cursor-pointer"
+        style={{ background: 'none', border: 'none' }}
         aria-expanded={open}
       >
-        <span className="text-sm font-semibold text-slate-100">{q}</span>
-        <IconChevron open={open} />
+        <span style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 500, fontFamily: 'Space Grotesk, sans-serif' }}>{q}</span>
+        <span style={{
+          color: 'var(--text-muted)',
+          transition: 'transform 280ms var(--smooth)',
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+          flexShrink: 0,
+          display: 'flex',
+        }}>
+          <ChevronDown size={15} />
+        </span>
       </button>
-      {/* grid-template-rows trick — smooth without JS height calc */}
-      <div className={`faq-body ${open ? 'open' : ''}`}>
+      <div className={`faq-grid ${open ? 'open' : ''}`}>
         <div>
-          <p className="px-6 pb-5 pt-1 text-sm text-slate-400 leading-relaxed border-t border-white/[0.06]">
+          <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.75, paddingBottom: 20 }}>
             {a}
           </p>
         </div>
@@ -90,222 +85,364 @@ function FAQItem({ q, a }) {
   )
 }
 
-/* ─── logo ───────────────────────────────────────────────────────── */
-function Logo({ size = 7 }) {
+/* ── Score preview card (hero visual) ──────────────────────────── */
+function ScorePreview() {
+  const r = 42, circ = 2 * Math.PI * r
+  const pct = 47
+  const offset = circ - (pct / 100) * circ
   return (
-    <div className="flex items-center gap-2.5">
-      <div className={`w-${size} h-${size} rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0`}
-        style={{ boxShadow: '0 0 16px rgba(37,99,235,0.35)' }}>
-        <span className="text-white font-black" style={{ fontSize: size === 7 ? 14 : 12 }}>C</span>
+    <div className="bezel reveal reveal-3" style={{ maxWidth: 340, width: '100%' }}>
+      <div className="bezel-inner p-6">
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>
+          Sample ISO 42001 Report
+        </div>
+
+        {/* Score ring */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <svg width={100} height={100} style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx={50} cy={50} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
+              <circle cx={50} cy={50} r={r} fill="none" stroke="#f59e0b" strokeWidth={8}
+                strokeLinecap="round" strokeDasharray={circ}
+                className="score-ring"
+                style={{ '--circ': circ, '--offset': offset, filter: 'drop-shadow(0 0 5px rgba(245,158,11,0.4))' }}
+              />
+            </svg>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 22, fontWeight: 700, color: '#f59e0b', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1 }}>47%</span>
+              <span style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>Developing</span>
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 4 }}>Acme AI Corp.</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>Multiple gaps identified across data governance and monitoring controls.</div>
+          </div>
+        </div>
+
+        {/* Control bars */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {CONTROLS.map(c => (
+            <div key={c.id}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.label}</span>
+                <span style={{ fontSize: 11, color: c.color, fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{c.pct}%</span>
+              </div>
+              <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ width: `${c.pct}%`, height: '100%', background: c.color, borderRadius: 99, boxShadow: `0 0 6px ${c.color}60` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA strip */}
+        <div style={{ marginTop: 20, padding: '12px 14px', background: 'rgba(37,99,235,0.08)', borderRadius: 12, border: '1px solid rgba(37,99,235,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 12, color: '#93b4fd', fontWeight: 600 }}>Generate 7 policies to fix these gaps</span>
+          <ArrowRight size={14} />
+        </div>
       </div>
-      <span className="font-black tracking-widest text-white" style={{ fontSize: size === 7 ? 15 : 13 }}>COMPLAI</span>
     </div>
   )
 }
 
-/* ─── page ───────────────────────────────────────────────────────── */
+/* ── page ─────────────────────────────────────────────────────── */
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0A0F1E] text-slate-100 page-enter">
+    <div className="mesh-bg" style={{ background: 'var(--bg-base)', minHeight: '100dvh' }}>
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-[#0A0F1E]/90 backdrop-blur-md border-b border-white/[0.06]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Logo size={7} />
-          <div className="flex items-center gap-3">
-            <Link to="/auth" className="text-sm text-slate-400 hover:text-white hidden sm:block"
-              style={{ transition: 'color 160ms var(--ease-out)' }}>
-              Sign In
-            </Link>
-            <Link to="/assessment"
-              className="btn-press px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl cursor-pointer"
-              style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)' }}>
-              Take Free Assessment
-            </Link>
+      {/* ── Floating pill nav ── */}
+      <nav className="nav-pill" style={{ width: 'min(680px, calc(100vw - 32px))' }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 'auto' }}>
+          <div style={{
+            width: 26, height: 26, borderRadius: 8,
+            background: 'var(--blue)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 12px rgba(37,99,235,0.35)',
+          }}>
+            <span style={{ color: '#fff', fontSize: 11, fontWeight: 800, fontFamily: 'Space Grotesk, sans-serif' }}>C</span>
           </div>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.12em', color: '#fff' }}>COMPLAI</span>
         </div>
+
+        {/* Links */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <a href="#pricing" style={{ padding: '7px 14px', color: 'var(--text-muted)', fontSize: 13, fontWeight: 500, textDecoration: 'none', borderRadius: 999, transition: 'color 160ms, background 160ms' }}
+            onMouseEnter={e => { e.target.style.color = 'var(--text-primary)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+            onMouseLeave={e => { e.target.style.color = 'var(--text-muted)'; e.target.style.background = 'transparent' }}>
+            Pricing
+          </a>
+          <Link to="/auth" style={{ padding: '7px 14px', color: 'var(--text-muted)', fontSize: 13, fontWeight: 500, textDecoration: 'none', borderRadius: 999, transition: 'color 160ms, background 160ms' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}>
+            Sign In
+          </Link>
+        </div>
+
+        {/* CTA pill-in-pill */}
+        <Link to="/assessment" className="btn-primary" style={{ marginLeft: 8, fontSize: 13, padding: '8px 10px 8px 16px' }}>
+          Take Assessment
+          <span className="btn-icon" style={{ width: 26, height: 26 }}>
+            <ArrowRight size={13} />
+          </span>
+        </Link>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-        <div className="stagger-children inline-flex flex-col items-center gap-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider">
-            ISO 42001 Readiness Platform for AI Startups
+      {/* ── Hero — split layout (left text / right visual) ── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '140px 32px 80px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}
+        className="max-md:grid-cols-1 max-md:pt-28 max-md:pb-12">
+
+        {/* Left */}
+        <div>
+          <div className="eyebrow reveal reveal-1" style={{ marginBottom: 24 }}>
+            <Shield size={12} />
+            ISO 42001 Readiness Platform
           </div>
 
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight max-w-4xl">
+          <h1 className="reveal reveal-2" style={{
+            fontFamily: 'Space Grotesk, sans-serif',
+            fontSize: 'clamp(42px, 5vw, 68px)',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.03em',
+            lineHeight: 1.05,
+            margin: '0 0 24px',
+          }}>
             Investors ask:<br />
-            <span className="text-slate-500">"Are you ISO 42001<br />compliant?"</span>
+            <span style={{ color: 'var(--text-muted)' }}>are you ISO<br />42001 ready?</span>
           </h1>
 
-          <p className="text-slate-400 text-lg sm:text-xl max-w-xl leading-relaxed">
-            Most AI startups say <em className="text-slate-300 not-italic font-semibold">"Uh…"</em> — COMPLAI gives
-            you clarity, a readiness score, and customised policies for{' '}
-            <strong className="text-white">$299</strong> instead of $50K in consulting.
+          <p className="reveal reveal-3" style={{
+            fontSize: 17,
+            color: 'var(--text-sub)',
+            lineHeight: 1.7,
+            maxWidth: '46ch',
+            marginBottom: 36,
+          }}>
+            Most AI startups say "Uh..." COMPLAI gives you a readiness score,
+            gap analysis, and 7 customised policies for <strong style={{ color: 'var(--text-primary)' }}>$299</strong> instead
+            of $50K in consulting fees.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Link to="/assessment"
-              className="btn-press w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-base cursor-pointer"
-              style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out)', boxShadow: '0 8px 24px rgba(37,99,235,0.28)' }}>
+          <div className="reveal reveal-4" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <Link to="/assessment" className="btn-primary">
               Take Free Assessment
+              <span className="btn-icon"><ArrowRight /></span>
             </Link>
-            <p className="text-slate-500 text-sm">No credit card · 10–15 minutes</p>
+            <Link to="#pricing" className="btn-ghost">See pricing</Link>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.07] text-sm text-slate-400">
-            <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-            </svg>
-            <span><strong className="text-slate-200">1,000+ AI startups</strong> have assessed their ISO 42001 readiness</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Problem / Solution */}
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid md:grid-cols-2 gap-5 stagger-children">
-          <div className="bg-[#111827] border border-red-500/20 rounded-2xl p-8 hover-lift"
-            style={{ borderColor: 'rgba(239,68,68,0.2)' }}>
-            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-5">
-              <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-white mb-4">The Problem</h3>
-            <ul className="space-y-3 text-sm text-slate-400">
-              {['ISO 42001 feels abstract and overwhelming', "You don't know which policies your company needs", 'Investors ask about AI governance at Series A', 'Consultants charge $50K and take 3–6 months'].map(t => (
-                <li key={t} className="flex items-start gap-2.5"><IconX />{t}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="bg-[#111827] border border-emerald-500/20 rounded-2xl p-8 hover-lift">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5">
-              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-white mb-4">The COMPLAI Solution</h3>
-            <ul className="space-y-3 text-sm text-slate-400">
-              {['Free 10-minute assessment maps your exact gaps', 'Instant readiness score across 6 ISO 42001 controls', 'Customised policies ready for investor due diligence', 'Professional PDF report for board and auditors'].map(t => (
-                <li key={t} className="flex items-start gap-2.5"><IconCheck />{t}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-3">How It Works</p>
-          <h2 className="text-3xl sm:text-4xl font-black text-white">From zero to investor-ready in 4 steps</h2>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children">
-          {STEPS.map(step => (
-            <div key={step.num} className="bg-[#111827] border border-white/[0.06] rounded-2xl p-6 hover-lift"
-              style={{ transition: 'border-color 220ms var(--ease-out), transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out)' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(37,99,235,0.30)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
-            >
-              <span className="text-3xl font-black text-blue-500/25 font-mono tabular-nums">{step.num}</span>
-              <h3 className="text-base font-bold text-white mt-3 mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section className="max-w-6xl mx-auto px-6 py-16" id="pricing">
-        <div className="text-center mb-12">
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-3">Pricing</p>
-          <h2 className="text-3xl sm:text-4xl font-black text-white">Simple, transparent pricing</h2>
-          <p className="text-slate-400 mt-3">Start free. Pay only when you need policies.</p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-5 items-start stagger-children">
-          {PRICING.map(plan => (
-            <div
-              key={plan.name}
-              className={`rounded-2xl p-8 flex flex-col gap-6 hover-lift ${
-                plan.highlight
-                  ? 'bg-blue-600/10 border-2 border-blue-500/50'
-                  : 'bg-[#111827] border border-white/[0.07]'
-              }`}
-              style={plan.highlight ? { boxShadow: '0 0 32px rgba(37,99,235,0.12)' } : {}}
-            >
-              <div>
-                {plan.badge && (
-                  <span className="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold mb-3">
-                    {plan.badge}
-                  </span>
-                )}
-                <p className="text-sm font-semibold text-slate-300">{plan.name}</p>
-                <p className="text-4xl font-black text-white mt-1">{plan.price}</p>
-                <p className="text-xs text-slate-500 mt-1">{plan.sub}</p>
+          {/* Trust bar */}
+          <div className="reveal reveal-5" style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            {['Free to start', '10–15 minutes', '30-day guarantee'].map(t => (
+              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ color: 'var(--emerald)' }}><CheckMark /></span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t}</span>
               </div>
-              <ul className="space-y-2.5 flex-1">
-                {plan.features.map(f => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-400">
-                    <IconCheck />{f}
+            ))}
+          </div>
+        </div>
+
+        {/* Right — score preview card */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }} className="max-md:justify-center">
+          <ScorePreview />
+        </div>
+      </section>
+
+      {/* ── Bento features ── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 32px 96px' }}>
+        <div style={{ marginBottom: 56, maxWidth: 480 }}>
+          <div className="eyebrow reveal" style={{ marginBottom: 16 }}>How it works</div>
+          <h2 className="reveal" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            From zero to investor-ready in one afternoon
+          </h2>
+        </div>
+
+        {/* Asymmetric bento grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '5fr 3fr', gridTemplateRows: 'auto auto', gap: 16 }} className="stagger max-md:grid-cols-1">
+
+          {/* Card 1 — wide */}
+          <div className="bezel hover-lift">
+            <div className="bezel-inner" style={{ padding: 32 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 15, fontWeight: 600, color: '#93b4fd' }}>01</span>
+              </div>
+              <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 10px' }}>
+                Answer 40 targeted questions
+              </h3>
+              <p style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7, margin: 0, maxWidth: '42ch' }}>
+                Walk through 6 sections covering governance, data quality, development, production monitoring, vendors, and ethics. Each question maps to a specific ISO 42001 control.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2 — narrow */}
+          <div className="bezel hover-lift">
+            <div className="bezel-inner" style={{ padding: 32 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 15, fontWeight: 600, color: '#fbbf24' }}>02</span>
+              </div>
+              <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 10px' }}>
+                Get your readiness score
+              </h3>
+              <p style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7, margin: 0 }}>
+                Instant percentage score and gap breakdown across all 6 control areas. Free.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3 — narrow */}
+          <div className="bezel hover-lift">
+            <div className="bezel-inner" style={{ padding: 32 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 15, fontWeight: 600, color: '#34d399' }}>03</span>
+              </div>
+              <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 10px' }}>
+                Download 7 policies
+              </h3>
+              <p style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7, margin: 0 }}>
+                Pay $299 once. Get 7 customised, ready-to-sign Word documents.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4 — wide */}
+          <div className="bezel hover-lift">
+            <div className="bezel-inner" style={{ padding: 32 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(139,92,246,0.10)', border: '1px solid rgba(139,92,246,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 15, fontWeight: 600, color: '#a78bfa' }}>04</span>
+              </div>
+              <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 10px' }}>
+                Show investors your governance
+              </h3>
+              <p style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7, margin: 0, maxWidth: '42ch' }}>
+                Export a professional 8-page PDF readiness report — designed to drop into investor data rooms, board packs, and pre-audit disclosure folders.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Pricing ── */}
+      <section id="pricing" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 32px 96px' }}>
+        <div style={{ marginBottom: 56, textAlign: 'center' }}>
+          <div className="eyebrow reveal" style={{ marginBottom: 16, display: 'inline-flex' }}>Pricing</div>
+          <h2 className="reveal" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px' }}>
+            Start free. Pay when you need policies.
+          </h2>
+          <p className="reveal" style={{ fontSize: 15, color: 'var(--text-sub)', margin: 0 }}>No subscription required to take the assessment.</p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr 1fr', gap: 16, alignItems: 'start' }} className="stagger max-md:grid-cols-1">
+          {/* Free */}
+          <div className="bezel">
+            <div className="bezel-inner" style={{ padding: 28 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, margin: '0 0 8px' }}>Assessment</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px', letterSpacing: '-0.03em' }}>Free</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 24px' }}>Always free</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {['40-question ISO 42001 assessment', 'Readiness score 0–100%', 'Gap analysis across 6 controls', 'Top 5 prioritised gaps', 'PDF readiness report'].map(f => (
+                  <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-sub)' }}>
+                    <span style={{ color: 'var(--emerald)', marginTop: 1, flexShrink: 0 }}><CheckMark /></span>{f}
                   </li>
                 ))}
               </ul>
-              <Link
-                to={plan.to}
-                className={`btn-press w-full py-3 rounded-xl text-sm font-bold text-center cursor-pointer ${
-                  plan.highlight
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                    : 'bg-white/[0.06] hover:bg-white/[0.10] text-slate-200 border border-white/[0.08]'
-                }`}
-                style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)' }}
-              >
-                {plan.cta}
+              <Link to="/assessment" className="btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
+                Take Assessment
               </Link>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-6 py-16">
-        <div className="text-center mb-10">
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-3">FAQ</p>
-          <h2 className="text-3xl font-black text-white">Common questions</h2>
-        </div>
-        <div className="space-y-3">
-          {FAQS.map(item => <FAQItem key={item.q} {...item} />)}
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="max-w-4xl mx-auto px-6 py-16">
-        <div className="bg-gradient-to-br from-blue-600/15 to-blue-900/10 border border-blue-500/20 rounded-3xl p-12 text-center">
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            Get ISO 42001-ready instead of spending $50K on consulting
-          </h2>
-          <p className="text-slate-400 max-w-lg mx-auto mb-8 leading-relaxed">
-            Take the free assessment, see your exact gaps, and download customised policies — all in one afternoon.
-          </p>
-          <Link to="/assessment"
-            className="btn-press inline-flex px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-base cursor-pointer"
-            style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)', boxShadow: '0 8px 24px rgba(37,99,235,0.28)' }}>
-            Start Free Assessment
-          </Link>
-          <p className="text-slate-600 text-sm mt-4">Free · No account required to start</p>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8 text-center text-xs text-slate-600">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
-            <span className="text-white text-xs font-black">C</span>
           </div>
-          <span className="text-slate-500 font-bold tracking-widest text-sm">COMPLAI</span>
+
+          {/* Paid — highlighted */}
+          <div className="bezel" style={{ border: '1px solid rgba(37,99,235,0.40)', boxShadow: '0 0 40px rgba(37,99,235,0.10), 0 24px 48px -12px rgba(0,0,0,0.45)' }}>
+            <div className="bezel-inner" style={{ padding: 28, background: 'rgba(37,99,235,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <p style={{ fontSize: 13, color: '#93b4fd', fontWeight: 600, margin: 0 }}>Policy Generator</p>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: 'var(--blue)', padding: '3px 9px', borderRadius: 999, letterSpacing: '0.06em' }}>MOST POPULAR</span>
+              </div>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px', letterSpacing: '-0.03em' }}>$299</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 24px' }}>One-time payment</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {['Everything in Free, plus:', '7 customised ISO 42001 policies', 'Pre-filled with your company details', 'Ready-to-sign Word documents', '30-day money-back guarantee', '3 months of ISO 42001 updates'].map(f => (
+                  <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-sub)' }}>
+                    <span style={{ color: 'var(--emerald)', marginTop: 1, flexShrink: 0 }}><CheckMark /></span>{f}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/policies" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                Get All 7 Policies
+                <span className="btn-icon"><ArrowRight /></span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Monthly */}
+          <div className="bezel">
+            <div className="bezel-inner" style={{ padding: 28 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, margin: '0 0 8px' }}>Policy Updates</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px', letterSpacing: '-0.03em' }}>$29<span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-muted)' }}>/mo</span></p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 24px' }}>Cancel anytime</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {['Everything in Policy Generator, plus:', 'Monthly policy updates', 'ISO 42001 change alerts', 'Ongoing compliance guidance', 'Priority email support'].map(f => (
+                  <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-sub)' }}>
+                    <span style={{ color: 'var(--emerald)', marginTop: 1, flexShrink: 0 }}><CheckMark /></span>{f}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/policies" className="btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
+                Subscribe
+              </Link>
+            </div>
+          </div>
         </div>
-        <p>© {new Date().getFullYear()} COMPLAI · ISO 42001 Readiness for AI Startups</p>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 32px 96px' }}>
+        <div style={{ marginBottom: 48, textAlign: 'center' }}>
+          <div className="eyebrow reveal" style={{ marginBottom: 16, display: 'inline-flex' }}>FAQ</div>
+          <h2 className="reveal" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            Common questions
+          </h2>
+        </div>
+        <div style={{ borderTop: '1px solid var(--line)' }} className="reveal">
+          {FAQS.map(item => <FaqItem key={item.q} {...item} />)}
+        </div>
+      </section>
+
+      {/* ── Final CTA ── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 32px 100px' }}>
+        <div className="bezel reveal" style={{ border: '1px solid rgba(37,99,235,0.20)', boxShadow: '0 0 60px rgba(37,99,235,0.07)' }}>
+          <div className="bezel-inner" style={{ padding: 'clamp(40px, 5vw, 72px)', textAlign: 'center', background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(37,99,235,0.08), transparent)' }}>
+            <div className="eyebrow" style={{ display: 'inline-flex', marginBottom: 20 }}>Get started today</div>
+            <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(28px, 4vw, 52px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px', letterSpacing: '-0.03em' }}>
+              Get ISO 42001-ready instead<br />of spending $50K on consulting
+            </h2>
+            <p style={{ fontSize: 16, color: 'var(--text-sub)', maxWidth: '48ch', margin: '0 auto 36px', lineHeight: 1.7 }}>
+              Take the free assessment, see your exact gaps, and download customised policies — all before your next investor call.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <Link to="/assessment" className="btn-primary" style={{ fontSize: 15, padding: '14px 14px 14px 24px' }}>
+                Start Free Assessment
+                <span className="btn-icon"><ArrowRight /></span>
+              </Link>
+              <Link to="#pricing" className="btn-ghost" style={{ fontSize: 15 }}>View pricing</Link>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 20 }}>No account required · Takes 10–15 minutes</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer style={{ borderTop: '1px solid var(--line)', padding: '32px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+          <div style={{ width: 22, height: 22, borderRadius: 7, background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, fontFamily: 'Space Grotesk, sans-serif' }}>C</span>
+          </div>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.1em', color: 'var(--text-sub)' }}>COMPLAI</span>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+          © {new Date().getFullYear()} COMPLAI · ISO 42001 Readiness for AI Startups
+        </p>
       </footer>
     </div>
   )

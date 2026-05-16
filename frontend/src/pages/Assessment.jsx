@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 
-/* ── 40 questions across 6 ISO 42001 control sections ───────────── */
 export const SECTIONS = [
   {
     id: 'A', title: 'AI Governance & Leadership', control: 'A.2 / A.3',
@@ -85,14 +84,6 @@ const COMPANY_SIZES = ['1–10', '11–50', '51–200', '200+']
 const INDUSTRIES    = ['AI/ML', 'SaaS', 'Fintech', 'Healthtech', 'Other']
 const AI_SYSTEMS    = ['1', '2–5', '6–10', '10+']
 
-/* answer options with selected state colors */
-const ANSWER_OPTIONS = [
-  { value: 'yes',         label: 'Yes',         selectedCls: 'border-emerald-500/70 bg-emerald-500/12 text-emerald-300' },
-  { value: 'in_progress', label: 'In Progress',  selectedCls: 'border-amber-500/70 bg-amber-500/12 text-amber-300'   },
-  { value: 'no',          label: 'No',           selectedCls: 'border-red-500/70 bg-red-500/12 text-red-300'          },
-]
-
-/* ── Scoring (exported for Results page) ─────────────────────────── */
 export function computeResults(companyInfo, answers) {
   const TOTAL_Q = 40
   let totalPoints = 0
@@ -101,10 +92,8 @@ export function computeResults(companyInfo, answers) {
     else if (v === 'in_progress') totalPoints += 0.5
   })
   const overallScore = Math.round((totalPoints / TOTAL_Q) * 100)
-
   const GAP_PRIORITY = { B: 1, D: 2, A: 3, C: 4, E: 5, F: 6 }
   const IMPACT_LABEL  = { B: 'CRITICAL', D: 'CRITICAL', A: 'HIGH', C: 'HIGH', E: 'MEDIUM', F: 'MEDIUM' }
-
   const sectionScores = SECTIONS.map(section => {
     let points = 0; const gaps = []
     section.questions.forEach(q => {
@@ -115,7 +104,6 @@ export function computeResults(companyInfo, answers) {
     })
     return { ...section, score: Math.round((points / section.questions.length) * 100), gaps }
   })
-
   const allGaps = []
   sectionScores.forEach(s => s.gaps.forEach(g => allGaps.push({
     section: s.id, sectionTitle: s.title, question: g,
@@ -125,200 +113,235 @@ export function computeResults(companyInfo, answers) {
   return { overallScore, sectionScores, topGaps: allGaps.slice(0, 5) }
 }
 
-/* ── Nav bar ─────────────────────────────────────────────────────── */
-function AssessmentNav({ step, totalSteps }) {
+/* ── icons ─────────────────────────────────────────────────────── */
+function ArrowRight({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function ArrowLeft({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/* ── Floating progress pill ─────────────────────────────────────── */
+function ProgressNav({ step, totalSteps }) {
   const pct = Math.round(((step + 1) / totalSteps) * 100)
   return (
-    <nav className="sticky top-0 z-50 bg-[#0A0F1E]/95 backdrop-blur-md border-b border-white/[0.06]">
-      <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
-        <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 cursor-pointer">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center"
-            style={{ boxShadow: '0 0 12px rgba(37,99,235,0.30)' }}>
-            <span className="text-white text-xs font-black">C</span>
-          </div>
-          <span className="text-sm font-black tracking-widest text-white hidden sm:block">COMPLAI</span>
-        </Link>
-
-        <div className="flex-1 max-w-xs">
-          <div className="flex justify-between text-[10px] text-slate-500 mb-1.5 font-medium">
-            <span>{step === 0 ? 'Company Info' : `Section ${step} of ${totalSteps - 1}`}</span>
-            <span>{pct}%</span>
-          </div>
-          <div className="h-1.5 bg-white/[0.07] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 rounded-full"
-              style={{
-                width: `${pct}%`,
-                transition: 'width 500ms cubic-bezier(0.23,1,0.32,1)',
-                boxShadow: '0 0 8px rgba(37,99,235,0.5)',
-              }}
-            />
-          </div>
+    <nav style={{
+      position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 50, width: 'min(600px, calc(100vw - 32px))',
+      display: 'flex', alignItems: 'center', gap: 16,
+      padding: '8px 12px 8px 20px',
+      background: 'rgba(9,15,28,0.80)',
+      backdropFilter: 'blur(20px) saturate(1.6)',
+      WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+      border: '1px solid rgba(255,255,255,0.10)',
+      borderRadius: 999,
+      boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 32px rgba(0,0,0,0.35)',
+    }}>
+      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+        <div style={{ width: 24, height: 24, borderRadius: 7, background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, fontFamily: 'Space Grotesk, sans-serif' }}>C</span>
         </div>
+        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.12em', color: '#fff', display: 'none' }} className="sm:inline">COMPLAI</span>
+      </Link>
 
-        <span className="text-xs text-slate-600 flex-shrink-0 hidden sm:block">Free</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>
+            {step === 0 ? 'Company info' : `Section ${step} of ${totalSteps - 1}`}
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>{pct}%</span>
+        </div>
+        <div style={{ height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
+          <div className="progress-fill" style={{ width: `${pct}%` }} />
+        </div>
       </div>
+
+      <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>Free</span>
     </nav>
   )
 }
 
-/* ── Shared field components ─────────────────────────────────────── */
-const inputCls = 'w-full bg-white/[0.04] border border-white/[0.10] text-slate-100 placeholder-slate-600 rounded-xl px-4 py-3 text-sm input-glow'
-const selectCls = 'w-full bg-[#0d1525] border border-white/[0.10] text-slate-100 rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none input-glow'
-
+/* ── Field label ────────────────────────────────────────────────── */
 function FieldLabel({ htmlFor, children }) {
   return (
-    <label htmlFor={htmlFor} className="block text-xs font-semibold text-slate-400 mb-1.5">
-      {children} <span className="text-red-400">*</span>
+    <label htmlFor={htmlFor} style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 7, letterSpacing: '0.04em' }}>
+      {children} <span style={{ color: '#ef4444' }}>*</span>
     </label>
   )
 }
 
-/* ── Step 0: company info ─────────────────────────────────────────── */
+/* ── Step 0 — company info ──────────────────────────────────────── */
 function CompanyInfoStep({ info, onChange, onNext }) {
   const valid = info.email && info.companyName && info.companySize && info.industry && info.numAISystems
   return (
-    <div className="max-w-xl mx-auto px-6 py-12 page-enter">
-      <div className="mb-8">
-        <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Step 1 of 7</p>
-        <h1 className="text-3xl font-black text-white mb-2">Tell us about your company</h1>
-        <p className="text-slate-400 text-sm leading-relaxed">We use this to customise your results and pre-fill your policies.</p>
+    <div style={{ maxWidth: 520, margin: '0 auto', padding: '120px 24px 60px' }} className="page-enter">
+      <div style={{ marginBottom: 36 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(37,99,235,0.25)', background: 'rgba(37,99,235,0.08)', color: '#93b4fd', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 18 }}>
+          Step 1 of 7
+        </div>
+        <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
+          Tell us about your company
+        </h1>
+        <p style={{ fontSize: 15, color: 'var(--text-sub)', margin: 0, lineHeight: 1.65 }}>
+          We use this to personalise your results and pre-fill your policies.
+        </p>
       </div>
 
-      <div className="bg-[#111827] border border-white/[0.07] rounded-2xl p-8 space-y-5">
-        <div>
-          <FieldLabel htmlFor="email">Work Email</FieldLabel>
-          <input id="email" type="email" required placeholder="you@company.com"
-            value={info.email} onChange={e => onChange('email', e.target.value)} className={inputCls} />
-        </div>
-        <div>
-          <FieldLabel htmlFor="companyName">Company Name</FieldLabel>
-          <input id="companyName" type="text" required placeholder="Acme AI, Inc."
-            value={info.companyName} onChange={e => onChange('companyName', e.target.value)} className={inputCls} />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="bezel">
+        <div className="bezel-inner" style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
-            <FieldLabel htmlFor="companySize">Company Size</FieldLabel>
-            <select id="companySize" value={info.companySize} onChange={e => onChange('companySize', e.target.value)} className={selectCls}>
-              <option value="" disabled>Select…</option>
-              {COMPANY_SIZES.map(o => <option key={o} value={o}>{o} employees</option>)}
-            </select>
+            <FieldLabel htmlFor="email">Work email</FieldLabel>
+            <input id="email" type="email" required placeholder="you@company.com"
+              value={info.email} onChange={e => onChange('email', e.target.value)}
+              className="input-premium" />
           </div>
           <div>
-            <FieldLabel htmlFor="industry">Industry</FieldLabel>
-            <select id="industry" value={info.industry} onChange={e => onChange('industry', e.target.value)} className={selectCls}>
-              <option value="" disabled>Select…</option>
-              {INDUSTRIES.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <FieldLabel htmlFor="companyName">Company name</FieldLabel>
+            <input id="companyName" type="text" required placeholder="Acme AI, Inc."
+              value={info.companyName} onChange={e => onChange('companyName', e.target.value)}
+              className="input-premium" />
           </div>
-        </div>
-        <div>
-          <FieldLabel htmlFor="numAISystems">Number of AI Systems</FieldLabel>
-          <select id="numAISystems" value={info.numAISystems} onChange={e => onChange('numAISystems', e.target.value)} className={selectCls}>
-            <option value="" disabled>Select…</option>
-            {AI_SYSTEMS.map(o => <option key={o} value={o}>{o} system{o !== '1' ? 's' : ''}</option>)}
-          </select>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <FieldLabel htmlFor="companySize">Company size</FieldLabel>
+              <div style={{ position: 'relative' }}>
+                <select id="companySize" value={info.companySize} onChange={e => onChange('companySize', e.target.value)} className="select-premium">
+                  <option value="" disabled>Select…</option>
+                  {COMPANY_SIZES.map(o => <option key={o} value={o}>{o} employees</option>)}
+                </select>
+                <svg style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} width={12} height={12} viewBox="0 0 12 12" fill="none">
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <FieldLabel htmlFor="industry">Industry</FieldLabel>
+              <div style={{ position: 'relative' }}>
+                <select id="industry" value={info.industry} onChange={e => onChange('industry', e.target.value)} className="select-premium">
+                  <option value="" disabled>Select…</option>
+                  {INDUSTRIES.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+                <svg style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} width={12} height={12} viewBox="0 0 12 12" fill="none">
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div>
+            <FieldLabel htmlFor="numAISystems">Number of AI systems</FieldLabel>
+            <div style={{ position: 'relative' }}>
+              <select id="numAISystems" value={info.numAISystems} onChange={e => onChange('numAISystems', e.target.value)} className="select-premium">
+                <option value="" disabled>Select…</option>
+                {AI_SYSTEMS.map(o => <option key={o} value={o}>{o} system{o !== '1' ? 's' : ''}</option>)}
+              </select>
+              <svg style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} width={12} height={12} viewBox="0 0 12 12" fill="none">
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
-      <button onClick={onNext} disabled={!valid}
-        className="btn-press mt-6 w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-2xl text-sm cursor-pointer flex items-center justify-center gap-2"
-        style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)', boxShadow: valid ? '0 4px 20px rgba(37,99,235,0.25)' : 'none' }}>
+      <button onClick={onNext} disabled={!valid} className="btn-primary"
+        style={{ marginTop: 20, width: '100%', justifyContent: 'center', opacity: valid ? 1 : 0.4, cursor: valid ? 'pointer' : 'not-allowed', fontSize: 15, padding: '14px 14px 14px 24px' }}>
         Start Assessment
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-        </svg>
+        <span className="btn-icon"><ArrowRight /></span>
       </button>
     </div>
   )
 }
 
-/* ── Answer button (Emil: every pressable needs :active press feel) */
+/* ── Answer button ─────────────────────────────────────────────── */
 function AnswerBtn({ option, selected, onClick }) {
   const active = selected === option.value
+  const colors = {
+    yes:         { border: 'rgba(16,185,129,0.55)', bg: 'rgba(16,185,129,0.09)', text: '#6ee7b7' },
+    in_progress: { border: 'rgba(245,158,11,0.55)', bg: 'rgba(245,158,11,0.09)', text: '#fcd34d' },
+    no:          { border: 'rgba(239,68,68,0.55)',  bg: 'rgba(239,68,68,0.09)',  text: '#fca5a5' },
+  }
+  const c = active ? colors[option.value] : null
   return (
-    <button
-      onClick={() => onClick(option.value)}
-      aria-pressed={active}
-      className="btn-press flex-1 py-2.5 px-3 rounded-xl border text-xs font-bold cursor-pointer text-center"
+    <button onClick={() => onClick(option.value)} aria-pressed={active}
       style={{
-        transition: 'background 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 160ms var(--ease-out)',
-        ...(active
-          ? option.value === 'yes'
-            ? { borderColor: 'rgba(16,185,129,0.7)', background: 'rgba(16,185,129,0.10)', color: '#6ee7b7' }
-            : option.value === 'in_progress'
-            ? { borderColor: 'rgba(245,158,11,0.7)', background: 'rgba(245,158,11,0.10)', color: '#fcd34d' }
-            : { borderColor: 'rgba(239,68,68,0.7)', background: 'rgba(239,68,68,0.10)', color: '#fca5a5' }
-          : { borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', color: '#94a3b8' }),
+        flex: 1, padding: '10px 8px', borderRadius: 12, cursor: 'pointer',
+        border: `1px solid ${active ? c.border : 'rgba(255,255,255,0.08)'}`,
+        background: active ? c.bg : 'rgba(255,255,255,0.02)',
+        color: active ? c.text : 'var(--text-muted)',
+        fontSize: 12, fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif',
+        transition: 'border-color 150ms var(--crisp), background 150ms var(--crisp), color 150ms var(--crisp), transform 150ms var(--smooth)',
       }}
+      onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
+      onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
     >
       {option.label}
     </button>
   )
 }
 
-/* ── Section question step ───────────────────────────────────────── */
+const ANSWER_OPTIONS = [
+  { value: 'yes',         label: 'Yes'         },
+  { value: 'in_progress', label: 'In Progress'  },
+  { value: 'no',          label: 'No'           },
+]
+
+/* ── Section step ──────────────────────────────────────────────── */
 function SectionStep({ section, sectionIndex, answers, onChange, onNext, onBack, isLast }) {
   const allAnswered = section.questions.every(q => answers[q.id])
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10 page-enter">
-      <div className="mb-8">
-        <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold mb-3">
+    <div style={{ maxWidth: 640, margin: '0 auto', padding: '120px 24px 60px' }} className="page-enter">
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(37,99,235,0.25)', background: 'rgba(37,99,235,0.08)', color: '#93b4fd', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 16 }}>
           ISO {section.control}
-        </span>
-        <h2 className="text-2xl font-black text-white mb-2">
+        </div>
+        <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
           Section {sectionIndex}: {section.title}
         </h2>
-        <p className="text-slate-400 text-sm leading-relaxed">{section.description}</p>
+        <p style={{ fontSize: 14, color: 'var(--text-sub)', margin: 0, lineHeight: 1.65 }}>{section.description}</p>
       </div>
 
-      {/* Questions stagger in (Emil: items appearing together should cascade) */}
-      <div className="space-y-4 stagger-children">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} className="stagger">
         {section.questions.map(q => (
-          <div
-            key={q.id}
-            className="bg-[#111827] border rounded-2xl p-5"
-            style={{
-              borderColor: answers[q.id] ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
-              transition: 'border-color 200ms var(--ease-out)',
-            }}
-          >
-            <p className="text-sm font-medium text-slate-100 mb-4 leading-relaxed">
-              <span className="text-slate-600 font-mono text-xs mr-2">{q.id}</span>
-              {q.text}
-            </p>
-            <div className="flex gap-2">
-              {ANSWER_OPTIONS.map(opt => (
-                <AnswerBtn key={opt.value} option={opt} selected={answers[q.id]} onClick={v => onChange(q.id, v)} />
-              ))}
+          <div key={q.id} className="bezel">
+            <div className="bezel-inner" style={{
+              padding: '18px 20px',
+              borderColor: answers[q.id] ? 'rgba(255,255,255,0.12)' : undefined,
+              transition: 'border-color 200ms var(--crisp)',
+            }}>
+              <p style={{ fontSize: 14, color: 'var(--text-primary)', margin: '0 0 14px', lineHeight: 1.6, fontWeight: 450 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'var(--text-muted)', marginRight: 8 }}>{q.id}</span>
+                {q.text}
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {ANSWER_OPTIONS.map(opt => (
+                  <AnswerBtn key={opt.value} option={opt} selected={answers[q.id]} onClick={v => onChange(q.id, v)} />
+                ))}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="flex gap-3 mt-8">
-        <button onClick={onBack}
-          className="btn-press px-6 py-3.5 rounded-xl border border-white/[0.10] text-sm font-semibold text-slate-400 hover:text-white cursor-pointer"
-          style={{ transition: 'background 160ms var(--ease-out), color 160ms var(--ease-out), transform 160ms var(--ease-out)' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-        >
-          Back
+      <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
+        <button onClick={onBack} className="btn-ghost" style={{ gap: 8 }}>
+          <ArrowLeft size={14} /> Back
         </button>
-        <button onClick={onNext} disabled={!allAnswered}
-          className="btn-press flex-1 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl text-sm cursor-pointer flex items-center justify-center gap-2"
-          style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)', boxShadow: allAnswered ? '0 4px 20px rgba(37,99,235,0.22)' : 'none' }}>
+        <button onClick={onNext} disabled={!allAnswered} className="btn-primary"
+          style={{ flex: 1, justifyContent: 'center', opacity: allAnswered ? 1 : 0.4, cursor: allAnswered ? 'pointer' : 'not-allowed' }}>
           {isLast ? 'See My Results' : 'Next Section'}
-          {!isLast && (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          )}
+          <span className="btn-icon"><ArrowRight /></span>
         </button>
       </div>
-
       {!allAnswered && (
-        <p className="text-center text-xs text-slate-600 mt-3">
+        <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', marginTop: 12 }}>
           Answer all {section.questions.length} questions to continue
         </p>
       )}
@@ -326,13 +349,12 @@ function SectionStep({ section, sectionIndex, answers, onChange, onNext, onBack,
   )
 }
 
-/* ── Page ────────────────────────────────────────────────────────── */
+/* ── Page ──────────────────────────────────────────────────────── */
 export default function Assessment() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [companyInfo, setCompanyInfo] = useState({ email: '', companyName: '', companySize: '', industry: '', numAISystems: '' })
   const [answers, setAnswers] = useState({})
-
   const totalSteps = 1 + SECTIONS.length
 
   const handleFinish = () => {
@@ -344,8 +366,8 @@ export default function Assessment() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] text-slate-100">
-      <AssessmentNav step={step} totalSteps={totalSteps} />
+    <div style={{ background: 'var(--bg-base)', minHeight: '100dvh', position: 'relative' }} className="mesh-bg">
+      <ProgressNav step={step} totalSteps={totalSteps} />
       {step === 0 ? (
         <CompanyInfoStep
           info={companyInfo}
@@ -354,7 +376,7 @@ export default function Assessment() {
         />
       ) : (
         <SectionStep
-          key={step}  /* key forces remount → re-triggers stagger on section change */
+          key={step}
           section={SECTIONS[step - 1]}
           sectionIndex={step}
           answers={answers}

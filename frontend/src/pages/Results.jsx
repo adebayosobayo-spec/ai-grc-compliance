@@ -1,104 +1,100 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 /* ── helpers ─────────────────────────────────────────────────────── */
 function scoreStatus(score) {
-  if (score < 25)  return { label: 'Not Ready',   desc: 'Urgent action needed',        stroke: '#ef4444', text: 'text-red-400',     badge: 'bg-red-500/10 border border-red-500/30 text-red-400'        }
-  if (score < 50)  return { label: 'Developing',  desc: 'Multiple gaps to address',     stroke: '#f59e0b', text: 'text-amber-400',   badge: 'bg-amber-500/10 border border-amber-500/30 text-amber-400'   }
-  if (score < 75)  return { label: 'Progressing', desc: 'Good foundation, refine gaps', stroke: '#3b82f6', text: 'text-blue-400',    badge: 'bg-blue-500/10 border border-blue-500/30 text-blue-400'    }
-  return             { label: 'Ready',       desc: 'Investor-ready governance',   stroke: '#10b981', text: 'text-emerald-400', badge: 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' }
+  if (score < 25) return { label: 'Not Ready',   desc: 'Urgent action needed',        stroke: '#ef4444', textColor: '#fca5a5', badgeBg: 'rgba(239,68,68,0.09)',  badgeBorder: 'rgba(239,68,68,0.30)'  }
+  if (score < 50) return { label: 'Developing',  desc: 'Multiple gaps to address',     stroke: '#f59e0b', textColor: '#fcd34d', badgeBg: 'rgba(245,158,11,0.09)', badgeBorder: 'rgba(245,158,11,0.30)' }
+  if (score < 75) return { label: 'Progressing', desc: 'Good foundation, refine gaps', stroke: '#3b82f6', textColor: '#93b4fd', badgeBg: 'rgba(59,130,246,0.09)',  badgeBorder: 'rgba(59,130,246,0.30)'  }
+  return              { label: 'Ready',       desc: 'Investor-ready governance',   stroke: '#10b981', textColor: '#6ee7b7', badgeBg: 'rgba(16,185,129,0.09)',  badgeBorder: 'rgba(16,185,129,0.30)'  }
 }
 
-function barColor(score) {
-  if (score < 25)  return { bg: 'bg-red-500',     text: 'text-red-400'     }
-  if (score < 50)  return { bg: 'bg-amber-500',   text: 'text-amber-400'   }
-  if (score < 75)  return { bg: 'bg-blue-400',    text: 'text-blue-400'    }
-  return             { bg: 'bg-emerald-500', text: 'text-emerald-400' }
+function barStroke(score) {
+  if (score < 25) return '#ef4444'
+  if (score < 50) return '#f59e0b'
+  if (score < 75) return '#3b82f6'
+  return '#10b981'
 }
 
-function impactCls(impact) {
-  if (impact === 'CRITICAL') return 'bg-red-500/10 border border-red-500/30 text-red-400'
-  if (impact === 'HIGH')     return 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
-  return                            'bg-blue-500/10 border border-blue-500/30 text-blue-400'
+function impactStyle(impact) {
+  if (impact === 'CRITICAL') return { bg: 'rgba(239,68,68,0.09)',  border: 'rgba(239,68,68,0.30)',  color: '#fca5a5' }
+  if (impact === 'HIGH')     return { bg: 'rgba(245,158,11,0.09)', border: 'rgba(245,158,11,0.30)', color: '#fcd34d' }
+  return                            { bg: 'rgba(59,130,246,0.09)',  border: 'rgba(59,130,246,0.30)', color: '#93b4fd' }
 }
 
-/* ── Animated score number (count-up) ───────────────────────────── */
-function useCountUp(target, duration = 900) {
-  const [display, setDisplay] = useState(0)
+/* ── Count-up hook ───────────────────────────────────────────────── */
+function useCountUp(target, duration = 1000) {
+  const [val, setVal] = useState(0)
   useEffect(() => {
     let start = null
-    const step = (ts) => {
+    const step = ts => {
       if (!start) start = ts
-      const progress = Math.min((ts - start) / duration, 1)
-      // ease-out
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setDisplay(Math.round(eased * target))
-      if (progress < 1) requestAnimationFrame(step)
+      const p = Math.min((ts - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setVal(Math.round(eased * target))
+      if (p < 1) requestAnimationFrame(step)
     }
     const id = requestAnimationFrame(step)
     return () => cancelAnimationFrame(id)
   }, [target, duration])
-  return display
+  return val
 }
 
-/* ── SVG score ring (stroke animates in from 0 → score) ─────────── */
+/* ── Animated score bar ──────────────────────────────────────────── */
+function ScoreBar({ score, delay = 0 }) {
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(score), 150 + delay)
+    return () => clearTimeout(t)
+  }, [score, delay])
+  return (
+    <div style={{ height: 5, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
+      <div style={{
+        height: '100%', width: `${width}%`, borderRadius: 99,
+        background: barStroke(score),
+        boxShadow: `0 0 6px ${barStroke(score)}50`,
+        transition: `width 800ms cubic-bezier(0.32,0.72,0,1) ${delay}ms`,
+      }} />
+    </div>
+  )
+}
+
+/* ── Score ring ──────────────────────────────────────────────────── */
 function ScoreRing({ score }) {
   const status = scoreStatus(score)
-  const r      = 56
-  const circ   = 2 * Math.PI * r
+  const r = 60, circ = 2 * Math.PI * r
   const offset = circ - (score / 100) * circ
-  const count  = useCountUp(score)
-
+  const display = useCountUp(score, 1100)
   return (
-    <div className="relative inline-flex items-center justify-center flex-shrink-0">
-      <svg width="148" height="148" viewBox="0 0 148 148" style={{ transform: 'rotate(-90deg)' }}>
-        {/* Track */}
-        <circle cx="74" cy="74" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="11" />
-        {/* Fill — animated via CSS using custom properties */}
-        <circle
-          cx="74" cy="74" r={r}
-          fill="none"
-          stroke={status.stroke}
-          strokeWidth="11"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          className="score-ring-fill"
-          style={{
-            '--circ': circ,
-            '--offset': offset,
-            filter: `drop-shadow(0 0 6px ${status.stroke}60)`,
-          }}
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <svg width={156} height={156} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={78} cy={78} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={10} />
+        <circle cx={78} cy={78} r={r} fill="none" stroke={status.stroke} strokeWidth={10}
+          strokeLinecap="round" strokeDasharray={circ}
+          className="score-ring"
+          style={{ '--circ': circ, '--offset': offset, filter: `drop-shadow(0 0 8px ${status.stroke}55)` }}
         />
       </svg>
-      <div className="absolute text-center select-none">
-        <p className={`text-4xl font-black tabular-nums ${status.text}`}>{count}%</p>
-        <p className="text-xs text-slate-500 mt-0.5 font-semibold">{status.label}</p>
+      <div style={{ position: 'absolute', textAlign: 'center', userSelect: 'none' }}>
+        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 700, color: status.textColor, margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{display}%</p>
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 0', fontWeight: 500 }}>{status.label}</p>
       </div>
     </div>
   )
 }
 
-/* ── Animated bar (width grows in on mount) ──────────────────────── */
-function ScoreBar({ score, delay = 0 }) {
-  const col = barColor(score)
-  const [width, setWidth] = useState(0)
-  useEffect(() => {
-    const t = setTimeout(() => setWidth(score), 120 + delay)
-    return () => clearTimeout(t)
-  }, [score, delay])
+/* ── Arrow icons ─────────────────────────────────────────────────── */
+function ArrowRight({ size = 15 }) {
   return (
-    <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-      <div
-        className={`h-full ${col.bg} rounded-full`}
-        style={{ width: `${width}%`, transition: `width 700ms cubic-bezier(0.23,1,0.32,1) ${delay}ms` }}
-      />
-    </div>
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
-/* ── Page ─────────────────────────────────────────────────────────── */
+/* ── Page ────────────────────────────────────────────────────────── */
 export default function Results() {
-  const navigate  = useNavigate()
+  const navigate = useNavigate()
   const [results, setResults] = useState(null)
   const [company, setCompany] = useState(null)
 
@@ -116,183 +112,183 @@ export default function Results() {
   const status = scoreStatus(overallScore)
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] text-slate-100 page-enter">
+    <div style={{ background: 'var(--bg-base)', minHeight: '100dvh' }} className="mesh-bg page-enter">
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-[#0A0F1E]/95 backdrop-blur-md border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 cursor-pointer">
-            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center"
-              style={{ boxShadow: '0 0 12px rgba(37,99,235,0.30)' }}>
-              <span className="text-white text-xs font-black">C</span>
-            </div>
-            <span className="text-sm font-black tracking-widest text-white">COMPLAI</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link to="/assessment"
-              className="text-xs text-slate-500 hover:text-slate-300 hidden sm:block cursor-pointer"
-              style={{ transition: 'color 160ms var(--ease-out)' }}>
-              Retake
-            </Link>
-            <Link to="/policies"
-              className="btn-press px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-black rounded-xl cursor-pointer"
-              style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)', boxShadow: '0 4px 16px rgba(245,158,11,0.25)' }}>
-              Generate Policies — $299
-            </Link>
+      {/* ── Floating pill nav ── */}
+      <nav style={{
+        position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 50, width: 'min(720px, calc(100vw - 32px))',
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '8px 8px 8px 20px',
+        background: 'rgba(9,15,28,0.80)',
+        backdropFilter: 'blur(20px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderRadius: 999,
+        boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 32px rgba(0,0,0,0.35)',
+      }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 7, background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, fontFamily: 'Space Grotesk, sans-serif' }}>C</span>
           </div>
-        </div>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.12em', color: '#fff' }}>COMPLAI</span>
+        </Link>
+        <div style={{ flex: 1 }} />
+        <Link to="/assessment" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none', padding: '6px 12px', borderRadius: 999, transition: 'color 160ms, background 160ms' }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}>
+          Retake
+        </Link>
+        <Link to="/policies" className="btn-cta" style={{ fontSize: 12, padding: '8px 10px 8px 16px' }}>
+          Generate Policies — $299
+          <span className="btn-icon" style={{ width: 26, height: 26 }}><ArrowRight size={13} /></span>
+        </Link>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '100px 24px 80px' }}>
 
-        {/* ── Score card ── */}
-        <div className="bg-[#111827] border border-white/[0.07] rounded-2xl p-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
-            <ScoreRing score={overallScore} />
-
-            <div className="flex-1">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
-                {company?.companyName || 'Your Company'} · ISO 42001 Readiness
-              </p>
-              <h1 className="text-3xl font-black text-white mb-3">Your Readiness Score</h1>
-              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${status.badge}`}>
-                {status.label.toUpperCase()} — {status.desc}
-              </span>
-              <p className="text-slate-400 text-sm mt-3 leading-relaxed max-w-md">
-                {overallScore < 50
-                  ? 'Significant gaps to close before your next investor meeting. The good news: all gaps are fixable with the right policies in place.'
-                  : overallScore < 75
-                  ? 'Solid foundation. A few targeted policies will get you to investor-ready governance quickly.'
-                  : 'Strong governance posture. Download your policies to formalise and evidence your practices.'}
-              </p>
-            </div>
-
-            <div className="hidden md:block flex-shrink-0">
-              <Link to="/policies"
-                className="btn-press block px-6 py-4 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-2xl text-sm text-center cursor-pointer whitespace-nowrap"
-                style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)', boxShadow: '0 6px 24px rgba(245,158,11,0.22)' }}>
-                Generate Policies
-                <span className="block text-xs font-semibold mt-0.5 opacity-75">$299 one-time</span>
-              </Link>
+        {/* ── Hero score card ── */}
+        <div className="bezel reveal" style={{ marginBottom: 20 }}>
+          <div className="bezel-inner" style={{ padding: 'clamp(28px,4vw,48px)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 40, alignItems: 'center' }} className="max-md:grid-cols-1 max-md:gap-6">
+              <ScoreRing score={overallScore} />
+              <div>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>
+                  {company?.companyName || 'Your Company'} · ISO 42001 Readiness
+                </p>
+                <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(24px,3.5vw,36px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 14px', letterSpacing: '-0.02em' }}>
+                  Your Readiness Score
+                </h1>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, border: `1px solid ${status.badgeBorder}`, background: status.badgeBg, marginBottom: 14 }}>
+                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, fontWeight: 700, color: status.textColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    {status.label} — {status.desc}
+                  </span>
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7, maxWidth: '52ch', margin: 0 }}>
+                  {overallScore < 50
+                    ? 'Significant gaps to close before your next investor meeting. Every gap is fixable — the right policies turn weaknesses into evidence of governance maturity.'
+                    : overallScore < 75
+                    ? 'Solid foundation. A few targeted policies will get you to investor-ready governance quickly.'
+                    : 'Strong governance posture. Download your policies to formalise and evidence your practices for auditors and investors.'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}>
+                <Link to="/policies" className="btn-cta" style={{ whiteSpace: 'nowrap', justifyContent: 'center' }}>
+                  Generate Policies
+                  <span className="btn-icon"><ArrowRight /></span>
+                </Link>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>$299 · one-time</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── Control breakdown ── */}
-        <div>
-          <h2 className="text-lg font-black text-white mb-4">Control-by-Control Breakdown</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
-            {sectionScores.map((s, i) => {
-              const col = barColor(s.score)
-              return (
-                <div key={s.id} className="bg-[#111827] border border-white/[0.07] rounded-2xl p-5 hover-lift"
-                  style={{ transition: 'border-color 220ms var(--ease-out), transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out)' }}>
-                  <div className="flex items-start justify-between gap-3 mb-3">
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
+            Control-by-Control Breakdown
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }} className="stagger max-md:grid-cols-1">
+            {sectionScores.map((s, i) => (
+              <div key={s.id} className="bezel hover-lift">
+                <div className="bezel-inner" style={{ padding: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
                     <div>
-                      <p className="text-xs font-bold text-slate-600 mb-1">ISO {s.control}</p>
-                      <p className="text-sm font-bold text-slate-100 leading-tight">{s.title}</p>
+                      <p style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace', margin: '0 0 5px' }}>ISO {s.control}</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1.3 }}>{s.title}</p>
                     </div>
-                    <span className={`text-xl font-black flex-shrink-0 tabular-nums ${col.text}`}>{s.score}%</span>
+                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 22, fontWeight: 700, color: barStroke(s.score), flexShrink: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.score}%</span>
                   </div>
                   <ScoreBar score={s.score} delay={i * 80} />
-                  <div className="mt-3">
+                  <div style={{ marginTop: 12 }}>
                     {s.gaps.length === 0 ? (
-                      <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
+                      <p style={{ fontSize: 12, color: '#6ee7b7', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5, margin: 0 }}>
+                        <svg width={13} height={13} viewBox="0 0 13 13" fill="none"><path d="M2 6.5l3 3 6-6" stroke="#6ee7b7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                         All controls addressed
                       </p>
                     ) : (
-                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                        <span className="text-slate-400 font-semibold">Gap: </span>{s.gaps[0]}
+                      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        <span style={{ color: 'var(--text-sub)', fontWeight: 600 }}>Top gap: </span>{s.gaps[0]}
                       </p>
                     )}
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         </div>
 
         {/* ── Top gaps ── */}
         {topGaps.length > 0 && (
-          <div>
-            <h2 className="text-lg font-black text-white mb-4">
+          <div style={{ marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
               Top {topGaps.length} Gaps — Prioritised by Impact
             </h2>
-            <div className="space-y-3 stagger-children">
-              {topGaps.map((gap, i) => (
-                <div key={i}
-                  className="bg-[#111827] border border-white/[0.07] rounded-2xl p-5 flex items-start gap-4 hover-lift"
-                  style={{ transition: 'border-color 220ms var(--ease-out), transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out)' }}>
-                  <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-xs font-black text-slate-400 font-mono">
-                    {i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${impactCls(gap.impact)}`}>
-                        {gap.impact}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} className="stagger">
+              {topGaps.map((gap, i) => {
+                const s = impactStyle(gap.impact)
+                return (
+                  <div key={i} className="bezel hover-lift">
+                    <div className="bezel-inner" style={{ padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                      <span style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>
+                        {i + 1}
                       </span>
-                      <span className="text-xs text-slate-600 font-medium">{gap.sectionTitle}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 6, border: `1px solid ${s.border}`, background: s.bg, color: s.color }}>
+                            {gap.impact}
+                          </span>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>{gap.sectionTitle}</span>
+                        </div>
+                        <p style={{ fontSize: 14, color: 'var(--text-primary)', margin: 0, lineHeight: 1.6, fontWeight: 450 }}>{gap.question}</p>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-200 font-medium leading-relaxed">{gap.question}</p>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
 
         {/* ── CTA ── */}
-        <div className="bg-gradient-to-br from-blue-600/15 to-blue-900/10 border border-blue-500/20 rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-black text-white mb-2">
-            Fix these gaps with 7 customised ISO 42001 policies
-          </h2>
-          <p className="text-slate-400 text-sm max-w-lg mx-auto mb-6 leading-relaxed">
-            Ready-to-sign Word documents pre-filled with{' '}
-            <strong className="text-white">{company?.companyName || 'your company'}</strong>'s details.
-            Show investors your governance proof in one afternoon.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/policies"
-              className="btn-press w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-2xl text-sm cursor-pointer"
-              style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)', boxShadow: '0 6px 24px rgba(245,158,11,0.22)' }}>
-              Generate My ISO 42001 Policies — $299
-            </Link>
-            <Link to="/assessment"
-              className="text-sm text-slate-500 hover:text-slate-300 cursor-pointer"
-              style={{ transition: 'color 160ms var(--ease-out)' }}>
-              Retake assessment
-            </Link>
+        <div className="bezel reveal" style={{ border: '1px solid rgba(37,99,235,0.20)', boxShadow: '0 0 40px rgba(37,99,235,0.06)' }}>
+          <div className="bezel-inner" style={{ padding: 'clamp(28px,4vw,44px)', textAlign: 'center', background: 'radial-gradient(ellipse 70% 100% at 50% 0%, rgba(37,99,235,0.07), transparent)' }}>
+            <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(20px,3vw,30px)', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+              Fix these gaps with 7 customised ISO 42001 policies
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--text-sub)', maxWidth: '52ch', margin: '0 auto 28px', lineHeight: 1.7 }}>
+              Ready-to-sign Word documents pre-filled with <strong style={{ color: 'var(--text-primary)' }}>{company?.companyName || 'your company'}</strong>'s details. Show investors your governance proof in one afternoon.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <Link to="/policies" className="btn-cta" style={{ fontSize: 15, padding: '13px 13px 13px 22px' }}>
+                Generate My ISO 42001 Policies — $299
+                <span className="btn-icon"><ArrowRight /></span>
+              </Link>
+              <Link to="/assessment" className="btn-ghost" style={{ fontSize: 14 }}>Retake assessment</Link>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 16 }}>30-day money-back guarantee · One-time payment</p>
           </div>
-          <p className="text-slate-600 text-xs mt-4">30-day money-back guarantee · One-time payment</p>
         </div>
 
         {/* ── Email capture ── */}
-        <div className="bg-[#111827] border border-white/[0.07] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex-1">
-            <p className="text-sm font-bold text-slate-100 mb-1">Email me my assessment results</p>
-            <p className="text-xs text-slate-500">Get a copy of this report in your inbox.</p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <input
-              type="email"
-              defaultValue={company?.email || ''}
-              placeholder="you@company.com"
-              className="flex-1 sm:w-56 bg-white/[0.04] border border-white/[0.10] text-slate-100 placeholder-slate-600 rounded-xl px-4 py-2.5 text-sm input-glow"
-            />
-            <button
-              className="btn-press px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl flex-shrink-0 cursor-pointer"
-              style={{ transition: 'background 160ms var(--ease-out), transform 160ms var(--ease-out)' }}>
-              Send
-            </button>
+        <div className="bezel reveal" style={{ marginTop: 16 }}>
+          <div className="bezel-inner" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 3px' }}>Email me my assessment results</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Get a copy of this report in your inbox.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="email" defaultValue={company?.email || ''} placeholder="you@company.com" className="input-premium" style={{ width: 220 }} />
+              <button className="btn-primary" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 12 }}>Send</button>
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="border-t border-white/[0.06] py-6 text-center text-xs text-slate-600 mt-8">
-        © {new Date().getFullYear()} COMPLAI · Self-assessment, not a formal ISO 42001 audit.
+      <footer style={{ borderTop: '1px solid var(--line)', padding: '24px', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+          © {new Date().getFullYear()} COMPLAI · Self-assessment, not a formal ISO 42001 audit.
+        </p>
       </footer>
     </div>
   )
