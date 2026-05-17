@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { saveAssessment } from '../lib/db'
 
 /* ── Data — DO NOT MODIFY ──────────────────────────────────────── */
 export const SECTIONS = [
@@ -249,20 +251,31 @@ function SectionStep({ section, idx, answers, onChange, onNext, onBack, isLast }
 
 export default function Assessment() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [step, setStep] = useState(0)
   const [info, setInfo] = useState({ email: '', companyName: '', companySize: '', industry: '', numAISystems: '' })
   const [answers, setAnswers] = useState({})
   const total = 1 + SECTIONS.length
   const curSec = SECTIONS[step - 1]
 
-  const finish = () => {
+  const finish = async () => {
     const results = computeResults(info, answers)
+    // Always persist to localStorage first (works without account)
     try {
       localStorage.setItem('complai_company', JSON.stringify(info))
       localStorage.setItem('complai_answers', JSON.stringify(answers))
       localStorage.setItem('complai_results', JSON.stringify(results))
     } catch {
-      // localStorage unavailable (private mode) — continue to results anyway
+      // private/incognito mode — continue anyway
+    }
+    // If signed in, also save to Supabase
+    if (user) {
+      try {
+        const id = await saveAssessment({ userId: user.id, company: info, answers, results })
+        try { localStorage.setItem('complai_assessment_id', id) } catch {}
+      } catch (err) {
+        console.warn('Supabase save failed — results still available locally:', err.message)
+      }
     }
     navigate('/results')
   }

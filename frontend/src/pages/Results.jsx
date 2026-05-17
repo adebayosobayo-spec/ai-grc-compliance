@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { getLatestAssessment } from '../lib/db'
 
 function statusOf(s) {
   if (s < 25) return { label: 'Not ready',   badge: 'badge-red',   color: '#DC2626' }
@@ -70,22 +72,49 @@ function ScoreRing({ score }) {
 
 export default function Results() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [results, setResults] = useState(null)
   const [company, setCompany] = useState(null)
 
   useEffect(() => {
-    try {
-      const r = localStorage.getItem('complai_results')
-      const c = localStorage.getItem('complai_company')
-      if (!r) { navigate('/assessment'); return }
-      const parsed = JSON.parse(r)
-      if (!parsed?.overallScore && parsed?.overallScore !== 0) { navigate('/assessment'); return }
-      setResults(parsed)
-      if (c) setCompany(JSON.parse(c))
-    } catch {
-      navigate('/assessment')
+    async function load() {
+      // Try Supabase first if signed in
+      if (user) {
+        try {
+          const row = await getLatestAssessment(user.id)
+          if (row) {
+            setResults({
+              overallScore:  row.overall_score,
+              sectionScores: row.section_scores,
+              topGaps:       row.top_gaps,
+            })
+            setCompany({
+              companyName: row.company_name,
+              email:       row.company_email,
+              companySize: row.company_size,
+              industry:    row.industry,
+            })
+            return
+          }
+        } catch (err) {
+          console.warn('Supabase load failed, falling back to localStorage:', err.message)
+        }
+      }
+      // Fallback: localStorage
+      try {
+        const r = localStorage.getItem('complai_results')
+        const c = localStorage.getItem('complai_company')
+        if (!r) { navigate('/assessment'); return }
+        const parsed = JSON.parse(r)
+        if (!parsed?.overallScore && parsed?.overallScore !== 0) { navigate('/assessment'); return }
+        setResults(parsed)
+        if (c) setCompany(JSON.parse(c))
+      } catch {
+        navigate('/assessment')
+      }
     }
-  }, [navigate])
+    load()
+  }, [navigate, user])
 
   if (!results) return null
   const { overallScore, sectionScores, topGaps } = results
