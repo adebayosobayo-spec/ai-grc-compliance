@@ -1,485 +1,266 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 
-/* ── Animated counter ───────────────────────────────────────── */
-function Counter({ to, duration = 1400, suffix = '' }) {
-  const [val, setVal] = useState(0)
-  const [started, setStarted] = useState(false)
+const SAMPLE_SECTIONS = [
+  { id:'A.2', title:'Context & Scope',   score:92, color:'#059669' },
+  { id:'A.6', title:'Risk Management',   score:41, color:'#DC2626' },
+  { id:'A.5', title:'AI Policy',         score:67, color:'#D97706' },
+  { id:'A.8', title:'Operations',        score:58, color:'#D97706' },
+  { id:'A.9', title:'Monitoring',        score:75, color:'#059669' },
+  { id:'A.7', title:'Documentation',     score:33, color:'#DC2626' },
+]
+
+const FAQS = [
+  { q:'What is ISO 42001?', a:'ISO 42001 is the international standard for AI management systems. It provides a framework for organisations to govern AI responsibly — covering risk, policy, operations, and accountability. Investors and enterprise customers increasingly require it.' },
+  { q:'Is this a formal audit?', a:'No. This is a self-assessment tool that maps your current practices against the ISO 42001 control framework. It gives you an accurate readiness score and identifies specific gaps, but a formal certification requires an accredited third-party auditor.' },
+  { q:'What does the $299 policy pack include?', a:'Seven customised Word documents: AI Governance Policy, Risk Assessment Framework, Incident Response Plan, Transparency & Explainability Policy, Data Governance Policy, Third-Party AI Vendor Policy, and an ISO 42001 Readiness Report. Ready to present to investors or submit to auditors.' },
+  { q:'How long does the assessment take?', a:'Most users finish in 8–12 minutes. There are 40 questions across 6 control areas. You can save and return at any time — your progress is stored in your browser.' },
+  { q:'Do I need an account?', a:'No. Run the full assessment and see results without signing up. An account lets you save results across devices and access your downloaded policies.' },
+]
+
+const STEPS = [
+  { n:'01', title:'Take the free assessment', body:'40 questions across 6 ISO 42001 control areas. Honest answers take about 8 minutes.' },
+  { n:'02', title:'Get your readiness score',  body:'Instant scoring with a breakdown by control area and a prioritised list of gaps by investor impact.' },
+  { n:'03', title:'Generate investor-ready policies', body:'One-click generation of 7 customised policy documents in Word format. $299 one-time.' },
+]
+
+const CONTROLS = [
+  { id:'A.2', label:'Context & Scope',          desc:'Organisation context, interested parties, AI system scope and boundaries.' },
+  { id:'A.6', label:'Risk Management',           desc:'AI-specific risk identification, assessment, treatment, and monitoring.' },
+  { id:'A.5', label:'Policy & Leadership',       desc:'AI governance policy, roles, responsibilities, and top management commitment.' },
+  { id:'A.8', label:'Operations',               desc:'Operational planning, AI system design, development, and deployment controls.' },
+  { id:'A.9', label:'Performance & Monitoring', desc:'Monitoring, measurement, analysis, and evaluation of AI system performance.' },
+  { id:'A.7', label:'Documentation',            desc:'Information requirements, documentation control, and record management.' },
+]
+
+function AnimatedBar({ score, color, delay = 0 }) {
+  const [width, setWidth] = useState(0)
   const ref = useRef(null)
   useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStarted(true) }, { threshold: 0.5 })
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setTimeout(() => setWidth(score), delay); obs.disconnect() }
+    }, { threshold: 0.3 })
     if (ref.current) obs.observe(ref.current)
     return () => obs.disconnect()
-  }, [])
-  useEffect(() => {
-    if (!started) return
-    let id, t0 = null
-    const go = ts => {
-      if (!t0) t0 = ts
-      const p = Math.min((ts - t0) / duration, 1)
-      setVal(Math.round((1 - Math.pow(1 - p, 3)) * to))
-      if (p < 1) id = requestAnimationFrame(go)
-    }
-    id = requestAnimationFrame(go)
-    return () => cancelAnimationFrame(id)
-  }, [started, to, duration])
-  return <span ref={ref}>{val.toLocaleString()}{suffix}</span>
-}
-
-/* ── Block progress bar ─────────────────────────────────────── */
-function BlockBar({ pct, total = 20, color = 'var(--green)' }) {
-  const filled = Math.round((pct / 100) * total)
+  }, [score, delay])
   return (
-    <span style={{ letterSpacing: 0, fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>
-      {Array.from({ length: total }, (_, i) => (
-        <span key={i} style={{ color: i < filled ? color : 'var(--t4)' }}>█</span>
-      ))}
-    </span>
+    <div ref={ref} style={{ height: 5, background: '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${width}%`, background: color, borderRadius: 3, transition: 'width 700ms cubic-bezier(0.4,0,0.2,1)' }} />
+    </div>
   )
 }
 
-/* ── Score ring ─────────────────────────────────────────────── */
-function MiniRing({ pct, color = 'var(--green)', size = 80 }) {
-  const r = size / 2 - 6
-  const circ = 2 * Math.PI * r
-  const offset = circ - (pct / 100) * circ
+function SampleReport() {
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--grid2)" strokeWidth={4} />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={4}
-        strokeLinecap="square" strokeDasharray={circ}
-        className="ring-anim" style={{ '--full': circ, '--gap': offset }} />
-    </svg>
-  )
-}
-
-/* ── FAQ item ───────────────────────────────────────────────── */
-function FaqRow({ q, a, idx }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div style={{ borderBottom: '1px solid var(--grid)' }}>
-      <button onClick={() => setOpen(o => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 16,
-          padding: '14px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-        <span style={{ color: 'var(--green)', fontWeight: 700, fontSize: 11, minWidth: 24, marginTop: 1 }}>
-          {String(idx).padStart(2, '0')}
-        </span>
-        <span style={{ flex: 1, fontSize: 12, color: 'var(--t1)', fontWeight: 500 }}>{q}</span>
-        <span style={{ color: 'var(--t3)', fontSize: 12, transition: 'transform 200ms',
-          transform: open ? 'rotate(180deg)' : 'none', display: 'flex', flexShrink: 0 }}>▼</span>
-      </button>
-      <div className={`faq-grid ${open ? 'open' : ''}`}>
+    <div className="card" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)', maxWidth: 420, width: '100%' }}>
+      <div style={{ padding: '18px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ paddingLeft: 40, paddingBottom: 14, fontSize: 12, color: 'var(--t2)', lineHeight: 1.7 }}>{a}</p>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>Sample Report</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Acme AI, Inc.</div>
+          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Assessed May 2025</div>
         </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className="mono" style={{ fontSize: 36, fontWeight: 700, color: '#D97706', lineHeight: 1 }}>61%</div>
+          <div className="badge badge-amber" style={{ marginTop: 6, display: 'inline-flex' }}>Progressing</div>
+        </div>
+      </div>
+      <div style={{ padding: '8px 0' }}>
+        {SAMPLE_SECTIONS.map((s, i) => (
+          <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 46px', alignItems: 'center', padding: '7px 20px' }}>
+            <span className="mono" style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8' }}>{s.id}</span>
+            <div style={{ padding: '0 12px 0 4px' }}>
+              <div style={{ fontSize: 11, color: '#475569', marginBottom: 5 }}>{s.title}</div>
+              <AnimatedBar score={s.score} color={s.color} delay={i * 80} />
+            </div>
+            <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: s.color, textAlign: 'right' }}>{s.score}%</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ margin: '0 16px 16px', padding: '11px 14px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#DC2626' }}>5 critical gaps found</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#DC2626' }}>View full report →</span>
       </div>
     </div>
   )
 }
 
-/* ── data ───────────────────────────────────────────────────── */
-const CONTROLS = [
-  { id: 'A.2', label: 'AI_GOVERNANCE',  pct: 45, status: 'DEVELOPING' },
-  { id: 'A.6', label: 'DATA_GOVERNANCE', pct: 22, status: 'CRITICAL'   },
-  { id: 'A.5', label: 'DEVELOPMENT',    pct: 38, status: 'DEVELOPING' },
-  { id: 'A.8', label: 'MONITORING',     pct: 18, status: 'CRITICAL'   },
-  { id: 'A.9', label: 'VENDORS',        pct: 60, status: 'PROGRESSING'},
-  { id: 'A.10',label: 'ETHICS',         pct: 55, status: 'PROGRESSING'},
-]
-
-const STEPS = [
-  { cmd: 'ASSESS()', desc: 'Answer 40 questions across 6 ISO 42001 control areas. Maps your practices to A.2, A.5, A.6, A.7, A.8, A.9, A.10.' },
-  { cmd: 'ANALYSE()', desc: 'Instant readiness score plus prioritised gaps ranked by investor impact. Control-level breakdown. Free.' },
-  { cmd: 'GENERATE()', desc: '7 customised Word documents pre-filled with your company details. Ready to sign. $299 one-time.' },
-  { cmd: 'EXPORT()', desc: '8-page PDF readiness report. Structured for investor data rooms and pre-audit disclosure folders.' },
-]
-
-const FAQS = [
-  { q: 'What is ISO 42001?', a: 'ISO 42001 is the international standard for AI management systems. Investors and enterprise customers are starting to require it. Covers AI policy, risk management, data governance, monitoring, and ethics.' },
-  { q: 'Who needs ISO 42001?', a: 'Any company building or deploying AI — especially startups raising Series A or selling to enterprise. Investors ask "are you ISO 42001 compliant?" during due diligence.' },
-  { q: 'Is this a real assessment?', a: 'Yes. Every question maps to a specific ISO 42001 control area. This is a rigorous self-assessment — formal certification requires an external auditor.' },
-  { q: 'What do I get for $299?', a: '7 Word documents (.docx), each 3–5 pages, pre-filled with your company name, industry, and AI system details. All 7 core ISO 42001 policy areas covered.' },
-  { q: 'Is there a refund policy?', a: '30-day money-back guarantee. No questions asked.' },
-]
+function FaqItem({ q, a }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ borderBottom: '1px solid #E2E8F0' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', gap: 16 }}>
+        <span style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{q}</span>
+        <span style={{ fontSize: 18, color: '#94A3B8', transform: open ? 'rotate(45deg)' : 'none', transition: 'transform 200ms', flexShrink: 0 }}>+</span>
+      </button>
+      <div className={`faq-grid${open ? ' open' : ''}`}>
+        <div><p style={{ fontSize: 14, color: '#475569', lineHeight: 1.7, paddingBottom: 18 }}>{a}</p></div>
+      </div>
+    </div>
+  )
+}
 
 export default function LandingPage() {
-  const [time, setTime] = useState(new Date())
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  const fmt = d => d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
-
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100dvh' }} className="term-in">
+    <div style={{ background: '#fff', minHeight: '100dvh' }}>
 
-      {/* ── Terminal nav bar ── */}
-      <nav className="term-nav">
-        <Link to="/" className="term-nav-cell" style={{ color: 'var(--green)', gap: 8, minWidth: 140 }}>
-          <span style={{ fontWeight: 700 }}>COMPLAI</span>
-          <span style={{ color: 'var(--t3)', fontSize: 10 }}>v1.0</span>
-        </Link>
-        <div className="term-nav-cell" style={{ color: 'var(--t3)', fontSize: 10 }}>
-          {fmt(time)}
+      {/* ── Nav ── */}
+      <nav className="nav">
+        <Link to="/" className="nav-logo">COMPLAI</Link>
+        <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+          <Link to="/assessment" className="nav-link">Assessment</Link>
+          <a href="#pricing" className="nav-link" style={{ textDecoration: 'none' }}>Pricing</a>
+          <a href="#faq" className="nav-link" style={{ textDecoration: 'none' }}>FAQ</a>
         </div>
-        <div style={{ flex: 1, borderRight: '1px solid var(--grid)' }} />
-        <a href="#how" className="term-nav-cell" style={{ color: 'var(--t2)' }}>HOW_IT_WORKS</a>
-        <a href="#pricing" className="term-nav-cell" style={{ color: 'var(--t2)' }}>PRICING</a>
-        <Link to="/auth" className="term-nav-cell" style={{ color: 'var(--t2)' }}>SIGN_IN</Link>
-        <Link to="/assessment" className="term-nav-cell term-nav-cta">
-          ▶ START_FREE
-        </Link>
+        <Link to="/auth" className="nav-link" style={{ marginRight: 8 }}>Sign in</Link>
+        <Link to="/assessment" className="btn btn-primary btn-sm">Start free →</Link>
       </nav>
 
-      {/* ── Status bar ── */}
-      <div className="status-bar">
-        <div className="status-cell">
-          <div className="status-dot dot-green" />
-          <span style={{ color: 'var(--green)' }}>SYSTEM_ONLINE</span>
-        </div>
-        <div className="status-cell">
-          ASSESSMENTS_RUN: <span style={{ color: 'var(--t1)', marginLeft: 6 }}>1,247</span>
-        </div>
-        <div className="status-cell">
-          CONTROLS_TRACKED: <span style={{ color: 'var(--t1)', marginLeft: 6 }}>6</span>
-        </div>
-        <div className="status-cell">
-          UPTIME: <span style={{ color: 'var(--t1)', marginLeft: 6 }}>99.9%</span>
-        </div>
-        <div style={{ flex: 1 }} />
-        <div className="status-cell" style={{ borderLeft: '1px solid var(--grid)', borderRight: 'none' }}>
-          <div className="status-dot dot-amber" />
-          <span>ISO_42001:2023 ACTIVE</span>
-        </div>
-      </div>
-
       {/* ── Hero ── */}
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid var(--grid)' }}
-        className="max-md:grid-cols-1">
-
-        {/* Left: headline */}
-        <div style={{ padding: '64px 40px 64px', borderRight: '1px solid var(--grid)' }}>
-          <div style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700, letterSpacing: '0.12em',
-            marginBottom: 32 }} className="scan-in d1">
-            ▸ ISO_42001_READINESS_PLATFORM
-          </div>
-
-          <h1 className="scan-in d2" style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 700,
-            color: 'var(--t1)', lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 24 }}>
-            ARE YOU ISO<br />
-            <span style={{ color: 'var(--green)' }}>42001</span><br />
-            READY?
-          </h1>
-
-          <p className="scan-in d3" style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.75,
-            maxWidth: '44ch', marginBottom: 40 }}>
-            Investors ask this question at Series A. Most AI startups say "Uh..."
-            COMPLAI runs a 40-question assessment, outputs a readiness score,
-            and generates 7 customised ISO 42001 policies for $299.
-          </p>
-
-          <div className="scan-in d4" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link to="/assessment" className="tbtn tbtn-solid" style={{ fontSize: 13 }}>
-              ▶ RUN_ASSESSMENT()
-            </Link>
-            <a href="#pricing" className="tbtn" style={{ fontSize: 13 }}>
-              VIEW_PRICING()
-            </a>
-          </div>
-
-          {/* Inline stats */}
-          <div className="scan-in d5" style={{ marginTop: 48, display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr', gap: 0,
-            borderTop: '1px solid var(--grid)' }}>
-            {[
-              { label: 'STARTUPS', val: 1247, suffix: '+' },
-              { label: 'CONTROLS', val: 6, suffix: '' },
-              { label: 'SAVED_VS_CONSULTING', val: 50, suffix: 'K' },
-            ].map((s, i) => (
-              <div key={s.label} style={{ padding: '18px 16px',
-                borderRight: i < 2 ? '1px solid var(--grid)' : 'none' }}>
-                <p style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 700,
-                  color: 'var(--green)', letterSpacing: '-0.02em', lineHeight: 1 }}>
-                  {i === 2 ? '$' : ''}<Counter to={s.val} suffix={s.suffix} duration={1200} />
-                </p>
-                <p style={{ fontSize: 10, color: 'var(--t3)', marginTop: 5, letterSpacing: '0.06em' }}>
-                  {s.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right: live sample report terminal */}
-        <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: 0 }}>
-          <div className="tbox" style={{ flex: 1 }}>
-            <div className="tbox-header">
-              <span style={{ color: 'var(--green)' }}>●</span>
-              SAMPLE_REPORT — ACME_AI_CORP — ISO_42001
-              <span style={{ marginLeft: 'auto', color: 'var(--t3)' }}>SCORE: 47%</span>
+      <section style={{ maxWidth: 1160, margin: '0 auto', padding: '80px 40px 96px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 440px', gap: 64, alignItems: 'center' }}>
+          <div>
+            <div className="eyebrow fade-up" style={{ marginBottom: 16 }}>ISO 42001 Readiness Platform</div>
+            <h1 className="fade-up d1" style={{ fontSize: 'clamp(34px,4.5vw,56px)', fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.04em', color: '#0F172A', marginBottom: 22 }}>
+              Know your AI governance score before investors ask.
+            </h1>
+            <p className="fade-up d2" style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, maxWidth: 480, marginBottom: 32 }}>
+              Free 40-question assessment across all 6 ISO 42001 control areas. Instant gap analysis ranked by investor impact. Policies in Word format for $299.
+            </p>
+            <div className="fade-up d3" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 44 }}>
+              <Link to="/assessment" className="btn btn-primary btn-lg">Start free assessment →</Link>
+              <Link to="/results" className="btn btn-secondary btn-lg">See sample report</Link>
             </div>
-
-            {/* Score display */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20,
-              padding: '20px 16px', borderBottom: '1px solid var(--grid)' }}>
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <MiniRing pct={47} color="var(--amber)" size={90} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex',
-                  flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--amber)', lineHeight: 1 }}>47%</span>
+            <div className="fade-up d4" style={{ display: 'flex', gap: 36, flexWrap: 'wrap' }}>
+              {[['400+', 'startups assessed'], ['8 min', 'average time'], ['$0', 'to get your score']].map(([n, l]) => (
+                <div key={l}>
+                  <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: '#0F172A' }}>{n}</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{l}</div>
                 </div>
-              </div>
-              <div>
-                <div className="tag tag-amber" style={{ marginBottom: 8 }}>DEVELOPING</div>
-                <p style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.6 }}>
-                  Multiple critical gaps identified.<br />
-                  Investor-readiness: LOW
-                </p>
-              </div>
-            </div>
-
-            {/* Control table */}
-            <div style={{ borderBottom: '1px solid var(--grid)',
-              padding: '8px 0' }}>
-              {CONTROLS.map(c => {
-                const col = c.status === 'CRITICAL' ? 'var(--red)'
-                  : c.status === 'PROGRESSING' ? 'var(--green)' : 'var(--amber)'
-                return (
-                  <div key={c.id} style={{ display: 'grid',
-                    gridTemplateColumns: '40px 140px 1fr 80px',
-                    gap: 8, padding: '6px 16px', alignItems: 'center',
-                    borderBottom: '1px solid var(--grid)',
-                  }}>
-                    <span style={{ fontSize: 10, color: 'var(--t3)' }}>{c.id}</span>
-                    <span style={{ fontSize: 10, color: 'var(--t2)' }}>{c.label}</span>
-                    <BlockBar pct={c.pct} total={16} color={col} />
-                    <span style={{ fontSize: 10, color: col, textAlign: 'right', fontWeight: 600 }}>
-                      {c.pct}%
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* CTA strip */}
-            <div style={{ padding: '12px 16px', background: 'var(--green2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, color: 'var(--green)' }}>
-                ▸ 5 critical gaps · 7 policies available
-              </span>
-              <Link to="/assessment" style={{ fontSize: 11, color: 'var(--green)',
-                textDecoration: 'none', fontWeight: 700 }}>
-                RUN_YOUR_ASSESSMENT →
-              </Link>
+              ))}
             </div>
           </div>
+          <div className="fade-up d2"><SampleReport /></div>
         </div>
       </section>
 
       {/* ── How it works ── */}
-      <section id="how" style={{ borderBottom: '1px solid var(--grid)' }}>
-        <div style={{ borderBottom: '1px solid var(--grid)', padding: '10px 40px',
-          display: 'flex', alignItems: 'center', gap: 16,
-          background: 'var(--bg1)' }}>
-          <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700 }}>PROCESS</span>
-          <span style={{ color: 'var(--grid2)', fontSize: 10 }}>│</span>
-          <span style={{ fontSize: 10, color: 'var(--t3)' }}>HOW_IT_WORKS — 4 STEPS — AVG TIME: 15 MIN</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}
-          className="max-md:grid-cols-1 scan-stagger">
-          {STEPS.map((s, i) => (
-            <div key={s.cmd} style={{
-              padding: '28px 24px',
-              borderRight: i < 3 ? '1px solid var(--grid)' : 'none',
-            }}>
-              <div style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700,
-                marginBottom: 12 }}>
-                {String(i + 1).padStart(2, '0')} ─────
+      <section style={{ background: '#F8FAFC', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '72px 40px' }}>
+        <div style={{ maxWidth: 1160, margin: '0 auto' }}>
+          <div className="eyebrow" style={{ textAlign: 'center', marginBottom: 12 }}>How it works</div>
+          <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', color: '#0F172A', marginBottom: 56 }}>From zero to investor-ready in three steps</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 40 }}>
+            {STEPS.map((s, i) => (
+              <div key={s.n}>
+                <div className="mono" style={{ fontSize: 12, fontWeight: 700, color: '#059669', marginBottom: 14, letterSpacing: '0.04em' }}>{s.n}</div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginBottom: 10, letterSpacing: '-0.02em' }}>{s.title}</h3>
+                <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>{s.body}</p>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--t1)', fontWeight: 600,
-                marginBottom: 10 }}>{s.cmd}</p>
-              <p style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.7 }}>{s.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Control map ── */}
-      <section style={{ borderBottom: '1px solid var(--grid)' }}>
-        <div style={{ borderBottom: '1px solid var(--grid)', padding: '10px 40px',
-          display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg1)' }}>
-          <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700 }}>COVERAGE</span>
-          <span style={{ color: 'var(--grid2)', fontSize: 10 }}>│</span>
-          <span style={{ fontSize: 10, color: 'var(--t3)' }}>ISO_42001 CONTROL MAP — 6 AREAS — 40 QUESTIONS</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}
-          className="max-md:grid-cols-1 scan-stagger">
-          {[
-            { id: 'A.2/A.3', label: 'AI_GOVERNANCE_&_LEADERSHIP',     q: 6, cover: 'Policy, roles, board review, incident response' },
-            { id: 'A.6',     label: 'DATA_GOVERNANCE',                 q: 8, cover: 'Lineage, quality, bias, privacy, retention'    },
-            { id: 'A.5',     label: 'DEVELOPMENT_&_TESTING',           q: 8, cover: 'Bias testing, adversarial, version control'    },
-            { id: 'A.8',     label: 'DEPLOYMENT_&_MONITORING',         q: 8, cover: 'Production monitoring, drift, change mgmt'     },
-            { id: 'A.9',     label: 'THIRD_PARTY_AI_VENDORS',          q: 6, cover: 'Contracts, DPAs, vendor risk, data protection' },
-            { id: 'A.7/A.10',label: 'ETHICS_&_TRANSPARENCY',           q: 4, cover: 'Framework, user disclosure, GDPR/CCPA'         },
-          ].map((c, i) => (
-            <div key={c.id} style={{
-              padding: '20px 24px',
-              borderRight: i % 3 < 2 ? '1px solid var(--grid)' : 'none',
-              borderBottom: i < 3 ? '1px solid var(--grid)' : 'none',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: 10 }}>
-                <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700 }}>{c.id}</span>
-                <span style={{ fontSize: 10, color: 'var(--t3)' }}>{c.q}Q</span>
+      {/* ── Control coverage ── */}
+      <section style={{ maxWidth: 1160, margin: '0 auto', padding: '88px 40px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 64, alignItems: 'flex-start' }}>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 12 }}>Full ISO 42001 coverage</div>
+            <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', color: '#0F172A', marginBottom: 16, lineHeight: 1.2 }}>6 control areas. 40 questions. One clear score.</h2>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.7, marginBottom: 28 }}>Every question maps directly to an ISO 42001 clause. Your score reflects true readiness, not a checkbox exercise.</p>
+            <Link to="/assessment" className="btn btn-primary">Start assessment →</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {CONTROLS.map(c => (
+              <div key={c.id} className="card card-hover" style={{ padding: '18px 20px' }}>
+                <div className="mono" style={{ fontSize: 11, fontWeight: 700, color: '#059669', marginBottom: 8 }}>{c.id}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', marginBottom: 6 }}>{c.label}</div>
+                <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.55 }}>{c.desc}</div>
               </div>
-              <p style={{ fontSize: 11, color: 'var(--t1)', fontWeight: 600, marginBottom: 6 }}>{c.label}</p>
-              <p style={{ fontSize: 10, color: 'var(--t3)', lineHeight: 1.6 }}>{c.cover}</p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Dark stats bar ── */}
+      <section style={{ background: '#0F172A', padding: '64px 40px' }}>
+        <div style={{ maxWidth: 1160, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 40, textAlign: 'center' }}>
+          {[['400+','startups have used COMPLAI to score their AI governance before fundraising.'],['8 min','average time to complete the full 40-question ISO 42001 assessment.'],['7','customised policy documents generated instantly after a single payment.']].map(([n, d]) => (
+            <div key={n}>
+              <div className="mono" style={{ fontSize: 52, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 14 }}>{n}</div>
+              <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, maxWidth: 260, margin: '0 auto' }}>{d}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" style={{ borderBottom: '1px solid var(--grid)' }}>
-        <div style={{ borderBottom: '1px solid var(--grid)', padding: '10px 40px',
-          display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg1)' }}>
-          <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700 }}>PRICING</span>
-          <span style={{ color: 'var(--grid2)', fontSize: 10 }}>│</span>
-          <span style={{ fontSize: 10, color: 'var(--t3)' }}>TIERED_PRICING — START FREE — PAY_WHEN_READY</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}
-          className="max-md:grid-cols-1 scan-stagger">
-
-          {/* Free */}
-          <div style={{ padding: '32px 28px', borderRight: '1px solid var(--grid)' }}>
-            <div className="tag" style={{ marginBottom: 16 }}>ASSESSMENT</div>
-            <p style={{ fontSize: 32, fontWeight: 700, color: 'var(--t1)', letterSpacing: '-0.02em',
-              marginBottom: 4 }}>FREE</p>
-            <p style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 24 }}>ALWAYS_FREE</p>
-            <div style={{ marginBottom: 24 }}>
-              {['40Q ISO 42001 assessment','Readiness score 0–100%',
-                'Gap analysis — 6 controls','Top 5 prioritised gaps','PDF readiness report'].map(f => (
-                <div key={f} style={{ display: 'flex', gap: 10, padding: '6px 0',
-                  borderBottom: '1px solid var(--grid)', fontSize: 11, color: 'var(--t2)',
-                  alignItems: 'center' }}>
-                  <span style={{ color: 'var(--green)' }}>▸</span>{f}
-                </div>
+      <section id="pricing" style={{ maxWidth: 1160, margin: '0 auto', padding: '88px 40px' }}>
+        <div className="eyebrow" style={{ textAlign: 'center', marginBottom: 12 }}>Pricing</div>
+        <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', color: '#0F172A', marginBottom: 14 }}>Start free. Pay only when you're ready.</h2>
+        <p style={{ fontSize: 15, color: '#475569', textAlign: 'center', marginBottom: 52, maxWidth: 440, margin: '0 auto 52px' }}>The assessment and your results are always free. Pay once to unlock the full policy pack.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 720, margin: '0 auto' }}>
+          <div className="card" style={{ padding: '32px 28px' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', marginBottom: 8 }}>Free</div>
+            <div style={{ fontSize: 40, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.04em', lineHeight: 1 }}>$0</div>
+            <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 4, marginBottom: 24 }}>forever</div>
+            <hr style={{ marginBottom: 24 }} />
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 28 }}>
+              {['Full 40-question assessment','Overall readiness score','Section breakdown by control area','Top 5 gaps identified','Email report delivery'].map(f => (
+                <li key={f} style={{ display: 'flex', gap: 10, fontSize: 14, color: '#475569' }}>
+                  <span style={{ color: '#059669', fontWeight: 700 }}>✓</span>{f}
+                </li>
               ))}
-            </div>
-            <Link to="/assessment" className="tbtn" style={{ width: '100%', justifyContent: 'center' }}>
-              RUN_ASSESSMENT()
-            </Link>
+            </ul>
+            <Link to="/assessment" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', display: 'flex' }}>Start assessment</Link>
           </div>
-
-          {/* Paid — highlighted */}
-          <div style={{ padding: '32px 28px', borderRight: '1px solid var(--grid)',
-            background: 'var(--green2)', borderLeft: '2px solid var(--green)',
-            position: 'relative' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0,
-              height: 2, background: 'var(--green)' }} />
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
-              <div className="tag tag-green">POLICY_GENERATOR</div>
-              <div className="tag tag-green" style={{ fontSize: 9 }}>RECOMMENDED</div>
+          <div className="card" style={{ padding: '32px 28px', border: '2px solid #059669', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: -13, left: 20 }}>
+              <span className="badge badge-green">Most popular</span>
             </div>
-            <p style={{ fontSize: 32, fontWeight: 700, color: 'var(--green)',
-              letterSpacing: '-0.02em', marginBottom: 4 }}>$299</p>
-            <p style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 24 }}>ONE_TIME_PAYMENT</p>
-            <div style={{ marginBottom: 24 }}>
-              {['Everything in ASSESSMENT','7 customised ISO 42001 policies',
-                'Pre-filled with your details','Ready-to-sign .docx files',
-                '30-day money-back guarantee','3 months update emails'].map(f => (
-                <div key={f} style={{ display: 'flex', gap: 10, padding: '6px 0',
-                  borderBottom: '1px solid var(--grid2)', fontSize: 11, color: 'var(--t1)',
-                  alignItems: 'center' }}>
-                  <span style={{ color: 'var(--green)' }}>▸</span>{f}
-                </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', marginBottom: 8 }}>Policy Pack</div>
+            <div style={{ fontSize: 40, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.04em', lineHeight: 1 }}>$299</div>
+            <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 4, marginBottom: 24 }}>one-time · 30-day guarantee</div>
+            <hr style={{ marginBottom: 24 }} />
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 28 }}>
+              {['Everything in Free','7 customised Word documents','AI Governance Policy','Risk Assessment Framework','Incident Response Plan','Investor-ready PDF report'].map(f => (
+                <li key={f} style={{ display: 'flex', gap: 10, fontSize: 14, color: '#475569' }}>
+                  <span style={{ color: '#059669', fontWeight: 700 }}>✓</span>{f}
+                </li>
               ))}
-            </div>
-            <Link to="/policies" className="tbtn tbtn-solid" style={{ width: '100%', justifyContent: 'center' }}>
-              GET_ALL_7_POLICIES()
-            </Link>
-          </div>
-
-          {/* Monthly */}
-          <div style={{ padding: '32px 28px' }}>
-            <div className="tag" style={{ marginBottom: 16 }}>POLICY_UPDATES</div>
-            <p style={{ fontSize: 32, fontWeight: 700, color: 'var(--t1)', letterSpacing: '-0.02em',
-              marginBottom: 4 }}>$29</p>
-            <p style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 24 }}>PER_MONTH · CANCEL_ANYTIME</p>
-            <div style={{ marginBottom: 24 }}>
-              {['Everything in POLICY_GENERATOR','Monthly policy updates',
-                'ISO 42001 change alerts','Ongoing compliance guidance',
-                'Priority support'].map(f => (
-                <div key={f} style={{ display: 'flex', gap: 10, padding: '6px 0',
-                  borderBottom: '1px solid var(--grid)', fontSize: 11, color: 'var(--t2)',
-                  alignItems: 'center' }}>
-                  <span style={{ color: 'var(--green)' }}>▸</span>{f}
-                </div>
-              ))}
-            </div>
-            <Link to="/policies" className="tbtn" style={{ width: '100%', justifyContent: 'center' }}>
-              SUBSCRIBE()
-            </Link>
+            </ul>
+            <Link to="/policies" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', display: 'flex' }}>Get policy pack →</Link>
           </div>
         </div>
       </section>
 
       {/* ── FAQ ── */}
-      <section style={{ borderBottom: '1px solid var(--grid)' }}>
-        <div style={{ borderBottom: '1px solid var(--grid)', padding: '10px 40px',
-          display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg1)' }}>
-          <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700 }}>FAQ</span>
-          <span style={{ color: 'var(--grid2)', fontSize: 10 }}>│</span>
-          <span style={{ fontSize: 10, color: 'var(--t3)' }}>FREQUENTLY_ASKED_QUESTIONS — {FAQS.length} ENTRIES</span>
-        </div>
-        <div style={{ maxWidth: 800, padding: '0 40px' }}>
-          {FAQS.map((f, i) => <FaqRow key={f.q} q={f.q} a={f.a} idx={i + 1} />)}
+      <section id="faq" style={{ background: '#F8FAFC', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '80px 40px' }}>
+        <div style={{ maxWidth: 660, margin: '0 auto' }}>
+          <div className="eyebrow" style={{ textAlign: 'center', marginBottom: 12 }}>FAQ</div>
+          <h2 style={{ fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', color: '#0F172A', marginBottom: 48 }}>Common questions</h2>
+          {FAQS.map(f => <FaqItem key={f.q} {...f} />)}
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section style={{ borderBottom: '1px solid var(--grid)', padding: '60px 40px',
-        display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'center' }}
-        className="max-md:grid-cols-1">
-        <div>
-          <div style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700,
-            letterSpacing: '0.1em', marginBottom: 16 }}>
-            ▸ READY_TO_EXECUTE
-          </div>
-          <h2 style={{ fontSize: 'clamp(22px,4vw,40px)', fontWeight: 700,
-            color: 'var(--t1)', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 14 }}>
-            GET ISO 42001-READY<br />
-            INSTEAD OF PAYING $50K
-          </h2>
-          <p style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.7, maxWidth: '52ch' }}>
-            Free assessment → instant gap analysis → 7 customised policies.
-            All before your next investor call.
-          </p>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}>
-          <Link to="/assessment" className="tbtn tbtn-solid" style={{ fontSize: 13, padding: '14px 28px' }}>
-            ▶ START_FREE_ASSESSMENT()
-          </Link>
-          <p style={{ fontSize: 10, color: 'var(--t3)', textAlign: 'center' }}>
-            NO_ACCOUNT_REQUIRED · 10–15_MIN · FREE
-          </p>
-        </div>
+      {/* ── Footer CTA ── */}
+      <section style={{ maxWidth: 1160, margin: '0 auto', padding: '96px 40px', textAlign: 'center' }}>
+        <div className="eyebrow" style={{ marginBottom: 16 }}>Get started today</div>
+        <h2 style={{ fontSize: 'clamp(28px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', color: '#0F172A', marginBottom: 20, lineHeight: 1.1 }}>
+          Your investors will ask.<br />
+          <span style={{ color: '#059669' }}>Know your answer.</span>
+        </h2>
+        <p style={{ fontSize: 15, color: '#475569', marginBottom: 36 }}>Free assessment. No account required. Results in 8 minutes.</p>
+        <Link to="/assessment" className="btn btn-primary btn-lg">Run free assessment →</Link>
       </section>
 
-      {/* ── Footer terminal ── */}
-      <footer style={{ padding: '0', borderBottom: '1px solid var(--grid)' }}>
-        <div className="status-bar" style={{ borderBottom: 'none', borderTop: '1px solid var(--grid)' }}>
-          <div className="status-cell">
-            <span>COMPLAI v1.0</span>
-          </div>
-          <div className="status-cell">
-            <span>ISO_42001:2023</span>
-          </div>
-          <div style={{ flex: 1 }} />
-          <div className="status-cell" style={{ borderLeft: '1px solid var(--grid)', borderRight: 'none' }}>
-            © {new Date().getFullYear()} COMPLAI · SELF_ASSESSMENT_NOT_FORMAL_AUDIT
-          </div>
+      {/* ── Footer ── */}
+      <footer style={{ borderTop: '1px solid #E2E8F0', padding: '24px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <span style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>COMPLAI</span>
+        <span style={{ fontSize: 12, color: '#94A3B8' }}>ISO 42001 self-assessment · Not a formal audit · © 2025</span>
+        <div style={{ display: 'flex', gap: 20 }}>
+          {[['Assessment','/assessment'],['Policies','/policies'],['Sign in','/auth']].map(([l,h]) => (
+            <Link key={l} to={h} style={{ fontSize: 13, color: '#94A3B8', textDecoration: 'none' }}>{l}</Link>
+          ))}
         </div>
       </footer>
     </div>
