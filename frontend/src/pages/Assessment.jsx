@@ -257,9 +257,13 @@ export default function Assessment() {
 
   const finish = () => {
     const results = computeResults(info, answers)
-    localStorage.setItem('complai_company', JSON.stringify(info))
-    localStorage.setItem('complai_answers', JSON.stringify(answers))
-    localStorage.setItem('complai_results', JSON.stringify(results))
+    try {
+      localStorage.setItem('complai_company', JSON.stringify(info))
+      localStorage.setItem('complai_answers', JSON.stringify(answers))
+      localStorage.setItem('complai_results', JSON.stringify(results))
+    } catch {
+      // localStorage unavailable (private mode) — continue to results anyway
+    }
     navigate('/results')
   }
 

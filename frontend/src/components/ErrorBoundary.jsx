@@ -17,25 +17,17 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div role="alert" className="min-h-[60vh] flex items-center justify-center p-8">
-          <div className="max-w-md text-center space-y-4">
-            <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center">
-              <svg className="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold text-slate-900">Something went wrong</h2>
-            <p className="text-sm text-slate-500">
-              An unexpected error occurred. Please try refreshing the page.
+        <div role="alert" style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, background: '#F8FAFC' }}>
+          <div style={{ maxWidth: 440, width: '100%', textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 22 }}>!</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>Something went wrong</h2>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65, marginBottom: 24, fontFamily: 'Inter, sans-serif' }}>
+              An unexpected error occurred. Your assessment progress is saved — refreshing the page should fix this.
             </p>
             <button
-              onClick={() => {
-                this.setState({ hasError: false, error: null })
-                window.location.reload()
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Refresh Page
+              onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload() }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: '#059669', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              Reload page
             </button>
           </div>
         </div>

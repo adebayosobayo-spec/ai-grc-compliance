@@ -9,23 +9,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check active session on mount
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s)
-      setUser(s?.user ?? null)
-      setLoading(false)
-    })
+    let subscription = null
 
-    // Listen for auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, s) => {
+    supabase.auth.getSession()
+      .then(({ data: { session: s } }) => {
+        setSession(s)
+        setUser(s?.user ?? null)
+      })
+      .catch(() => {
+        // Supabase not configured — continue without auth
+      })
+      .finally(() => setLoading(false))
+
+    try {
+      const { data } = supabase.auth.onAuthStateChange((_event, s) => {
         setSession(s)
         setUser(s?.user ?? null)
         setLoading(false)
-      },
-    )
+      })
+      subscription = data?.subscription
+    } catch {
+      setLoading(false)
+    }
 
-    return () => subscription.unsubscribe()
+    return () => { try { subscription?.unsubscribe() } catch {} }
   }, [])
 
   const signUp = async (email, password) => {

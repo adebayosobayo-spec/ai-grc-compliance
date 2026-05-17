@@ -74,11 +74,17 @@ export default function Results() {
   const [company, setCompany] = useState(null)
 
   useEffect(() => {
-    const r = localStorage.getItem('complai_results')
-    const c = localStorage.getItem('complai_company')
-    if (!r) { navigate('/assessment'); return }
-    setResults(JSON.parse(r))
-    if (c) setCompany(JSON.parse(c))
+    try {
+      const r = localStorage.getItem('complai_results')
+      const c = localStorage.getItem('complai_company')
+      if (!r) { navigate('/assessment'); return }
+      const parsed = JSON.parse(r)
+      if (!parsed?.overallScore && parsed?.overallScore !== 0) { navigate('/assessment'); return }
+      setResults(parsed)
+      if (c) setCompany(JSON.parse(c))
+    } catch {
+      navigate('/assessment')
+    }
   }, [navigate])
 
   if (!results) return null
