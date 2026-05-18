@@ -153,7 +153,7 @@ OUTPUT FORMAT:
 - Start directly with the document — no preamble, no explanation, no "here is the policy"`
 
 // ── Build the per-policy user prompt ───────────────────────────
-function buildPrompt(policyId, company, results) {
+function buildPrompt(policyId, company, results, context) {
   const cfg = POLICIES[policyId]
   const gapLines = results.topGaps
     .map((g, i) => `  ${i + 1}. [${g.impact}] ${g.section} — ${g.question}`)
@@ -161,6 +161,29 @@ function buildPrompt(policyId, company, results) {
   const sectionLines = results.sectionScores
     .map(s => `  ${s.id} ${s.title}: ${s.score}%`)
     .join('\n')
+
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  // Build the enriched context block from intake wizard answers
+  const ctxLines = []
+  if (context) {
+    if (context.aiDescription)
+      ctxLines.push(`  What the AI does:       ${context.aiDescription}`)
+    if (context.aiModels)
+      ctxLines.push(`  AI models/services:     ${context.aiModels}`)
+    if (context.jurisdictions?.length)
+      ctxLines.push(`  Operating jurisdictions: ${context.jurisdictions.join(', ')}`)
+    if (context.personalData)
+      ctxLines.push(`  Personal data in AI:    ${context.personalData}`)
+    if (context.reviewers?.length)
+      ctxLines.push(`  Policy reviewers:       ${context.reviewers.join(', ')}`)
+    if (context.timeline)
+      ctxLines.push(`  Timeline / urgency:     ${context.timeline}`)
+    if (context.existingDocs)
+      ctxLines.push(`  Existing governance docs: ${context.existingDocs}${context.existingDocsDesc ? ' — ' + context.existingDocsDesc : ''}`)
+    if (context.specificRequirements)
+      ctxLines.push(`  Specific requirements:  ${context.specificRequirements}`)
+  }
 
   return `Generate a complete, production-ready ${cfg.name} for the company below.
 
@@ -171,13 +194,16 @@ COMPANY PROFILE
   AI Systems:      ${company.numAISystems} deployed AI system(s)
   Contact:         ${company.email}
 
+ENRICHED CONTEXT (from intake questionnaire — use this to make every section specific, not generic)
+${ctxLines.length ? ctxLines.join('\n') : '  No additional context provided'}
+
 ISO 42001 ASSESSMENT RESULTS
   Overall Score:   ${results.overallScore}%
 
   Section Scores:
 ${sectionLines}
 
-  Priority Gaps (must be directly addressed by this policy):
+  Priority Gaps (every gap MUST be addressed by a specific control in this policy):
 ${gapLines || '  None identified in this section'}
 
 DOCUMENT MANDATE
@@ -186,15 +212,19 @@ DOCUMENT MANDATE
   This document must cover:
 ${cfg.brief}
 
-ADDITIONAL REQUIREMENTS
-- The document header SHALL include: Policy Name, Version (1.0), Effective Date (${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}), Document Owner (AI Governance Lead), Classification (CONFIDENTIAL — INTERNAL), Next Review Date (12 months from effective date)
-- Tailor all examples, thresholds, and obligations to the ${company.industry} sector
-- Where the gap analysis above identifies missing controls, this policy MUST include the specific controls that — when implemented — would close each gap
-- Include at least one measurable KPI or success metric per major section
-- The Roles & Responsibilities section MUST be a RACI table
-- Minimum depth: this document will be reviewed by enterprise procurement teams and ISO 42001 certification auditors — it must satisfy their checklists completely
+CRITICAL REQUIREMENTS
+1. Document header SHALL include: Policy Name · Version 1.0 · Effective Date ${today} · Document Owner: AI Governance Lead · Classification: CONFIDENTIAL — INTERNAL · Next Review: ${new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+2. Every obligation uses RFC 2119 modal verbs (SHALL / SHALL NOT / SHOULD / MAY) correctly
+3. Every major section cites the specific ISO 42001:2023 clause it satisfies, e.g. [ISO 42001 §6.1.2]
+4. Where EU AI Act / GDPR / NIST apply (based on the jurisdictions above), cite specific articles
+5. The Roles & Responsibilities section MUST be a RACI table — not prose
+6. Each priority gap from the assessment MUST have a named control that closes it
+7. Tailor all examples, thresholds, and roles to the ${company.industry} sector and the AI systems described
+8. If the reviewer list includes investors or enterprise customers, ensure the tone and depth satisfy due diligence standards
+9. If the reviewer list includes an ISO 42001 auditor, ensure complete clause coverage with no gaps
+10. At least one measurable KPI per major section
 
-Generate the complete document now.`
+This document will be used in live due diligence. Generate the complete, unabridged policy now.`
 }
 
 // ── Markdown → docx parser ──────────────────────────────────────
@@ -450,25 +480,25 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { policyId, company, results } = req.body || {}
+  const { policyId, company, results, context } = req.body || {}
 
   if (!policyId || !POLICIES[policyId]) {
     return res.status(400).json({ error: `Unknown policy: ${policyId}` })
   }
-  if (!company?.companyName || !results?.overallScore === undefined) {
+  if (!company?.companyName || results?.overallScore === undefined) {
     return res.status(400).json({ error: 'Missing company or results data' })
   }
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' })
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured on the server. Add it to Vercel environment variables.' })
   }
 
   try {
-    // Generate policy content with Claude
+    // Generate policy content with Claude — using enriched context from intake
     const message = await client.messages.create({
       model: 'claude-opus-4-5',
       max_tokens: 8000,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildPrompt(policyId, company, results) }],
+      messages: [{ role: 'user', content: buildPrompt(policyId, company, results, context) }],
     })
 
     const markdown = message.content[0]?.text
