@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getLatestAssessment } from '../lib/db'
 
+
 function statusOf(s) {
   if (s < 25) return { label: 'Not ready',   badge: 'badge-red',   color: '#DC2626' }
   if (s < 50) return { label: 'Developing',  badge: 'badge-amber', color: '#D97706' }
@@ -126,6 +127,7 @@ export default function Results() {
       {/* Nav */}
       <nav className="nav">
         <Link to="/" style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.04em', color: '#0F172A', textDecoration: 'none', marginRight: 'auto' }}>COMPLAI</Link>
+        {user && <Link to="/dashboard" className="nav-link" style={{ marginRight: 4 }}>Dashboard</Link>}
         <Link to="/assessment" className="btn btn-secondary btn-sm" style={{ marginRight: 8 }}>Retake</Link>
         <Link to="/policies" className="btn btn-primary btn-sm">Get policies →</Link>
       </nav>

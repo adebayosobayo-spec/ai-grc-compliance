@@ -18,7 +18,7 @@ export default function Auth() {
     setLoading(true)
     try {
       if (isSignUp) { await signUp(email, pass); setDone(true) }
-      else { await signIn(email, pass); navigate('/results') }
+      else { await signIn(email, pass); navigate('/dashboard') }
     } catch (err) { setError(err.message || 'Authentication failed. Please try again.') }
     finally { setLoading(false) }
   }

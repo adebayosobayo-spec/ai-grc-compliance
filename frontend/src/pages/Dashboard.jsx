@@ -1,183 +1,279 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
-import { Link } from 'react-router-dom'
-import { useAppContext } from '../context/AppContext'
-import { complianceAPI } from '../services/api'
-import { Zap, ShieldCheck, FileText, BarChart3, Lock, ArrowRight, CheckCircle2 } from 'lucide-react'
+import React, { useEffect, useState, useRef } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { listAssessments, hasPaid } from '../lib/db'
 
-const ComplianceGlobe = lazy(() => import('../components/ComplianceGlobe'))
+function statusOf(s) {
+  if (s < 25) return { label: 'Not ready',   badge: 'badge-red',   color: '#DC2626' }
+  if (s < 50) return { label: 'Developing',  badge: 'badge-amber', color: '#D97706' }
+  if (s < 75) return { label: 'Progressing', badge: 'badge-blue',  color: '#2563EB' }
+  return              { label: 'Ready',       badge: 'badge-green', color: '#059669' }
+}
 
-const FW_LABELS = { ISO_27001: 'ISO 27001', ISO_42001: 'ISO 42001', NDPR: 'NDPR', GDPR: 'GDPR', UK_GDPR: 'UK GDPR', POPIA: 'POPIA', LGPD: 'LGPD', CCPA: 'CCPA/CPRA', PDPA: 'PDPA' }
+function ScoreDial({ score, size = 72 }) {
+  const r = (size / 2) - 6
+  const circ = 2 * Math.PI * r
+  const offset = circ - (score / 100) * circ
+  const st = statusOf(score)
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F1F5F9" strokeWidth={5} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={st.color} strokeWidth={5}
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 800ms ease' }} />
+      </svg>
+      <div style={{ position: 'absolute', textAlign: 'center' }}>
+        <div className="mono" style={{ fontSize: 16, fontWeight: 800, color: st.color, lineHeight: 1 }}>{score}%</div>
+      </div>
+    </div>
+  )
+}
 
-const quickActions = [
-  {
-    to: '/assessment',
-    label: 'Assessment',
-    desc: 'Audit your AI governance maturity',
-    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
-    icon: <BarChart3 size={20} />,
-  },
-  {
-    to: '/policy-generator',
-    label: 'Policies',
-    desc: 'Generate audit-ready policies',
-    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-    icon: <FileText size={20} />,
-  },
-  {
-    to: '/risk-register',
-    label: 'Risks',
-    desc: 'Manage your AI risk register',
-    color: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
-    icon: <ShieldCheck size={20} />,
-  },
-  {
-    to: '/questionnaire',
-    label: 'Questionnaire AI',
-    desc: 'Answer DDQs with AI',
-    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-    icon: <Zap size={20} />,
-  },
-]
-
-function AnimatedScore({ target }) {
-  const [display, setDisplay] = useState(0)
+function AnimatedBar({ score, color }) {
+  const [w, setW] = useState(0)
   useEffect(() => {
-    if (!target) return
-    let start = 0
-    const step = Math.ceil(target / 40)
-    const interval = setInterval(() => {
-      start = Math.min(start + step, target)
-      setDisplay(start)
-      if (start >= target) clearInterval(interval)
-    }, 25)
-    return () => clearInterval(interval)
-  }, [target])
-  return <>{display}</>
+    const t = setTimeout(() => setW(score), 150)
+    return () => clearTimeout(t)
+  }, [score])
+  return (
+    <div className="bar-track" style={{ flex: 1 }}>
+      <div className="bar-fill" style={{ width: `${w}%`, background: color }} />
+    </div>
+  )
+}
+
+function EmptyState() {
+  return (
+    <div style={{ textAlign: 'center', padding: '80px 32px' }}>
+      <div style={{ width: 60, height: 60, background: '#F1F5F9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 26 }}>📋</div>
+      <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', marginBottom: 10, letterSpacing: '-0.02em' }}>No assessments yet</h2>
+      <p style={{ fontSize: 14, color: '#64748B', marginBottom: 28, maxWidth: 340, margin: '0 auto 28px', lineHeight: 1.65 }}>
+        Run your free ISO 42001 assessment to get your readiness score and a prioritised gap analysis.
+      </p>
+      <Link to="/assessment" className="btn btn-primary btn-lg">Start free assessment →</Link>
+    </div>
+  )
 }
 
 export default function Dashboard() {
-  const { orgProfile, sessionId, lastGapResult } = useAppContext()
-  const framework = orgProfile?.compliance_framework || 'ISO_42001'
-  const frameworkLabel = FW_LABELS[framework] || framework
-  const [registerSummary, setRegisterSummary] = useState(null)
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+  const [assessments, setAssessments] = useState([])
+  const [paid, setPaid] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [signingOut, setSigningOut] = useState(false)
+  const [localResult, setLocalResult] = useState(null)
+  const [localCompany, setLocalCompany] = useState(null)
 
   useEffect(() => {
-    if (sessionId) {
-      complianceAPI.getRegisterSummary(sessionId)
-        .then(setRegisterSummary)
-        .finally(() => setLoading(false))
-    } else {
+    async function load() {
+      try {
+        const [rows, paidStatus] = await Promise.all([
+          listAssessments(user.id),
+          hasPaid(user.id),
+        ])
+        setAssessments(rows || [])
+        setPaid(paidStatus)
+      } catch (err) {
+        console.warn('Supabase load error:', err.message)
+      }
+      try {
+        const r = localStorage.getItem('complai_results')
+        const c = localStorage.getItem('complai_company')
+        const lp = localStorage.getItem('complai_paid')
+        if (r) setLocalResult(JSON.parse(r))
+        if (c) setLocalCompany(JSON.parse(c))
+        if (lp) setPaid(true)
+      } catch {}
       setLoading(false)
     }
-  }, [sessionId])
+    load()
+  }, [user.id])
 
-  const score = lastGapResult ? Math.round((lastGapResult.compliant_controls / lastGapResult.total_controls) * 100) : 0
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    try { await signOut() } catch {}
+    navigate('/')
+  }
+
+  const latest = assessments[0]
+  const hasData = assessments.length > 0 || !!localResult
+
+  if (loading) return (
+    <div style={{ minHeight: '100dvh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 28, height: 28, border: '2px solid #E2E8F0', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
 
   return (
-    <div className="py-8 px-6 max-w-7xl mx-auto space-y-10">
-      
-      {/* Premium Cockpit Hero */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-[#0A0F1E] border border-white/5 shadow-2xl min-h-[360px] flex flex-col lg:flex-row items-stretch group">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-blue-500/5 opacity-50" />
-        
-        <div className="relative flex-1 flex flex-col justify-center p-10 z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest mb-6">
-            <Zap size={12} /> Compliance Dashboard
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-white mb-6 leading-tight font-heading uppercase tracking-tight">
-            Governance <br /> <span className="text-amber-500">Maturity.</span>
-          </h1>
+    <div style={{ background: '#F8FAFC', minHeight: '100dvh' }}>
 
-          <div className="flex flex-wrap items-center gap-8 mb-10">
-            <div className="flex flex-col">
-              <p className="text-6xl font-black text-white font-heading tabular-nums tracking-tighter">
-                <AnimatedScore target={score || 42} />
-                <span className="text-2xl font-bold text-amber-500 ml-1">%</span>
-              </p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Readiness Score</p>
-            </div>
-            <div className="h-12 w-px bg-white/5 hidden sm:block" />
-            <div className="space-y-2">
-              <span className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                12 / 40 Controls Verified
-              </span>
-              <span className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
-                8 Critical Gaps Detected
-              </span>
-            </div>
-          </div>
+      {/* Nav */}
+      <nav className="nav">
+        <Link to="/" style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.04em', color: '#0F172A', textDecoration: 'none', marginRight: 40 }}>COMPLAI</Link>
+        <Link to="/dashboard" className="nav-link" style={{ color: '#059669', fontWeight: 600 }}>Dashboard</Link>
+        <Link to="/assessment" className="nav-link">New assessment</Link>
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize: 13, color: '#94A3B8', marginRight: 16 }}>{user.email}</span>
+        <button onClick={handleSignOut} disabled={signingOut} className="btn btn-secondary btn-sm">
+          {signingOut ? 'Signing out…' : 'Sign out'}
+        </button>
+      </nav>
 
-          <div className="flex items-center gap-4">
-            <Link to="/assessment" className="btn-primary px-8">
-              Resume Audit <ArrowRight size={18} />
-            </Link>
-            <Link to="/gap-analysis" className="btn-secondary px-8">
-              View Report
-            </Link>
-          </div>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 40px' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 32 }}>
+          <div className="eyebrow" style={{ marginBottom: 8 }}>Your workspace</div>
+          <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', color: '#0F172A' }}>Dashboard</h1>
         </div>
 
-        {/* 3D Globe */}
-        <div className="flex-shrink-0 w-full lg:w-[450px] h-80 lg:h-auto relative flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-l from-[#0A0F1E] to-transparent pointer-events-none z-10 hidden lg:block" />
-          <div className="w-full h-full relative z-0 opacity-80 group-hover:opacity-100 transition-opacity">
-            <Suspense fallback={<div className="w-full h-full bg-slate-900/20 animate-pulse" />}>
-              <ComplianceGlobe score={score || 42} />
-            </Suspense>
-          </div>
-        </div>
-      </div>
+        {!hasData && <div className="card"><EmptyState /></div>}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: 'Active Risks', value: '14', color: 'text-red-500' },
-          { label: 'Assets Tracked', value: '28', color: 'text-blue-500' },
-          { label: 'Policy Status', value: 'Draft', color: 'text-amber-500' },
-          { label: 'Audit Pack', value: '62%', color: 'text-emerald-500' },
-        ].map((stat, i) => (
-          <div key={i} className="card-dark p-6 group hover:border-white/10 transition-all">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 group-hover:text-slate-400">{stat.label}</p>
-            <p className={`text-3xl font-black font-heading ${stat.color}`}>{stat.value}</p>
-          </div>
-        ))}
-      </div>
+        {hasData && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24, alignItems: 'flex-start' }}>
 
-      {/* Quick Actions */}
-      <div className="space-y-6">
-        <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Mission Control</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action, i) => (
-            <Link key={i} to={action.to} className="card-dark p-6 group hover:-translate-y-1 transition-all">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${action.color}`}>
-                {action.icon}
+            {/* Left column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Latest assessment card */}
+              {(() => {
+                const score    = latest?.overall_score   ?? localResult?.overallScore ?? 0
+                const name     = latest?.company_name    ?? localCompany?.companyName  ?? 'Your company'
+                const sections = latest?.section_scores  ?? localResult?.sectionScores ?? []
+                const dateStr  = latest?.created_at
+                  ? new Date(latest.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+                  : 'Recent'
+                const st = statusOf(score)
+                return (
+                  <div className="card">
+                    {/* Card header */}
+                    <div style={{ padding: '20px 24px', borderBottom: '1px solid #E2E8F0', background: '#FAFAFA', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Latest assessment</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: 2 }}>{name}</div>
+                        <div style={{ fontSize: 12, color: '#94A3B8' }}>{dateStr}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                        <ScoreDial score={score} />
+                        <div>
+                          <span className={`badge ${st.badge}`} style={{ display: 'block', marginBottom: 10 }}>{st.label}</span>
+                          <Link to="/results" className="btn btn-secondary btn-sm" style={{ display: 'block', textAlign: 'center', marginBottom: 6 }}>View report</Link>
+                          <Link to="/assessment" className="btn btn-ghost btn-sm" style={{ display: 'block', textAlign: 'center', fontSize: 12, color: '#94A3B8' }}>Retake ↺</Link>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section bars */}
+                    {sections.length > 0 && (
+                      <div style={{ padding: '6px 0' }}>
+                        {sections.map((s, i) => {
+                          const ss = statusOf(s.score)
+                          return (
+                            <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 46px', alignItems: 'center', padding: '9px 24px', borderBottom: i < sections.length - 1 ? '1px solid #F8FAFC' : 'none' }}>
+                              <span className="mono" style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8' }}>{s.id}</span>
+                              <div style={{ padding: '0 12px 0 0' }}>
+                                <div style={{ fontSize: 11, color: '#475569', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
+                                <AnimatedBar score={s.score} color={ss.color} />
+                              </div>
+                              <span className="mono" style={{ fontSize: 12, fontWeight: 700, color: ss.color, textAlign: 'right' }}>{s.score}%</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Card footer CTA */}
+                    <div style={{ padding: '14px 24px', borderTop: '1px solid #E2E8F0', background: '#FAFAFA', display: 'flex', gap: 10 }}>
+                      <Link to="/policies" className="btn btn-primary btn-sm">
+                        {paid ? 'Generate policies →' : 'Get policy pack — $299 →'}
+                      </Link>
+                      <Link to="/results" className="btn btn-secondary btn-sm">Full report</Link>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* History — only if multiple saved assessments */}
+              {assessments.length > 1 && (
+                <div className="card">
+                  <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Assessment history</span>
+                  </div>
+                  {assessments.map((a, i) => {
+                    const st = statusOf(a.overall_score)
+                    return (
+                      <div key={a.id} style={{ padding: '14px 20px', borderBottom: i < assessments.length - 1 ? '1px solid #F8FAFC' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', marginBottom: 2 }}>{a.company_name || '—'}</div>
+                          <div style={{ fontSize: 12, color: '#94A3B8' }}>
+                            {new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span className={`badge ${st.badge}`} style={{ fontSize: 10 }}>{st.label}</span>
+                          <span className="mono" style={{ fontSize: 14, fontWeight: 700, color: st.color }}>{a.overall_score}%</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Right column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Policy pack status */}
+              <div className="card" style={{ padding: '20px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>Policy pack</div>
+                {paid ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                      <div style={{ width: 36, height: 36, background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#059669', flexShrink: 0 }}>✓</div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>Unlocked</div>
+                        <div style={{ fontSize: 12, color: '#94A3B8' }}>7 documents available</div>
+                      </div>
+                    </div>
+                    <Link to="/policies" className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center', display: 'flex' }}>Open generator →</Link>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6, marginBottom: 14 }}>7 AI governance documents generated by Claude, customised to your gaps.</p>
+                    <div className="mono" style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginBottom: 14 }}>$299 <span style={{ fontSize: 13, color: '#94A3B8', fontWeight: 400 }}>one-time</span></div>
+                    <Link to="/policies" className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center', display: 'flex' }}>Get policy pack →</Link>
+                  </>
+                )}
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 font-heading">{action.label}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{action.desc}</p>
-            </Link>
-          ))}
-        </div>
-      </div>
 
-      {/* Upgrade Banner */}
-      <div className="p-1 bg-gradient-to-r from-amber-500 to-purple-600 rounded-3xl">
-        <div className="bg-slate-950 rounded-[1.4rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="max-w-xl text-center md:text-left">
-            <h3 className="text-2xl font-black text-white mb-3 font-heading uppercase">Unlock Policy Generator</h3>
-            <p className="text-slate-400 text-sm leading-relaxed font-medium">
-              You've identified 8 critical gaps. Don't waste weeks drafting documents. 
-              Unlock the ISO 42001 Policy Generator and be audit-ready by tomorrow.
-            </p>
+              {/* Quick actions */}
+              <div className="card" style={{ padding: '20px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>Quick actions</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Link to="/assessment" className="btn btn-secondary btn-sm" style={{ justifyContent: 'flex-start' }}>+ New assessment</Link>
+                  <Link to="/results" className="btn btn-secondary btn-sm" style={{ justifyContent: 'flex-start' }}>View latest report</Link>
+                  {paid && <Link to="/policies" className="btn btn-secondary btn-sm" style={{ justifyContent: 'flex-start' }}>Generate policies</Link>}
+                </div>
+              </div>
+
+              {/* Account */}
+              <div className="card" style={{ padding: '20px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Account</div>
+                <div style={{ fontSize: 13, color: '#475569', marginBottom: 14, wordBreak: 'break-all' }}>{user.email}</div>
+                <button onClick={handleSignOut} disabled={signingOut}
+                  style={{ width: '100%', padding: '8px', background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 13, color: '#64748B', cursor: signingOut ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', transition: 'all 150ms' }}
+                  onMouseEnter={e => { e.target.style.borderColor='#FCA5A5'; e.target.style.color='#DC2626' }}
+                  onMouseLeave={e => { e.target.style.borderColor='#E2E8F0'; e.target.style.color='#64748B' }}>
+                  {signingOut ? 'Signing out…' : 'Sign out'}
+                </button>
+              </div>
+            </div>
           </div>
-          <Link to="/checkout" className="btn-primary px-10 whitespace-nowrap">
-            Upgrade Now $299 <ArrowRight size={18} />
-          </Link>
-        </div>
+        )}
       </div>
-
     </div>
   )
 }
