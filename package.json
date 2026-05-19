@@ -2,11 +2,12 @@
     "name": "ai-grc-compliance",
     "version": "1.0.0",
     "private": true,
+    "type": "module",
     "engines": {
         "node": "20.x"
     },
     "scripts": {
-        "build": "cd frontend && npm install && npm run build"
+        "build": "npm install && cd frontend && npm install && npm run build"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.30.0",
